@@ -1,0 +1,56 @@
+<%@ page pageEncoding="utf-8"%>
+<s:eval expression="@config.getProperty('isTest')" var="isTest"/>
+<form id="commonForm" name="commonForm"></form>
+<input type="hidden" id="ACTION_MENU_ID" name="ACTION_MENU_ID" value="${ACTION_MENU_ID}"/>
+<input type="hidden" id="ACTION_MENU_NM" name="ACTION_MENU_NM" value="${ACTION_MENU_NM}"/>
+<input type="hidden" id="ACTION_MENU_DIV" name="ACTION_MENU_DIV" value="${ACTION_MENU_DIV}"/>
+<script>
+    $(function()
+    {
+        // 숫자만 입력 가능 (numberOnly='true')
+        $(document).on("keyup", "input:text[numberOnly]", function() {
+            if($(this).attr('decimalFormat')) {
+                if($(this).val() != $(this).val().replace(/[^0-9\\.]/gi,"")) {
+                    $(this).val($(this).val().replace(/[^0-9\\.]/gi,"") );
+                }
+
+                var f = $(this).attr('decimalFormat').split(',');
+                f[0] = Number(f[0]) - Number(f[1]);
+                var v = $(this).val().split('.');
+
+                if(v[0].length > f[0]) {
+                    $(this).val(v[0].substring(0, f[0]));
+                } else {
+                    if(f.length > 1 && v.length > 1 && v[1].length > Number(f[1])) {
+                        v[1] = v[1].substring(0, f[1]);
+                        $(this).val(v[0] + (v.length == 2 ? '.' : '') + (v[1] ? v[1] : ''));
+                    }
+                }
+            } else {
+                $(this).val( $(this).val().replace(/[^0-9]/gi,"") );
+            }
+        });
+
+        $('input:text[numberOnly]').css("text-align", "right");
+
+        //영문 + 띄어쓰기 (alphaOnly="true")
+        $(document).on("keyup", "input:text[alphaOnly]", function() {
+            $(this).val( $(this).val().replace(/[0-9]|[^\!-z\s]/gi,"") );
+        });
+
+        //영문 + 숫자 + 띄어쓰기 (alphaNumber="true")
+        $(document).on("keyup", "input:text[alphaNumber]", function() {
+            $(this).val( $(this).val().replace(/[^0-9a-zA-Z\s]/gi,"") );
+        });
+
+        gfn_unitTestPopup("${isTest}");
+    });
+
+</script>
+<div class="dim_laoding">
+    <div class="dim_inner">
+        <a href="#" id="loading" onclick="gfn_closeDimLoading()"><div class="cssload-loading"><i></i><i></i><i></i><i></i></div></a>
+    </div>
+</div>
+<div id="layer"></div>
+<div id="main_win_dim"></div>

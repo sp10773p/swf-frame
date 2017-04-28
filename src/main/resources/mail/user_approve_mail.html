@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	<title>가입완료메일 발송</title>
+</head>
+
+<body>
+<table width="800" border="0" cellspacing="0" bgcolor="#15a4fa" cellpadding="0" style="font-family:'Dotum'; font-size:12px; line-height:18px; padding:0;">
+	<tbody>
+	<tr>
+		<td colspan="3" height="67" align="left" bgcolor="#15a4fa" valign="bottom" style="padding:0; font-size:0; line-height:0;"><img src="${SERVER_URL}/images/mail/logo.gif" style="display: block; border: 0; line-height:0; font-size:0;" width="800" height="67"/></td>
+	</tr>
+	<tr>
+		<td colspan="3" height="154" width="800">
+			<table border="0" cellspacing="0" cellpadding="0" height="154" width="800">
+				<tr height="80" width="800">
+					<td rowspan="3" width="195" height="154" bgcolor="#15a4fa">&nbsp;</td>
+					<td width="410" height="80" align="center" style="color:#ffffff; vertical-align:middle; font-size:42px; font-family:'맑은고딕','Malgun Gothic','Dotum',sans-serif; line-height:42px;"
+						bgcolor="#15a4fa">가입완료메일 발송</td>
+					<td rowspan="3" width="195" height="154" valign="bottom" style="padding:0; font-size:0; line-height:0;"><img src="${SERVER_URL}/images/mail/bg_mail.gif" style="display: block; border:0; line-height:0; font-size:0; " height="154" width="195"/></td>
+				</tr>
+				<tr height="33" width="800">
+					<td height="33" width="410" bgcolor="#15a4fa" valign="top"  style="padding:0; font-size:0; line-height:0;"><img src="${SERVER_URL}/images/mail/top_line.gif" style="display: block; border:0; padding:0; line-height:0; font-size:0; vertical-align:top; text-align:left;" heihgt="33" width="410"/></td>
+				</tr>
+				<tr height="41" width="800">
+					<td bgcolor="#15a4fa" height="41" width="410" align="center" valign="top" style="color:#ffffff; padding:0; font-family:'맑은고딕','Malgun Gothic','Dotum',sans-serif; font-size:18px; line-height:18px;">안녕하세요. goGLOBAL입니다.</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+	<tr>
+		<td height="51" align="center" valign="bottom" colspan="3" style="padding:0; font-size:1px; line-height:0;"><img src="${SERVER_URL}/images/mail/box_top.gif" style="display: block; border:0; padding:0; line-height:0; font-size:0; vertical-align:bottom;" height="51" width="800"/></td>
+	</tr>
+	<tr height="67" width="750">
+		<td width="25" height="67" bgcolor="#15a4fa">&nbsp;</td>
+		<td width="750" height="67" align="center" bgcolor="#ffffff" style="font-size:26px; font-weight:bold; font-family:'맑은고딕','Malgun Gothic','Dotum',sans-serif; color:#1160a4; line-height:26px; padding:0;">goGLOBAL 서비스를 이용해주셔서 감사합니다.</td>
+		<td width="25" height="67" bgcolor="#15a4fa">&nbsp;</td>
+	</tr>
+	<!--//상단 타이틀-->
+	<tr>
+		<td width="25" bgcolor="#f2f2f2">&nbsp;</td>
+		<td width="750" align="center" bgcolor="#ffffff">
+			<table width="700" border="0" cellspacing="0" cellpadding="0" bgcolor="#ffffff">
+				<tbody>
+				<tr>
+					<td width="750" align="center" style="padding:11px 0 32px; margin:0; color:#777777; font-family:'Dotum'; font-size:12px; line-height:21px;">
+						<b style="color:#000; font-weight:bold;">goGlobal 서비스(www.goglobal.co.kr) 가입이 완료되었습니다.</b></td>
+				</tr>
+				<!--//안내글-->
+				<tr>
+					<td width="700">
+						<table width="700" height="112" cellspacing="0" cellpadding="0" style="border:2px solid #15a4fa; border-radius:5px;">
+							<tbody>
+							<tr>
+								<td align="center">
+									<table align="left" border="0" cellspacing="0" cellpadding="0" height="112">
+										<tbody>
+										<tr>
+											<td width="100%" height="112" align="left" style=" font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:18px;">
+												<b>
+													#set ($userDiv = ${USER_DIV})
+													#if($userDiv == "M" || $userDiv == "S")
+													<span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>
+													신고업무 처리를 위해 홈페이지(www.goglobal.co.kr)에 로그인하여 <br> &nbsp;&nbsp;
+													신고서 기본값 정보 및 신고인 정보를 등록하여 주시기 바랍니다.<br><br>
+													<span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>
+													신고서 기본값 정보는 수출신고 Open API/엑셀업로드 신고시 사용되는 정보로<br> &nbsp;&nbsp;
+													수출신고요청시 명시 하지 않을 경우 사용되는 기본값입니다.
+													(메뉴 : 기초정보 > 신고서 기본값)
+													<br><br>
+													<span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>
+													Open API를 이용하여 신고업무를 하실 경우 API등록요청을 하여 주시기바랍니다.
+													#elseif($userDiv == "G")
+													<span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>
+													판매업체의 수출 및 수입 의뢰 받은업무를 홈페이지(www.goglobal.co.kr)에 승인받은 계정으로 로그인하여 <br> &nbsp;&nbsp;&nbsp;&nbsp;처리하실 수 있습니다.
+													#elseif($userDiv == "E")
+													<span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>
+													판매업체의 배송요청 받은업무를 홈페이지(www.goglobal.co.kr)에 승인받은 계정으로 로그인하여 <br> &nbsp;&nbsp;&nbsp;&nbsp;확인하실 수 있습니다.<br><br>
+													<span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>
+													수출이행신고를 위한 정보를 Open API를 이용하여 받으실 경우 API등록요청을 하여 주시기 바랍니다.
+													#end
+												</b>
+											</td>
+										</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							</tbody>
+						</table>
+					</td>
+				</tr>
+				<tr><td>&nbsp;</td></tr>
+				<tr><td><b style="color:#000; font-weight:bold;"><span style="color:#bababa; font-family:'Dotum'; font-size:12px;">ㆍ</span>신고서 기본값 정보</b></td></tr>
+				<tr>
+					<td width="700">
+						<table width="700" height="112" cellspacing="0" cellpadding="0">
+							<tbody>
+							<tr>
+								<td align="center">
+									<table align="left" border="0" cellspacing="0" cellpadding="0" height="120" style="border: 1px solid #15a4fa; border-radius:5px; width:100%;">
+										<thead>
+										<tr>
+											<td width="20%" align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:25px;">
+												<b>항목명</b>
+											</td>
+											<td width="30%" align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:25px;">
+												<b>항목값</b>
+											</td>
+											<td width="20%" align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:25px;">
+												<b>항목명</b>
+											</td>
+											<td width="30%" align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:25px;">
+												<b>항목값</b>
+											</td>
+										</tr>
+										</thead>
+										<tbody>
+										<tr>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												세관코드
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${CUSTOMORGANIZATIONID}
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												과코드
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${CUSTOMDEPARTMENTID}
+											</td>
+										</tr>
+										<tr>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												적재항
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${LODINGLOCATIONID}
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												물품소재지 우편번호
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${GOODSLOCATIONID1}
+											</td>
+										</tr>
+										<tr>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												인도조건
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${DELIVERYTERMSCODE}
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												결재방법코드
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${PAYMENTTERMSTYPECODE}
+											</td>
+										</tr>
+										<tr>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												수출자구분
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${EXPORTERCLASSCODE}
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												환급신청인
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${DRAWBACKROLE}
+											</td>
+										</tr>
+										<tr>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												검사방법선택
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${INSPECTIONCODE}
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												주운송수단
+											</td>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${TRANSPORTMEANSCODE}
+											</td>
+										</tr>
+										<tr>
+											<td align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												물품소재지
+											</td>
+											<td colspan="3" align="center" style="border: 1px solid #15a4fa; font-family:'Dotum'; padding-top:1px; font-size:12px; line-height:20px;">
+												${GOODSLOCATIONNAME}
+											</td>
+										</tr>
+										</tbody>
+									</table>
+								</td>
+							</tr>
+							</tbody>
+						</table>
+					</td>
+				</tr>
+				</tbody>
+			</table>
+		</td>
+		<td width="25" bgcolor="#f2f2f2">&nbsp;</td>
+	</tr>
+	<tr width="800" height="30">
+		<td width="25" height="30" bgcolor="#f2f2f2">&nbsp;</td>
+		<td width="750" height="30" bgcolor="#ffffff">&nbsp;</td>
+		<td width="25" height="30" bgcolor="#f2f2f2">&nbsp;</td>
+	</tr>
+	<tr width="800" height="35">
+		<td width="25" height="35" bgcolor="#f2f2f2">&nbsp;</td>
+		<td align="center" width="750" bgcolor="ffffff" height="35">
+			<table border="0" cellspacing="0" bgcolor="#15a4fa" cellpadding="0" height="35">
+				<tbody>
+				<tr>
+					<td width="183" height="35" align="center" bgcolor="#15a4fa"><a href="${SERVER_URL}" target="_blank" style="color:#ffffff; line-height:0; font-weight:bold; text-decoration:none; font-size:12px; border-left: 28px solid #15a4fa; border-right: 28px solid #15a4fa; border-top:10px solid #15a4fa; border-bottom:10px solid #15a4fa;" bgcolor="#15a4fa">goGLOBAL 바로가기</a></td>
+				</tr>
+				</tbody>
+			</table>
+		</td>
+		<td width="25" height="30" bgcolor="#f2f2f2">&nbsp;</td>
+	</tr>
+
+	<tr>
+		<td colspan="3" valign="top" height="43" bgcolor="f2f2f2" style="font-size:0; line-height:0;"><img src="${SERVER_URL}/images/mail/box_bottom.gif" style="display: block; border: 0; font-size:0; line-height:0;" bgcolor="#ffffff" height="43"/></td>
+	</tr>
+	<!--Footer-->
+	<tr>
+		<td colspan="3" bgcolor="#f2f2f2" style="color:#555555; text-align:center; padding:14px 0 11px; font-family:'Dotum'; font-size:12px;">※ 이 메일은 발신전용 메일이므로 회신이 되지 않습니다.</td>
+	</tr>
+	<tr>
+		<td colspan="3" width="800" height="9" valign="bottom" bgcolor="#f2f2f2" style="font-size:0; line-height:0;"><img src="${SERVER_URL}/images/mail/footer_line.gif" style="display: block; border: 0; line-height:0; font-size:0;" height="9"/></td>
+	</tr>
+	<tr bgcolor="#f2f2f2" heihgt="41">
+		<td width="25" height="41" bgcolor="#f2f2f2">&nbsp;</td>
+		<td align="center" bgcolor="#f2f2f2" style="color:#969697; line-height:20px;">
+			<strong style="font-weight:bold;">한국무역정보통신(KTNET)</strong><br/>
+			서울 : 135-729 서울 강남구 영동대로 511 트레이드타워 4층 <span style="color:#d7d7d7">/</span> 판교 : 436-400 경기도 성남시 분당구 판교로 338한국전자무역센터
+		</td>
+		<td width="25" bgcolor="#f2f2f2" height="57">&nbsp;</td>
+	</tr>
+	<tr bgcolor="#f2f2f2" height="31">
+		<td width="25" bgcolor="#f2f2f2">&nbsp;</td>
+		<td align="center" valign="top">
+			<span style="color:#bcbcbd;">Copyright 2016KTNET All rights reserved.</span>
+		</td>
+		<td width="25" bgcolor="#f2f2f2">&nbsp;</td>
+	</tr>
+	<!--//Footer-->
+	</tbody>
+</table>
+</body>
+</html>

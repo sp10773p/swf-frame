@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="acc">
+    <select	id="selectCmmIpAccessList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.USER_ID) RNUM, A.*
+        FROM (
+                SELECT USER_ID
+                        , (SELECT USER_NM FROM CMM_USER WHERE USER_ID = A.USER_ID) AS USER_NM
+                        , IP
+                        , AUTH_YN
+                        , REG_ID
+                        , TO_CHAR(REG_DTM , 'YYYY-MM-DD') AS REG_DTM
+                        , MOD_ID
+                        , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+                FROM  CMM_IP_ACCESS A
+                WHERE  1=1
+                <if test="P_USER_ID != null and P_USER_ID != ''">
+                    AND USER_ID  LIKE '%'||#{P_USER_ID}||'%'
+                </if>
+                <if test="P_AUTH_YN != null and P_AUTH_YN != ''">
+                    AND AUTH_YN  = #{P_AUTH_YN}
+                </if>
+        ) A
+        <if test="P_USER_NM != null and P_USER_NM != ''">
+            WHERE USER_NM  LIKE '%'||#{P_USER_NM}||'%'
+        </if>
+        ORDER BY A.USER_ID
+    </select>
+
+    <select	id="selectCmmIpAccessCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM CMM_IP_ACCESS
+         WHERE USER_ID = #{USER_ID}
+           AND IP = #{ORG_IP}
+    </select>
+
+    <insert id="insertCmmIpAccess" parameterType="map">
+        INSERT INTO CMM_IP_ACCESS(
+            USER_ID
+            , IP
+            , AUTH_YN
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES(
+            #{USER_ID}
+            , REPLACE(#{IP1}||DECODE(#{IP2}, NULL, '', '.')||#{IP2}||DECODE(#{IP3}, NULL, '', '.')||#{IP3}||DECODE(#{IP4}, NULL, '', '.')||#{IP4}||DECODE(#{IP5}, NULL, '', '-')||#{IP5}, ' ', '')
+            , #{AUTH_YN}
+            , #{SSuserId}
+            , SYSDATE
+            , #{SSuserId}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateCmmIpAccess" parameterType="map">
+        UPDATE CMM_IP_ACCESS
+        SET IP         = REPLACE(#{IP1}||DECODE(#{IP2}, NULL, '', '.')||#{IP2}||DECODE(#{IP3}, NULL, '', '.')||#{IP3}||DECODE(#{IP4}, NULL, '', '.')||#{IP4}||DECODE(#{IP5}, NULL, '', '-')||#{IP5}, ' ', '')
+            , AUTH_YN = #{AUTH_YN}
+            , MOD_ID = #{SSuserId}
+            , MOD_DTM = SYSDATE
+        WHERE USER_ID = #{USER_ID}
+          AND IP = #{ORG_IP}
+    </update>
+
+    <delete id="deleteCmmIpAccess" parameterType="map">
+        DELETE FROM CMM_IP_ACCESS
+          WHERE USER_ID = #{USER_ID}
+            AND IP = #{IP}
+    </delete>
+    <select	id="selectAdminUsrPopList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.USER_ID) RNUM
+                , A.USER_ID                    /* 사용자ID */
+                , A.USER_NM                    /* 사용자명 */
+                , A.BIZ_NO                     /* 사업자등록번호 */
+                , A.USER_PW                    /* 패스워드 */
+                , A.AUTH_CD                    /* 권한코드 */
+                , (SELECT AUTH_NM FROM CMM_AUTH WHERE AUTH_CD = A.AUTH_CD) AS AUTH_NM
+                , A.TEL_NO                     /* 전화번호 */
+                , A.HP_NO                      /* 핸드폰번호 */
+                , A.EMAIL                      /* 이메일 */
+        FROM  CMM_USER A
+        WHERE  1=1
+        <if test='IS_ADMIN == "T"'>
+            AND A.USER_DIV IN ('A', 'C')
+        </if>
+        <if test='IS_ADMIN != "T"'>
+            AND A.USER_DIV NOT IN ('A', 'C')
+        </if>
+        <if test="SEARCH_TXT1 != null and SEARCH_TXT1 != ''">
+            <if test="SEARCH_COL1 == 'USER_ID'">
+                AND USER_ID LIKE '%'||#{SEARCH_TXT1}||'%'
+            </if>
+            <if test="SEARCH_COL1 == 'USER_NM'">
+                AND USER_NM LIKE '%'||#{SEARCH_TXT1}||'%'
+            </if>
+            <if test="SEARCH_COL1 == 'BIZ_NO'">
+                AND BIZ_NO LIKE '%'||#{SEARCH_TXT1}||'%'
+            </if>
+        </if>
+        <!--<if test="SEARCH_TXT2 != null and SEARCH_TXT2 != ''">
+            AND ${SEARCH_COL2} LIKE '%'||#{SEARCH_TXT2}||'%'
+        </if>-->
+        <if test="S_USE_CHK != null and S_USE_CHK != ''">
+            AND USE_CHK = #{S_USE_CHK}
+        </if>
+        <if test="USE_CHK != null and USE_CHK != ''">
+            AND USE_CHK = #{USE_CHK}
+        </if>
+        <if test="S_USER_DIV != null and S_USER_DIV != ''">
+            AND USER_DIV IN (${S_USER_DIV})
+        </if>
+        ORDER BY A.USER_ID, A.AUTH_CD
+    </select>
+
+</mapper>

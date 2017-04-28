@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="ntc">
+    <select	id="selectCmmNoticeList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.REG_DTM DESC) RNUM
+                , SN
+                , TITLE
+                , CONTENTS
+                , NVL(IS_POPUP, 'N') AS IS_POPUP
+                , POPUP_LAST_DT
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM
+                , ATCH_FILE_ID
+                , REFERENCE_FILE_DIV
+         FROM  CMM_NOTICE A
+        WHERE  1=1
+            <if test="F_MOD_DTM != null and F_MOD_DTM != '' and T_MOD_DTM != null and T_MOD_DTM != ''">
+                AND MOD_DTM BETWEEN TO_DATE(#{F_MOD_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_MOD_DTM}||'235959', 'YYYYMMDDHH24MISS')
+            </if>
+            <if test="P_TITLE != null and P_TITLE != ''">
+                AND TITLE LIKE '%'||#{P_TITLE}||'%'
+            </if>
+            <if test="SN != null and SN != ''">
+                AND SN = #{SN}
+            </if>
+        ORDER 	BY A.REG_DTM DESC
+    </select>
+
+    <select	id="selectCmmNotice" parameterType="map" resultType="map">
+        SELECT SN
+                , TITLE
+                , CONTENTS
+                , NVL(IS_POPUP, 'N') AS IS_POPUP
+                , POPUP_LAST_DT
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM
+                , ATCH_FILE_ID
+         FROM  CMM_NOTICE A
+        WHERE  SN = #{SN}
+    </select>
+
+    <insert id="insertCmmNotice" parameterType="map">
+        <selectKey resultType="int" keyProperty="SN" order="BEFORE">
+            SELECT	NVL(MAX(SN)+1,1) AS SN FROM CMM_NOTICE
+        </selectKey>
+        INSERT INTO CMM_NOTICE(
+            SN
+            , TITLE
+            , CONTENTS
+            , IS_POPUP
+            , POPUP_LAST_DT
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES(
+            #{SN}
+            , #{TITLE}
+            , #{CONTENTS}
+            , #{IS_POPUP}
+            , #{POPUP_LAST_DT}
+            , #{SSuserId}
+            , SYSDATE
+            , #{SSuserId}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateCmmNotice" parameterType="map">
+        UPDATE CMM_NOTICE
+           SET TITLE = #{TITLE}
+                , CONTENTS = #{CONTENTS}
+                , IS_POPUP = #{IS_POPUP}
+                , POPUP_LAST_DT = #{POPUP_LAST_DT}
+                , MOD_ID = #{SSuserId}
+                , MOD_DTM = SYSDATE
+          WHERE SN = #{SN}
+    </update>
+
+    <update id="updateCmmFileAttchId" parameterType="map">
+        UPDATE CMM_NOTICE
+           SET ATCH_FILE_ID = #{ATCH_FILE_ID}
+                , MOD_ID = #{MOD_ID}
+                , MOD_DTM = SYSDATE
+          WHERE SN = #{SN}
+    </update>
+
+    <delete id="deleteCmmNotice" parameterType="map">
+        DELETE FROM CMM_NOTICE
+         WHERE SN = #{SN}
+    </delete>
+
+
+    <delete id="deleteCmmFileMst" parameterType="map">
+        DELETE FROM CMM_FILE_MST
+        WHERE ATCH_FILE_ID = (SELECT ATCH_FILE_ID FROM CMM_NOTICE WHERE SN = #{SN})
+    </delete>
+
+    <delete id="deleteCmmFileDtl" parameterType="map">
+        DELETE FROM CMM_FILE_DTL
+        WHERE ATCH_FILE_ID = (SELECT ATCH_FILE_ID FROM CMM_NOTICE WHERE SN = #{SN})
+    </delete>
+
+    <insert id="insertCmmNews" parameterType="map">
+        INSERT INTO CMM_NEWS(
+            SN, SUBJECT, CONTENTS, IS_OPEN, REG_DTM
+        )VALUES(
+            (SELECT NVL(MAX(SN), 0) + 1 FROM CMM_NEWS),
+            #{SUBJECT},
+            #{CONTENTS:CLOB},
+            #{IS_OPEN},
+            SYSDATE
+        )
+    </insert>
+
+    <update id="updateCmmNews" parameterType="map">
+        UPDATE CMM_NEWS
+            SET SUBJECT = #{SUBJECT},
+                CONTENTS = #{CONTENTS:CLOB},
+                IS_OPEN = #{IS_OPEN}
+          WHERE SN = #{SN}
+    </update>
+
+    <delete id="deleteCmmNews" parameterType="map">
+        DELETE FROM CMM_NEWS
+          WHERE SN = #{SN}
+    </delete>
+
+    <resultMap id="cmmNewsResultMap" type="map" >
+        <result property="SN"       column="SN"/>
+        <result property="SUBJECT"  column="SUBJECT"/>
+        <result property="CONTENTS" column="CONTENTS" javaType="java.lang.String" jdbcType="CLOB" />
+        <result property="IS_OPEN"  column="IS_OPEN"/>
+        <result property="REG_DTM"  column="REG_DTM"/>
+    </resultMap>
+
+    <select	id="selectCmmNewsList" parameterType="map" resultMap="cmmNewsResultMap">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.REG_DTM DESC) RNUM
+                , SN
+                , SUBJECT
+                , CONTENTS
+                , IS_OPEN
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+        FROM  CMM_NEWS A
+        WHERE  1=1
+        <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+            AND REG_DTM BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+        </if>
+        <if test="P_SUBJECT != null and P_SUBJECT != ''">
+            AND SUBJECT LIKE '%'||#{P_SUBJECT}||'%'
+        </if>
+        <if test="SN != null and SN != ''">
+            AND SN = #{SN}
+        </if>
+        <if test="IS_OPEN != null and IS_OPEN != ''">
+            AND IS_OPEN = #{IS_OPEN}
+        </if>
+        ORDER 	BY A.REG_DTM DESC
+    </select>
+</mapper>

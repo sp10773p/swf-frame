@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="euc-kr" ?>
+<UbiServer version="2.5.0601.0000">
+	<Environment OsCharset="KSC5601" 
+				 BaseCharset="US7ASCII" 
+				 LoadType="nonCache"
+				 PropertyFile="./WEB-INF/lib/ubigateway.property"
+				 LicenseFile="/user/web/markany/ubireport/license/License.xml" />
+
+	<!--
+	* MarkAny
+	PageType
+	  - 1 : 여러 페이지를 하나의 Barcode로 생성
+	  - 2 : 페이지마다 Barcode 생성
+	ServerIp, ServerPort : 서버모듈 설치 IP와 포트 번호
+	DataFileName : 프린터 데이터 정보 파일
+	UploadDir : upload 파일 디렉토리
+	TargetFileDir : upload한 파일에 대한 인증 파일 보관 디렉토리
+	CertFilePath : 보안 인증서 경로
+	PriKeyPath : Key 파일 경로
+	PriKeyPasswd : Key 파일 비밀번호
+	SignCompany
+	  - INIT : 인증서가 있는 경우
+	  - NONE : 인증서가 없는 경우
+	ConfigData : 위변조 방지 설정 문자열
+	n2DCellCount : Barcode의 너비를 cell 단위로 지정
+	n2DCellRow : Barcode의 높이를 cell 단위로 지정
+	n2DCellUnit : 
+	BarcodePosition : Barcode를 출력할 위치(mm단위)
+	CdPosition : 복사 방지 코드를 출력할 위치(mm단위)
+	DllName : MarkAny Page Safer 모듈 dll 파일명
+	PrinterOption : 프린터 지원
+	  - 0 : 등록 프린터, 공유 프린터 지원 안 함
+	  - 1 : 등록 프린터, 공유 프린터 지원
+	  - 2 : 모든 프린터, 공유 프린터 지원 안 함
+	  - 3 : 모든 프린터, 공유 프린터 지원
+	GenBarcodeType : Barcode 생성 Type
+	  - 0 : File Path
+	  - 1 : Buffer
+	-->
+
+	<MarkAny PageType="2"
+			 ServerIp="203.229.154.6"
+			 ServerPort="18350"
+			 DataFileName="MaPrintInfoUB.dat"
+			 UploadDir="/user/web/markany/ubireport/upload/"
+			 TargetFileDir="/user/web/markany/ubireport/result/"
+			 CertFilePath="C:/MarkAny/cert/SignCert.der"
+			 PriKeyPath="C:/MarkAny/cert/signPri.key"
+			 PriKeyPasswd="hjyUYSN9QicGVo/tXWpUBW0wMQ=="
+			 SignCompany="INIT"
+			 ConfigData="528^264^UbiReport^사본^1^280^70^0^0^0^"
+			 n2DCellCount="16"
+			 n2DCellRow="1"
+			 n2DCellUnit="250"
+			 BarcodePosition="35^275"
+			 CdPosition="10^275"
+			 DllName="MAePageSAFERUbi.dll"
+			 PrinterOption="1"
+			 GenBarcodeType="1"
+	/>
+
+	<DirectConnection ID="DEMO"
+					DBVendor=""
+					Driver=""
+					DBUrl=""
+					Charset=""
+					UserID=""
+					Passsword="" ></DirectConnection> 
+
+	<Resource ID="DEMO"
+			  FileURL="http://markany.ubireport.com/ubireport/"
+			  ServletRootURL=""
+			  ReportFormServlet=""
+			  ResultServlet=""
+			  JrfFileDir="http://markany.ubireport.com/ubireport/work/"
+			  IsUnicode="false"
+			  IsDeflater="false"
+			  CommLang=""
+			  RowDim="^n"
+			  ColDim="^t" > 
+		<DataSource ReportDBID="DEMO" DatasourceName="REAL" ConnectionType="direct" />
+		<DataSource ReportDBID="DEMO2" DatasourceName="REAL2" ConnectionType="direct" />
+	</Resource>
+
+	<ViewerOption ID="DEFALT"
+			ExecType="TYPE4" Scale="100" ProgressBar="true" Toolbar="true"
+			Margin="true" PopupMenu="false" Params="true" ImageCache="true"
+			FontElement="" InvisibleToolbar="" CopyFonts="" Background=""
+			BackgroundToolbar="" ExportDS="" ExportFilename="" InvisibleExporttypes=""
+			InitPage="" /> 
+
+</UbiServer>

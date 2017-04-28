@@ -1,0 +1,1051 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="pcr">
+	<sql id="docStat">
+		'A1','임시저장','A2','작성완료','C1','전송중','D1','전송완료','G1','전송실패','P4_N','발급완료','P4_M','변경완료',
+		'95','취소완료','E2','오류통보'  
+	</sql>
+    <select	id="selectPcrLicList" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID                        /*전자문서번호*/
+                , A.REQ_TYPE
+				, DECODE(A.REQ_TYPE,'N','신규','M','변경','C','취소') AS REQ_TYPE_NM   /*신청구분(N:신규,M:변경,C:취소)*/
+				, A.PCR_LIC_ID                	  /*구매확인서번호*/
+				, A.BEF_PCR_LIC_ID                /*변경전 구매확인서번호*/
+				, A.APP_ORG_NM                    /*신청인 상호*/
+				, A.APP_ORG_CEO_NM                /*신청인 성명 */
+				, A.APP_ORG_ID                    /*신청인 사업자등록번호*/
+				, A.APP_ADDR1                     /*신청인 주소1*/
+				, A.APP_ADDR2                     /*신청인 주소2*/
+				, A.APP_ADDR3                     /*신청인 주소3*/
+				, A.SUP_ORG_NM                    /*공급자 상호*/
+				, A.SUP_ORG_CEO_NM                /*공급자 성명*/
+				, A.SUP_ORG_ID                    /*공급자 사업자등록번호*/
+				, A.SUP_ADDR1                     /*공급자 주소1*/
+				, A.SUP_ADDR2                     /*공급자 주소2*/
+				, A.SUP_ADDR3                     /*공급자 주소3*/
+				, A.DOC_STAT                      /*상태*/
+				, DECODE(A.DOC_STAT,<include refid="docStat"/>) AS DOC_STAT_NM   /*상태명*/
+				, A.CONF_ORG_ID                   /*확인기관코드*/
+				, A.CONF_ORG_NM                   /*확인기관명*/
+				, A.CONF_BR_ORG_NM                /*확인지점명*/
+				, A.CONF_DT						  /*확인일자*/   
+				, A.APP_SIGN_ORG_NM               /*신청인 전자서명 상호*/
+				, A.APP_SIGN_ORG_CEO_NM           /*신청인 전자서명 대표명 */
+				, A.APP_SIGN_VALUE                /*신청인 전자서명*/
+				, A.TOT_QTY						  /*총수량*/
+				, A.QTY_UNIT                      /*수량 단위*/
+				, A.TOT_AMT						  /*총금액*/
+				, A.CURRENCY                      /*통화단위*/
+				, A.TOT_USD_AMT 				  /*총금액(USD금액부기)*/
+				, A.TOT_ALLOW_CHARGE_INDI         /*총 할인/할증/변동내역*/
+				, A.TOT_ALLOW_CHARGE_AMT 		  /*총 할인/할증/변동 금액*/
+				, A.TOT_ALLOW_CHARGE_USD_AMT	  /*총 할인/할증/변동 금액(USD)*/
+				, A.REG_ID                        /*등록자*/
+				, TO_CHAR(REG_DTM, 'YYYYMMDD') AS REG_DTM   /*등록일자*/
+				, A.MOD_ID                        /*수정자*/
+				, TO_CHAR(MOD_DTM, 'YYYYMMDD') AS MOD_DTM   /*수정일자*/
+         FROM  PCR_LIC_INFO A
+        WHERE  A.APP_ORG_ID = #{SSbizNo}
+          AND  A.REG_ID = #{SSuserId}
+       <if test="F_DTM != null and F_DTM != '' and T_DTM != null and T_DTM != ''">
+       	   <if test="SEARCH_DTM == 'REG_DTM'">
+       	   		AND A.REG_DTM BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       	   </if>	
+       	   <if test="SEARCH_DTM == 'MOD_DTM'">
+       	   		AND A.MOD_DTM BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       	   </if>
+       </if> 
+       <if test="DOC_STAT != null and DOC_STAT != ''">
+           AND A.DOC_STAT = (#{DOC_STAT})
+       </if>
+       <if test='ISSUE_YN != null and ISSUE_YN == "Y"'>
+           AND A.DOC_STAT IN ('P4_N', 'P4_M')
+           <if test="F_CONF_DT != null and F_CONF_DT != '' and T_CONF_DT != null and T_CONF_DT != ''">
+           	   AND A.CONF_DT BETWEEN TO_DATE(#{F_CONF_DT}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_CONF_DT}||'235959', 'YYYYMMDDHH24MISS')			
+           </if>
+       </if>
+       <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+       	   <if test="SEARCH_COL == 'SUP_ORG_NM'">
+           		AND A.SUP_ORG_NM LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+		   <if test="SEARCH_COL == 'SUP_ORG_ID'">
+           		AND A.SUP_ORG_ID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'DOC_ID'">
+           		AND A.DOC_ID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'BEF_PCR_LIC_ID'">
+           		AND A.BEF_PCR_LIC_ID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>	
+       </if>
+    </select>
+	
+    <select	id="selectPcrLicListAll" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID                        /*전자문서번호*/
+				, DECODE(A.REQ_TYPE,'N','신규','M','변경','C','취소') AS REQ_TYPE   /*신청구분(N:신규,M:변경,C:취소)*/
+				, A.BEF_PCR_LIC_ID                /*변경전 구매확인서번호*/
+				, A.APP_ORG_NM                    /*신청인 상호*/
+				, A.APP_ORG_CEO_NM                /*신청인 성명 */
+				, A.APP_ORG_ID                    /*신청인 사업자등록번호*/
+				, A.APP_ADDR1                     /*신청인 주소1*/
+				, A.APP_ADDR2                     /*신청인 주소2*/
+				, A.APP_ADDR3                     /*신청인 주소3*/
+				, A.SUP_ORG_NM                    /*공급자 상호*/
+				, A.SUP_ORG_CEO_NM                /*공급자 성명*/
+				, A.SUP_ORG_ID                    /*공급자 사업자등록번호*/
+				, A.SUP_ADDR1                     /*공급자 주소1*/
+				, A.SUP_ADDR2                     /*공급자 주소2*/
+				, A.SUP_ADDR3                     /*공급자 주소3*/
+				, A.SUP_EMAIL                     /*공급자 이메일주소*/
+				, DECODE(A.DOC_STAT,<include refid="docStat"/>) AS DOC_STAT   /*상태*/
+				, A.CONF_ORG_ID                   /*확인기관코드*/
+				, A.CONF_ORG_NM                   /*확인기관명*/
+				, A.CONF_BR_ORG_NM                /*확인지점명*/
+				, A.CONF_DT                		  /*확인일자*/
+				, A.APP_SIGN_ORG_NM               /*신청인 전자서명 상호*/
+				, A.APP_SIGN_ORG_CEO_NM           /*신청인 전자서명 대표명 */
+				, A.APP_SIGN_VALUE                /*신청인 전자서명*/
+				, TO_CHAR(A.TOT_QTY, 'FM999,999,999,999,999,999') AS TOT_QTY	/*총수량*/
+				, A.QTY_UNIT                      /*수량 단위*/
+				, TO_CHAR(A.TOT_AMT, 'FM999,999,999,999,999,999') AS TOT_AMT	/*총금액*/
+				, A.CURRENCY                      /*통화단위*/
+				, TO_CHAR(A.TOT_USD_AMT, 'FM999,999,999,999,999,999') AS TOT_USD_AMT	/*총금액(USD금액부기)*/
+				, A.TOT_ALLOW_CHARGE_INDI        /*총 할인/할증/변동내역*/
+				, TO_CHAR(A.TOT_ALLOW_CHARGE_AMT, 'FM999,999,999,999,999,999') AS TOT_ALLOW_CHARGE_AMT	/*총 할인/할증/변동 금액*/
+				, TO_CHAR(A.TOT_ALLOW_CHARGE_USD_AMT, 'FM999,999,999,999,999,999') AS TOT_ALLOW_CHARGE_USD_AMT	/*총 할인/할증/변동 금액(USD)*/
+				, A.REG_ID                        /*등록자*/
+				, TO_CHAR(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM   /*등록일시*/
+				, A.MOD_ID                        /*수정자*/
+				, TO_CHAR(MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM   /*수정일시*/
+         FROM  PCR_LIC_INFO A
+        WHERE  A.APP_ORG_ID = #{SSbizNo}
+          AND  A.REG_ID = #{SSuserId}
+ 	   <if test="F_DTM != null and F_DTM != '' and T_DTM != null and T_DTM != ''">
+       	   <if test="SEARCH_DTM == 'REG_DTM'">
+       	   		AND A.REG_DTM BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       	   </if>	
+       	   <if test="SEARCH_DTM == 'MOD_DTM'">
+       	   		AND A.MOD_DTM BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       	   </if>
+       </if> 
+       <if test="DOC_STAT != null and DOC_STAT != ''">
+           AND A.DOC_STAT IN #{DOC_STAT}
+       </if>
+       <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+       	   <if test="SEARCH_COL == 'SUP_ORG_NM'">
+           		AND A.SUP_ORG_NM LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+		   <if test="SEARCH_COL == 'SUP_ORG_ID'">
+           		AND A.SUP_ORG_ID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'DOC_ID'">
+           		AND A.DOC_ID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'BEF_PCR_LIC_ID'">
+           		AND A.BEF_PCR_LIC_ID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>	
+       </if>
+    </select>
+    
+    <select	id="selectPcrLic" parameterType="map" resultType="map">
+        SELECT    DECODE(A.DOC_STAT, 'A1', A.DOC_ID, 'A2', A.DOC_ID, '임시저장 또는 저장시 자동생성') AS DOC_ID    /*전자문서번호*/
+                , A.DOC_ID AS BEF_DOC_ID          /*전자문서번호*/  
+                , A.REQ_TYPE                      /*신청구분(N:신규,M:변경,C:취소)*/
+				, DECODE(A.REQ_TYPE,'N','신규','M','변경','C','취소') AS REQ_TYPE_NM   
+				, A.PCR_LIC_ID                	  /*구매확인서번호*/
+				, A.BEF_PCR_LIC_ID                /*변경전 구매확인서번호*/
+				, A.APP_ORG_NM                    /*신청인 상호*/
+				, A.APP_ORG_CEO_NM                /*신청인 성명 */
+				, A.APP_ORG_ID                    /*신청인 사업자등록번호*/
+				, A.APP_ADDR1                     /*신청인 주소1*/
+				, A.APP_ADDR2                     /*신청인 주소2*/
+				, A.APP_ADDR3                     /*신청인 주소3*/
+				, A.SUP_ORG_NM                    /*공급자 상호*/
+				, A.SUP_ORG_CEO_NM                /*공급자 성명*/
+				, A.SUP_ORG_ID                    /*공급자 사업자등록번호*/
+				, A.SUP_ADDR1                     /*공급자 주소1*/
+				, A.SUP_ADDR2                     /*공급자 주소2*/
+				, A.SUP_ADDR3                     /*공급자 주소3*/
+				, A.SUP_EMAIL                     /*공급자 이메일주소*/
+				, A.MTRL_USAGE_CD                 /*공급물품 용도명세코드*/
+				, A.MTRL_USAGE_DESC               /*공급물품 용도명세*/
+				, CASE WHEN A.MTRL_USAGE_CD = 'ZZZ' THEN A.MTRL_USAGE_DESC 
+				       ELSE (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'MTRL_USAGE_CD' AND CODE = A.MTRL_USAGE_CD)
+				        END AS MTRL_USAGE_NM 
+				, A.DOC_STAT                      /*상태코드*/
+				, DECODE(A.DOC_STAT,<include refid="docStat"/>) AS DOC_STAT_NM   /*상태*/
+				, A.CONF_ORG_ID                   /*확인기관코드*/
+				, A.CONF_ORG_NM                   /*확인기관명*/
+				, A.CONF_BR_ORG_NM                /*확인지점명*/
+				, A.APP_SIGN_ORG_NM               /*신청인 전자서명 상호*/
+				, A.APP_SIGN_ORG_CEO_NM           /*신청인 전자서명 대표명 */
+				, A.APP_SIGN_VALUE                /*신청인 전자서명*/
+				, TO_CHAR(A.TOT_QTY, 'FM999,999,999,999,999,999') AS TOT_QTY	/*총수량*/
+				, A.QTY_UNIT                      /*수량 단위*/
+				, TO_CHAR(A.TOT_AMT, 'FM999,999,999,999,999,999') AS TOT_AMT	/*총금액*/
+				, A.CURRENCY                      /*통화단위*/
+				, TO_CHAR(A.TOT_USD_AMT, 'FM999,999,999,999,999,999') AS TOT_USD_AMT	/*총금액(USD금액부기)*/
+				, A.TOT_ALLOW_CHARGE_INDI        /*총 할인/할증/변동내역*/
+				, DECODE(A.TOT_ALLOW_CHARGE_INDI,'Q','Minus(Amount)','S','Plus(Amount)','U','Plus/Minus(Amount)','') AS TOT_ALLOW_CHARGE_INDI_NM 
+				, TO_CHAR(A.TOT_ALLOW_CHARGE_AMT, 'FM999,999,999,999,999,999') AS TOT_ALLOW_CHARGE_AMT	/*총 할인/할증/변동 금액*/
+				, TO_CHAR(A.TOT_ALLOW_CHARGE_USD_AMT, 'FM999,999,999,999,999,999') AS TOT_ALLOW_CHARGE_USD_AMT	/*총 할인/할증/변동 금액(USD)*/
+				, A.REG_ID                        /*등록자*/
+				, TO_CHAR(REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM   /*등록일시*/
+				, A.MOD_ID                        /*수정자*/
+				, TO_CHAR(MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM   /*수정일시*/
+         FROM  PCR_LIC_INFO A
+        WHERE  A.DOC_ID = #{DOC_ID}
+    </select>
+  
+    <select	id="selectPcrDocList" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID        /*전자문서번호*/ 
+				, B.REF_DOC_ID	  /*근거서류번호*/
+				, B.SN            /*순서*/ 
+				, B.HS_ID         /*HS부호*/ 
+				, B.ITEM_NM       /*품목*/ 
+				, B.ITEM_DEF      /*규격*/ 
+				, B.ITEM_AMT      /*금액*/ 
+				, B.CURRENCY      /*통화단위*/ 
+				, B.SHIP_DT  	  /*선적기일*/ 
+				, B.REG_ID        /*등록자*/ 
+				, B.REG_DTM       /*등록일시*/ 
+				, B.MOD_ID        /*수정자*/ 
+				, B.MOD_DTM       /*수정일시*/ 
+         FROM  PCR_LIC_INFO A, PCR_DOC_INFO B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+    
+    <select	id="selectPcrDocCnt" parameterType="map" resultType="int">
+        SELECT  COUNT(1) AS CNT
+         FROM  PCR_LIC_INFO A, PCR_DOC_INFO B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+    
+    <select	id="selectPcrItemList" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID           /*전자문서번호*/
+				, B.SN               /*순서*/
+				, B.HS_ID            /*HS부호*/
+				, B.ITEM_NM          /*품목*/
+				, B.ITEM_DEF         /*규격*/
+				, TO_CHAR(TO_DATE(B.PCR_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS PCR_DT	/*구매일자*/ 
+				, B.BASE_PRICE_AMT   /*단가*/
+				, B.ITEM_QTY         /*수량*/
+				, B.ITEM_QTY_UNIT    /*수량코드*/
+				, B.ITEM_AMT		 /*금액*/
+				, B.ITEM_CURRENCY    /*통화단위*/
+				, B.REG_ID           /*등록자*/
+				, B.REG_DTM          /*등록일시*/
+				, B.MOD_ID           /*수정자*/
+				, B.MOD_DTM          /*수정일시*/
+         FROM  PCR_LIC_INFO A, PCR_ITEM B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+    
+    <select	id="selectPcrItemCnt" parameterType="map" resultType="int">
+        SELECT  COUNT(1) AS CNT
+         FROM  PCR_LIC_INFO A, PCR_ITEM B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+    
+    <select	id="selectPcrTaxInvoiceList" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID  		/*전자문서번호*/
+				, B.TAX_INVOICE_ID	/*세금계산서 번호*/  
+				, B.SN              /*순서*/
+				, B.ITEM_NM         /*품명*/
+				, B.ITEM_DEF        /*규격*/
+				, B.CHARGE_AMT      /*공급가액*/
+				, B.TAX_AMT			/*세액*/
+				, B.ITEM_QTY        /*수량*/
+				, B.ITEM_QTY_UNIT	/*수량코드*/
+				, B.ISSUE_DT		/*작성일자*/
+				, B.CHARGE_DT		/*공급일자*/
+				, B.REG_ID          /*등록자*/
+				, B.REG_DTM         /*등록일시*/
+				, B.MOD_ID          /*수정자*/
+				, B.MOD_DTM         /*수정일시*/
+         FROM  PCR_LIC_INFO A, PCR_TAX_INVOICE B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+    
+    <select	id="selectPcrTaxInvoiceCnt" parameterType="map" resultType="int">
+        SELECT  COUNT(1) AS CNT
+         FROM  PCR_LIC_INFO A, PCR_TAX_INVOICE B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+    
+    <select	id="selectPcrTaxInvoice" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID  		/*전자문서번호*/
+				, B.TAX_INVOICE_ID	/*세금계산서 번호*/  
+				, B.SN              /*순서*/
+				, B.ITEM_NM         /*품명*/
+				, B.ITEM_DEF        /*규격*/
+				, B.CHARGE_AMT      /*공급가액*/
+				, B.TAX_AMT  	    /*세액*/
+				, B.ITEM_QTY        /*수량*/
+				, B.ITEM_QTY_UNIT   /*수량코드*/ 
+				, TO_CHAR(TO_DATE(B.ISSUE_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS ISSUE_DT	/*작성일자*/
+				, TO_CHAR(TO_DATE(B.CHARGE_DT, 'YYYYMMDD'), 'YYYY-MM-DD') AS CHARGE_DT	/*공급일자*/
+				, B.REG_ID          /*등록자*/
+				, B.REG_DTM         /*등록일시*/
+				, B.MOD_ID          /*수정자*/
+				, B.MOD_DTM         /*수정일시*/
+         FROM  PCR_LIC_INFO A, PCR_TAX_INVOICE B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+		  AND  B.TAX_INVOICE_ID = #{TAX_INVOICE_ID}
+		  AND  B.SN = #{SN}
+    </select>
+    
+    <insert id="insertPcrLic" parameterType="map">
+        INSERT INTO PCR_LIC_INFO(
+             DOC_ID                       
+			,REQ_TYPE   					 
+			,BEF_PCR_LIC_ID               
+			,APP_ORG_NM                   
+			,APP_ORG_CEO_NM               
+			,APP_ORG_ID                   
+			,APP_ADDR1                    
+			,APP_ADDR2                    
+			,APP_ADDR3                    
+			,SUP_ORG_NM                   
+			,SUP_ORG_CEO_NM               
+			,SUP_ORG_ID                   
+			,SUP_ADDR1                    
+			,SUP_ADDR2                    
+			,SUP_ADDR3                    
+			,SUP_EMAIL    
+			,MTRL_USAGE_CD      
+			,MTRL_USAGE_DESC          
+			,DOC_STAT                     
+			,CONF_ORG_ID                  
+			,CONF_ORG_NM                  
+			,CONF_BR_ORG_NM               
+			,APP_SIGN_ORG_NM                  
+			,APP_SIGN_ORG_CEO_NM              
+			,APP_SIGN_VALUE 
+			,TOT_USD_AMT     
+			,TOT_ALLOW_CHARGE_INDI      
+			,TOT_ALLOW_CHARGE_AMT   
+			,TOT_ALLOW_CHARGE_USD_AMT    
+			,REG_ID                       
+			,REG_DTM
+			,MOD_ID                        
+			,MOD_DTM
+
+        )VALUES(
+             #{DOC_ID}
+			,#{REQ_TYPE}
+			,#{BEF_PCR_LIC_ID}
+			,#{APP_ORG_NM}
+			,#{APP_ORG_CEO_NM}
+			,#{APP_ORG_ID}
+			,#{APP_ADDR1}
+			,#{APP_ADDR2}
+			,#{APP_ADDR3}
+			,#{SUP_ORG_NM}
+			,#{SUP_ORG_CEO_NM}
+			,#{SUP_ORG_ID}
+			,#{SUP_ADDR1}
+			,#{SUP_ADDR2}
+			,#{SUP_ADDR3}
+			,#{SUP_EMAIL}
+			,#{MTRL_USAGE_CD}
+			,CASE WHEN #{MTRL_USAGE_CD} = 'ZZZ' THEN #{MTRL_USAGE_DESC} ELSE '' END
+			,#{DOC_STAT}
+			,#{CONF_ORG_ID}
+			,#{CONF_ORG_NM}
+			,#{CONF_BR_ORG_NM}
+			,#{APP_SIGN_ORG_NM}
+			,#{APP_SIGN_ORG_CEO_NM}
+			,#{APP_SIGN_VALUE}
+			,#{TOT_USD_AMT}     
+			,#{TOT_ALLOW_CHARGE_INDI}      
+			,#{TOT_ALLOW_CHARGE_AMT}   
+			,#{TOT_ALLOW_CHARGE_USD_AMT}  
+			,#{REG_ID}
+			,SYSDATE
+			,#{MOD_ID}
+			,SYSDATE
+        )
+    </insert>
+    
+    <update id="updatePcrLic" parameterType="map">
+        UPDATE PCR_LIC_INFO
+           SET
+				 REQ_TYPE   			  = #{REQ_TYPE}
+				,BEF_PCR_LIC_ID           = #{BEF_PCR_LIC_ID}
+				,APP_ORG_NM               = #{APP_ORG_NM}
+				,APP_ORG_CEO_NM           = #{APP_ORG_CEO_NM}
+				,APP_ORG_ID               = #{APP_ORG_ID}
+				,APP_ADDR1                = #{APP_ADDR1}
+				,APP_ADDR2                = #{APP_ADDR2}
+				,APP_ADDR3                = #{APP_ADDR3}
+				,SUP_ORG_NM               = #{SUP_ORG_NM}
+				,SUP_ORG_CEO_NM           = #{SUP_ORG_CEO_NM}
+				,SUP_ORG_ID               = #{SUP_ORG_ID}
+				,SUP_ADDR1                = #{SUP_ADDR1}
+				,SUP_ADDR2                = #{SUP_ADDR2}
+				,SUP_ADDR3                = #{SUP_ADDR3}
+				,SUP_EMAIL                = #{SUP_EMAIL}
+				,MTRL_USAGE_CD            = #{MTRL_USAGE_CD}
+				,MTRL_USAGE_DESC          = CASE WHEN MTRL_USAGE_CD = 'ZZZ' THEN #{MTRL_USAGE_DESC} ELSE '' END
+				,DOC_STAT                 = #{DOC_STAT}
+				,CONF_ORG_ID              = #{CONF_ORG_ID}
+				,CONF_ORG_NM              = #{CONF_ORG_NM}
+				,CONF_BR_ORG_NM           = #{CONF_BR_ORG_NM}
+				,APP_SIGN_ORG_NM          = #{APP_SIGN_ORG_NM}
+				,APP_SIGN_ORG_CEO_NM      = #{APP_SIGN_ORG_CEO_NM}
+				,APP_SIGN_VALUE           = #{APP_SIGN_VALUE}
+				,TOT_USD_AMT              = #{TOT_USD_AMT}
+				,TOT_ALLOW_CHARGE_INDI    = #{TOT_ALLOW_CHARGE_INDI}
+				,TOT_ALLOW_CHARGE_AMT     = #{TOT_ALLOW_CHARGE_AMT}
+				,TOT_ALLOW_CHARGE_USD_AMT = #{TOT_ALLOW_CHARGE_USD_AMT}
+				,MOD_ID                   = #{MOD_ID}
+				,MOD_DTM                  = SYSDATE
+        WHERE DOC_ID = #{DOC_ID}
+    </update>
+    
+    <update id="updatePcrLicStat" parameterType="map">
+        UPDATE PCR_LIC_INFO
+           SET
+				 DOC_STAT  = #{DOC_STAT}
+				,MOD_ID    = #{MOD_ID}
+				,MOD_DTM   = SYSDATE
+        WHERE DOC_ID = #{DOC_ID}
+    </update>
+    
+    <insert id="insertTaxInvoice" parameterType="map">
+    	<selectKey resultType="string" keyProperty="SN" order="BEFORE">
+            SELECT LPAD(NVL(MAX(SN), 0) + 1, 3, '0') 
+              FROM PCR_TAX_INVOICE 
+             WHERE DOC_ID = #{DOC_ID} AND TAX_INVOICE_ID = #{TAX_INVOICE_ID}
+        </selectKey>
+        INSERT INTO PCR_TAX_INVOICE(
+			 DOC_ID
+			,TAX_INVOICE_ID
+			,SN
+			,ITEM_NM
+			,ITEM_DEF
+			,CHARGE_AMT
+			,TAX_AMT
+			,ITEM_QTY
+			,ITEM_QTY_UNIT
+			,ISSUE_DT
+			,CHARGE_DT
+			,ATCH_FILE_ID
+			,REG_ID
+			,REG_DTM
+			,MOD_ID
+			,MOD_DTM
+
+        )VALUES(
+			 #{DOC_ID}
+			,#{TAX_INVOICE_ID}
+			,#{SN}
+			,#{ITEM_NM}
+			,#{ITEM_DEF}
+			,#{CHARGE_AMT}
+			,#{TAX_AMT}
+			,#{ITEM_QTY}
+			,#{ITEM_QTY_UNIT}
+			,#{ISSUE_DT}
+			,#{CHARGE_DT}
+			,#{ATCH_FILE_ID}
+			,#{REG_ID}
+			,SYSDATE
+			,#{MOD_ID}
+			,SYSDATE
+        )
+    </insert>
+	
+    <insert id="insertPcrDoc" parameterType="map">
+    	<selectKey resultType="string" keyProperty="SN" order="BEFORE">
+            (SELECT LPAD(NVL(MAX(SN), 0) + 1, 3, '0') FROM PCR_DOC_INFO WHERE DOC_ID = #{DOC_ID} AND REF_DOC_ID = #{REF_DOC_ID})
+        </selectKey>
+        INSERT INTO PCR_DOC_INFO(
+             DOC_ID
+            ,REF_DOC_ID
+            ,SN
+            ,HS_ID
+            ,ITEM_NM
+            ,ITEM_DEF
+            ,ITEM_AMT
+            ,CURRENCY
+            ,SHIP_DT
+            ,REG_ID
+            ,REG_DTM
+            ,MOD_ID
+            ,MOD_DTM
+
+        )VALUES(
+			 #{DOC_ID}
+            ,#{REF_DOC_ID}
+            ,#{SN}
+            ,#{HS_ID}
+            ,#{ITEM_NM}
+            ,#{ITEM_DEF}
+            ,#{ITEM_AMT}
+            ,#{CURRENCY}
+            ,#{SHIP_DT}
+            ,#{REG_ID}
+			,SYSDATE
+			,#{MOD_ID}
+			,SYSDATE
+        )
+    </insert>
+    
+    <insert id="insertPcrItem" parameterType="map">
+        INSERT INTO PCR_ITEM(
+             DOC_ID         
+			,SN            
+			,HS_ID          
+			,ITEM_NM        
+			,ITEM_DEF       
+			,PCR_DT 			
+			,BASE_PRICE_AMT 
+			,ITEM_QTY       
+			,ITEM_QTY_UNIT  
+			,ITEM_AMT	 
+			,ITEM_CURRENCY  
+			,REF_DOC_ID
+			,REF_DOC_SN
+			,REG_ID         
+			,REG_DTM          
+			,MOD_ID           
+			,MOD_DTM                                
+
+        )VALUES(
+			 #{DOC_ID}
+			,(SELECT LPAD(NVL(MAX(SN), 0) + 1, 3, '0') FROM PCR_ITEM WHERE DOC_ID = #{DOC_ID}) 
+			,#{HS_ID}
+			,#{ITEM_NM}
+			,#{ITEM_DEF}
+			,#{PCR_DT}
+			,#{BASE_PRICE_AMT}
+			,#{ITEM_QTY}
+			,#{ITEM_QTY_UNIT}
+			,#{ITEM_AMT}
+			,#{CURRENCY}
+			,#{REF_DOC_ID}
+			,#{SN}
+			,#{REG_ID}
+			,SYSDATE
+			,#{MOD_ID}
+			,SYSDATE
+		)
+
+    </insert>
+        
+	<delete id="deletePcrLic">
+        DELETE FROM PCR_LIC_INFO
+         WHERE DOC_ID = #{DOC_ID}
+    </delete>
+    
+    <delete id="deletePcrDoc">
+        DELETE FROM PCR_DOC_INFO
+         WHERE DOC_ID = #{DOC_ID}
+           AND REF_DOC_ID = #{REF_DOC_ID}
+           AND SN = #{SN}
+    </delete>
+    
+    <delete id="deletePcrDocList">
+        DELETE FROM PCR_DOC_INFO
+         WHERE DOC_ID = #{DOC_ID}
+    </delete>
+    
+    <delete id="deletePcrItem">
+        DELETE FROM PCR_ITEM
+         WHERE DOC_ID = #{DOC_ID}
+           AND REF_DOC_ID = #{REF_DOC_ID}
+           AND REF_DOC_SN = #{SN}
+    </delete>
+    
+    <delete id="deletePcrItemList">
+        DELETE FROM PCR_ITEM
+         WHERE DOC_ID = #{DOC_ID}
+    </delete>
+    
+    <delete id="deleteTaxInvoice">
+        DELETE FROM PCR_TAX_INVOICE
+         WHERE DOC_ID = #{DOC_ID}
+           AND TAX_INVOICE_ID = #{TAX_INVOICE_ID}
+           AND SN = #{SN}
+    </delete>
+    
+    <delete id="deletePcrTaxInvoiceList">
+        DELETE FROM PCR_TAX_INVOICE
+         WHERE DOC_ID = #{DOC_ID}
+    </delete>
+    
+    <select id="selectPcrLicStat" resultType="map">
+   	 	SELECT  A.DOC_ID, A.DOC_STAT
+       	  FROM  PCR_LIC_INFO A
+       	 WHERE  A.DOC_ID = #{BEF_DOC_ID}
+    </select>
+    
+    <select id="selectPcrLicSendItemList" resultType="map">
+     	SELECT  A.DOC_ID, A.DOC_STAT, A.CURRENCY, B.PCR_DT, B.ITEM_AMT, B.HS_ID, B.ITEM_NM, B.ITEM_CURRENCY
+     	        , (SELECT ISSUE_DT FROM PCR_TAX_INVOICE WHERE DOC_ID = A.DOC_ID AND ROWNUM = 1) AS TAX_INFO
+       	  FROM  PCR_LIC_INFO A, PCR_ITEM B
+       	 WHERE  A.DOC_ID = B.DOC_ID
+       	   AND  A.DOC_ID = #{DOC_ID}
+    </select>
+     
+    <select id="selectPcrLicSendDocList" resultType="map">
+        SELECT    A.DOC_ID        /*전자문서번호*/ 
+				, B.REF_DOC_ID	  /*근거서류번호*/
+				, B.SHIP_DT 	  /*선적기일*/ 
+         FROM  PCR_LIC_INFO A, PCR_DOC_INFO B
+        WHERE  A.DOC_ID = B.DOC_ID
+		  AND  A.DOC_ID = #{DOC_ID}
+    </select>
+     
+    <select id="selectPcrLicTotItem" resultType="map">
+   	 	SELECT SUM(ITEM_QTY) AS TOT_QTY, SUM(ITEM_AMT) AS TOT_AMT 
+   	 	       , MAX(ITEM_CURRENCY) AS CURRENCY, MAX(ITEM_QTY_UNIT) AS QTY_UNIT
+		  FROM PCR_ITEM 
+	  GROUP BY DOC_ID HAVING DOC_ID = #{DOC_ID}
+    </select>
+    
+    <insert id="copyPcrLic" parameterType="map">
+        INSERT INTO PCR_LIC_INFO(
+             DOC_ID                       
+			,REQ_TYPE  
+			,PCR_LIC_ID    					 
+			,BEF_PCR_LIC_ID               
+			,APP_ORG_NM                   
+			,APP_ORG_CEO_NM               
+			,APP_ORG_ID                   
+			,APP_ADDR1                    
+			,APP_ADDR2                    
+			,APP_ADDR3                    
+			,SUP_ORG_NM                   
+			,SUP_ORG_CEO_NM               
+			,SUP_ORG_ID                   
+			,SUP_ADDR1                    
+			,SUP_ADDR2                    
+			,SUP_ADDR3                    
+			,SUP_EMAIL   
+			,MTRL_USAGE_CD       
+			,MTRL_USAGE_DESC           
+			,DOC_STAT                     
+			,CONF_ORG_ID                  
+			,CONF_ORG_NM                  
+			,CONF_BR_ORG_NM               
+			,APP_SIGN_ORG_NM                  
+			,APP_SIGN_ORG_CEO_NM              
+			,APP_SIGN_VALUE                   
+			,TOT_QTY					     
+			,QTY_UNIT                     
+			,TOT_AMT
+			,CURRENCY                      
+			,TOT_USD_AMT
+			,TOT_ALLOW_CHARGE_INDI        
+			,TOT_ALLOW_CHARGE_AMT
+			,TOT_ALLOW_CHARGE_USD_AMT
+			,REG_ID                       
+			,REG_DTM
+			,MOD_ID                        
+			,MOD_DTM
+
+        )
+        SELECT    #{DOC_ID}                       /*전자문서번호*/
+        		, CASE WHEN #{CANCEL_SAVE} IS NOT NULL THEN 'C' 
+        		       ELSE #{COPY_TYPE}       /*신청구분(N:신규,M:변경,C:취소)*/
+        		       END
+        		, CASE WHEN #{CANCEL_SAVE} IS NOT NULL THEN (CASE WHEN A.DOC_STAT = '95' THEN '' ELSE A.PCR_LIC_ID END)
+        		       ELSE (CASE WHEN #{COPY_TYPE} = 'N' THEN '' ELSE A.PCR_LIC_ID END)
+        		       END
+        		, CASE WHEN #{CANCEL_SAVE} IS NOT NULL THEN (CASE WHEN (A.DOC_STAT = 'P4_N' OR A.DOC_STAT = 'P4_M') THEN A.PCR_LIC_ID
+        		                                                  WHEN (A.DOC_STAT = '95') THEN ''
+        		                                                  ELSE A.BEF_PCR_LIC_ID END)
+        		       ELSE (CASE WHEN #{COPY_TYPE} = 'N' THEN '' ELSE A.PCR_LIC_ID END)
+        		       END       				  /*변경전 구매확인서번호*/
+				, A.APP_ORG_NM                    /*신청인 상호*/
+				, A.APP_ORG_CEO_NM                /*신청인 성명 */
+				, A.APP_ORG_ID                    /*신청인 사업자등록번호*/
+				, A.APP_ADDR1                     /*신청인 주소1*/
+				, A.APP_ADDR2                     /*신청인 주소2*/
+				, A.APP_ADDR3                     /*신청인 주소3*/
+				, A.SUP_ORG_NM                    /*공급자 상호*/
+				, A.SUP_ORG_CEO_NM                /*공급자 성명*/
+				, A.SUP_ORG_ID                    /*공급자 사업자등록번호*/
+				, A.SUP_ADDR1                     /*공급자 주소1*/
+				, A.SUP_ADDR2                     /*공급자 주소2*/
+				, A.SUP_ADDR3                     /*공급자 주소3*/
+				, A.SUP_EMAIL                     /*공급자 이메일주소*/
+				, A.MTRL_USAGE_CD                 /*공급물품 용도명세코드*/ 
+				, A.MTRL_USAGE_DESC               /*공급물품 용도명세*/ 
+				, #{DOC_STAT}   				  /*상태*/
+				, A.CONF_ORG_ID                   /*확인기관코드*/
+				, A.CONF_ORG_NM                   /*확인기관명*/
+				, A.CONF_BR_ORG_NM                /*확인지점명*/
+				, A.APP_SIGN_ORG_NM               /*전자서명 상호*/
+				, A.APP_SIGN_ORG_CEO_NM           /*전자서명 대표명 */
+				, A.APP_SIGN_VALUE                /*전자서명*/
+				, A.TOT_QTY					      /*총수량*/
+				, A.QTY_UNIT                      /*수량 단위*/
+				, A.TOT_AMT						  /*총금액*/
+				, A.CURRENCY                      /*통화단위*/
+				, A.TOT_USD_AMT           	      /*총금액(USD금액부기)*/
+				, A.TOT_ALLOW_CHARGE_INDI         /*총 할인/할증/변동내역*/
+				, A.TOT_ALLOW_CHARGE_AMT	      /*총 할인/할증/변동 금액*/
+				, A.TOT_ALLOW_CHARGE_USD_AMT	  /*총 할인/할증/변동 금액(USD)*/
+				,#{REG_ID}
+				,SYSDATE
+				,#{MOD_ID}
+				,SYSDATE
+         FROM  PCR_LIC_INFO A
+        WHERE  A.DOC_ID = #{BEF_DOC_ID}
+    </insert>
+    
+    <insert id="copyPcrDoc" parameterType="map">
+        INSERT INTO PCR_DOC_INFO(
+             DOC_ID      
+			,REF_DOC_ID	
+			,SN          
+			,HS_ID       
+			,ITEM_NM     
+			,ITEM_DEF    
+			,ITEM_AMT    
+			,CURRENCY    
+			,SHIP_DT     
+			,REG_ID      
+			,REG_DTM     
+			,MOD_ID      
+			,MOD_DTM                               
+
+        )
+        SELECT    #{DOC_ID}         
+				, A.REF_DOC_ID	
+				, A.SN          
+				, A.HS_ID       
+				, A.ITEM_NM     
+				, A.ITEM_DEF    
+				, A.ITEM_AMT    
+				, A.CURRENCY    
+				, A.SHIP_DT     
+				, A.REG_ID      
+				, A.REG_DTM     
+				, A.MOD_ID      
+				, A.MOD_DTM     
+         FROM  PCR_DOC_INFO A
+        WHERE  A.DOC_ID = #{BEF_DOC_ID}
+    </insert>
+    
+    <insert id="copyPcrItem" parameterType="map">
+        INSERT INTO PCR_ITEM(
+             DOC_ID         
+			,SN             
+			,HS_ID          
+			,ITEM_NM        
+			,ITEM_DEF       
+			,PCR_DT 			
+			,BASE_PRICE_AMT 
+			,ITEM_QTY       
+			,ITEM_QTY_UNIT  
+			,ITEM_AMT
+			,ITEM_CURRENCY
+			,REF_DOC_ID	   
+			,REF_DOC_SN
+			,REG_ID         
+			,REG_DTM          
+			,MOD_ID           
+			,MOD_DTM                                
+
+        )
+        SELECT    #{DOC_ID}         
+				, A.SN             
+				, A.HS_ID          
+				, A.ITEM_NM        
+				, A.ITEM_DEF       
+				, A.PCR_DT 			
+				, A.BASE_PRICE_AMT 
+				, A.ITEM_QTY       
+				, A.ITEM_QTY_UNIT  
+				, A.ITEM_AMT
+				, A.ITEM_CURRENCY
+				, A.REF_DOC_ID
+				, A.REF_DOC_SN
+				, #{REG_ID}
+				, SYSDATE
+				, #{MOD_ID}
+				, SYSDATE
+         FROM  PCR_ITEM A
+        WHERE  A.DOC_ID = #{BEF_DOC_ID}
+    </insert>
+    
+    <insert id="copyTaxInvoice" parameterType="map">
+        INSERT INTO PCR_TAX_INVOICE(
+			 DOC_ID
+			,TAX_INVOICE_ID
+			,SN
+			,ITEM_NM
+			,ITEM_DEF
+			,CHARGE_AMT
+			,TAX_AMT
+			,ITEM_QTY
+			,ITEM_QTY_UNIT
+			,ISSUE_DT
+			,CHARGE_DT
+			,ATCH_FILE_ID
+			,REG_ID
+			,REG_DTM
+			,MOD_ID
+			,MOD_DTM
+
+        )
+        SELECT    #{DOC_ID}         
+				, A.TAX_INVOICE_ID
+	 			, A.SN
+	 			, A.ITEM_NM
+	 			, A.ITEM_DEF
+	 			, A.CHARGE_AMT
+	 			, A.TAX_AMT
+	 			, A.ITEM_QTY
+	 			, A.ITEM_QTY_UNIT
+	 			, A.ISSUE_DT
+	 			, A.CHARGE_DT
+	 			, A.ATCH_FILE_ID
+	 			, A.REG_ID
+	 			, A.REG_DTM
+	 			, A.MOD_ID
+	 			, A.MOD_DTM
+         FROM  PCR_TAX_INVOICE A
+        WHERE  A.DOC_ID = #{BEF_DOC_ID}
+    </insert>
+    
+    <update id="updatePcrLicItem" parameterType="map">
+        UPDATE PCR_ITEM
+           SET
+				 ITEM_QTY		= #{ITEM_QTY}
+				,PCR_DT         = #{PCR_DT}
+				,BASE_PRICE_AMT = #{BASE_PRICE_AMT}
+				,ITEM_AMT       = #{ITEM_AMT}
+				,MOD_ID         = #{MOD_ID}
+				,MOD_DTM        = SYSDATE
+        WHERE DOC_ID = #{DOC_ID}
+          AND SN = #{SN}
+    </update>
+
+    <update id="updatePcrTaxInvoice" parameterType="map">
+        UPDATE PCR_TAX_INVOICE
+           SET
+				 ITEM_NM       = #{ITEM_NM}
+				,ITEM_DEF      = #{ITEM_DEF}
+				,ITEM_QTY      = #{ITEM_QTY}
+				,ITEM_QTY_UNIT = #{ITEM_QTY_UNIT}
+				,CHARGE_DT     = #{CHARGE_DT}
+				,MOD_ID        = #{MOD_ID}
+				,MOD_DTM       = SYSDATE
+        WHERE DOC_ID = #{DOC_ID}
+		  AND TAX_INVOICE_ID = #{TAX_INVOICE_ID}
+          AND SN = #{SN}
+    </update>
+
+    <select	id="selectPcrLicHistList" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID                        /*전자문서번호*/
+				, DECODE(A.REQ_TYPE,'N','신규','M','변경','C','취소') AS REQ_TYPE   /*신청구분(N:신규,M:변경,C:취소)*/
+				, A.PCR_LIC_ID                	  /*구매확인서번호*/
+				, A.BEF_PCR_LIC_ID                /*변경전 구매확인서번호*/
+				, A.APP_ORG_NM                    /*신청인 상호*/
+				, A.APP_ORG_CEO_NM                /*신청인 성명 */
+				, A.APP_ORG_ID                    /*신청인 사업자등록번호*/
+				, A.APP_ADDR1                     /*신청인 주소1*/
+				, A.APP_ADDR2                     /*신청인 주소2*/
+				, A.APP_ADDR3                     /*신청인 주소3*/
+				, A.SUP_ORG_NM                    /*공급자 상호*/
+				, A.SUP_ORG_CEO_NM                /*공급자 성명*/
+				, A.SUP_ORG_ID                    /*공급자 사업자등록번호*/
+				, A.DOC_STAT                      /*상태*/
+				, DECODE(A.DOC_STAT,<include refid="docStat"/>) AS DOC_STAT_NM   /*상태명*/
+				, A.CONF_ORG_ID                   /*확인기관코드*/
+				, A.CONF_ORG_NM                   /*확인기관명*/
+				, A.CONF_BR_ORG_NM                /*확인지점명*/
+				, A.TOT_QTY						  /*총수량*/
+				, A.TOT_AMT						  /*총금액*/
+				, A.REG_ID                        /*등록자*/
+				, TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM   /*등록일자*/
+				, A.MOD_ID                        /*수정자*/
+				, TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM   /*수정일자*/
+         FROM  PCR_LIC_INFO A
+        WHERE  1=1
+        <if test="BEF_PCR_LIC_ID != null and BEF_PCR_LIC_ID != ''">
+        	AND	(A.BEF_PCR_LIC_ID = #{BEF_PCR_LIC_ID} OR A.PCR_LIC_ID = #{BEF_PCR_LIC_ID})
+        </if>
+        <if test="BEF_PCR_LIC_ID == null or BEF_PCR_LIC_ID == ''">
+        	AND	(A.DOC_ID = #{DOC_ID} OR A.BEF_PCR_LIC_ID = #{PCR_LIC_ID})
+        </if>
+    </select>
+
+    <select	id="selectExpDecList" parameterType="map" resultType="map">
+         SELECT  ROW_NUMBER() OVER (ORDER BY A.RPT_NO, A.RPT_SEQ DESC) RNUM
+               	 , A.RPT_NO                    	                                                 /* 수출신고번호 */
+				 , A.RPT_SEQ                    	                                             /* 제출차수 */
+				 , A.SEND                    	                                                 /* 전송(상태) */
+				 , A.RECE                    	                                                 /* 수신(상태) */
+				 , A.COMM_FIRM                    	                                             /* 수출화주 */
+				 , A.BUY_FIRM                    	                                             /* 해외거래처구매자상호 */
+				 , A.MAK_FIRM                    	                                             /* 제조자상호 */
+				 , A.TA_ST_ISO                    	                                             /* 목적국코드 */
+				 , A.FOD_CODE                    	                                             /* 적재항코드 */
+				 , A.TOT_PACK_CNT                    	                                         /* 총포장수 */
+				 , A.TOT_PACK_UT                                                                 /* 총포장단위 */
+				 , A.TOT_WT                                                                      /* 총중량 */
+				 , A.TOT_RPT_KRW                    	                                         /* 총신고금액원화 */
+				 , A.TOT_RPT_USD                    	                                         /* 총신고금액미화 */
+				 , A.AMT_COD                    	                                             /* 인도조건 */
+				 , A.CUR                    	                                                 /* 결제통화 */
+				 , A.AMT                    	                                                 /* 결제금액 */
+				 , A.EXC_RATE_USD                    	                                         /* 미화환율 */
+				 , A.EXC_RATE_CUR                    	                                         /* 결제환율 */
+				 , TO_CHAR(A.REG_DTM , 'YYYY-MM-DD') REG_DTM                                     /* 신청일자 */
+				 , TO_CHAR(TO_DATE(A.RPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DAY		 /* 신고일자 */
+				 , TO_CHAR(TO_DATE(A.EXP_LIS_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') EXP_LIS_DAY /* 수리일시 */
+				 , A.ORDER_ID                    	                                             /* 주문번호 */					
+	   FROM EXP_CUSDEC830 A
+		  , EXP_EXPDEC_REQ B
+         WHERE A.REQ_NO = B.REQ_NO(+)
+           AND A.RPT_SEQ = '00'
+           AND A.RECE = '03'            /*수리상태*/
+           <if test="F_REG_DTM != null and F_REG_DTM != '' and F_REG_DTM != null and T_REG_DTM != ''">
+               <if test="SEARCH_DTM == 'RPT_DAY'">
+       		       AND A.RPT_DAY BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       		   </if>	
+       		   <if test="SEARCH_DTM == 'EXP_LIS_DAY'">
+       		       AND A.EXP_LIS_DAY BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       		   </if>	
+           </if>
+           <if test="RPT_NO != null and RPT_NO != ''">
+               AND A.RPT_NO LIKE '%'||#{RPT_NO}||'%'
+           </if>
+           ORDER BY A.RPT_NO, A.RPT_SEQ DESC
+       
+    </select>
+    
+    <select	id="selectExpDecItemList" parameterType="map" resultType="map">
+         SELECT  ROW_NUMBER() OVER (ORDER BY A.RPT_NO, A.RPT_SEQ DESC) RNUM
+               	 , A.RPT_NO AS REF_DOC_ID          	                                             /* 수출신고번호 */
+				 , A.RPT_SEQ                    	                                             /* 제출차수 */
+				 , A.JUK_DAY AS SHIP_DT                                                          /* 선적일자 */  
+				 , '' AS PCR_DT                                                                  /* 구매일자 */  
+				 , B.HS AS HS_ID                    	                                         /* HS부호 */
+				 , B.EXC_GNM AS ITEM_NM            	                                             /* 거래품명 */
+				 , DECODE(B.CUR_UT,NULL,A.CUR,B.CUR_UT) AS CURRENCY            	                 /* 통화 */
+				 , C.QTY AS ITEM_QTY                   	                                         /* 수량 */
+				 , C.QTY_UT AS ITEM_QTY_UNIT               	                                     /* 수량단위 */
+				 , C.GNM AS ITEM_DEF                   	                                         /* 규격 */
+				 , C.PRICE AS BASE_PRICE_AMT                    	                             /* 단가 */
+				 , C.AMT AS ITEM_AMT                   	                                         /* 금액 */
+	   FROM EXP_CUSDEC830 A, EXP_CUSDEC830_RAN B, EXP_CUSDEC830_RAN_ITEM C, EXP_EXPDEC_REQ D
+         WHERE A.RPT_SEQ = '00'
+		   AND A.RPT_NO = #{RPT_NO}
+		   AND A.RPT_NO = B.RPT_NO(+)
+           AND A.RPT_SEQ = B.RPT_SEQ(+)
+		   AND B.RPT_NO = C.RPT_NO(+)
+           AND B.RPT_SEQ = C.RPT_SEQ(+)
+		   AND B.RAN_NO = C.RAN_NO(+)
+		   AND A.REQ_NO = D.REQ_NO(+)
+		   ORDER BY A.RPT_NO, A.RPT_SEQ DESC
+    </select>
+    
+    <update id="updatePcrLicTotItem" parameterType="map">
+        UPDATE PCR_LIC_INFO
+           SET (TOT_QTY, TOT_AMT, CURRENCY, QTY_UNIT, MOD_ID, MOD_DTM)   			  
+			   = (SELECT SUM(ITEM_QTY), SUM(ITEM_AMT), MAX(ITEM_CURRENCY), MAX(ITEM_QTY_UNIT), #{MOD_ID}, SYSDATE
+				   FROM PCR_ITEM GROUP BY DOC_ID HAVING  DOC_ID = #{DOC_ID})              
+        WHERE DOC_ID = #{DOC_ID}
+    </update>
+    
+    <select	id="selectPcrUthTaxInvoiceList" parameterType="map" resultType="map">
+    	SELECT A.*, ROW_NUMBER() OVER (ORDER BY A.TAXINVMKDT DESC) RNUM 
+    	       , TO_CHAR(TO_DATE(A.TAXINVMKDT, 'YYYYMMDD'), 'YYYY-MM-DD') ISSUE_DT /*세금계산서작성일*/
+    	  FROM (
+		        SELECT    A.PRTID              		/*사업자식별자아이디*/
+		                , (SELECT ISSUEID FROM TRADE.TAXINVDOC WHERE PRTID = A.PRTID AND REFNUM = A.REFNUM) AS TAX_INVOICE_ID /*문서번호*/
+						, A.REFNUM             		/*REFNUM*/
+						, A.TAXINVMGNNUM   	   		/*관리번호*/       
+						, A.TAXINVMKDT       
+						, A.SPLYORGNM AS ORG_NM /*공급자 상호명*/
+						, A.SPLYPRTID AS ORG_ID /*공급자 사업자번호*/
+						, A.SPLYCEONM AS ORG_CEO_NM  /*공급자 대표자명*/
+						, A.SPLYCNTTNM AS MANAGER_NM /*공급자 담당자명*/
+						, A.SPLYCNTTTEL AS TEL_NO  /*공급자 담당자전화*/
+						, A.SPLYADDR1 || A.SPLYADDR2 || A.SPLYADDR3 AS ADDR
+						, A.SPLYADDR1 AS ADDR1      /*공급자 주소1*/
+						, A.SPLYADDR2 AS ADDR2      /*공급자 주소2*/
+		                , A.SPLYADDR3 AS ADDR3      /*공급자 주소3*/
+		                , A.SPLYCNTTEMAILID || '@' || A.SPLYCNTTEMAILDOMAIN AS MANAGER_EMAIL 	/*공급자담당자이메일아이디*/
+		                , A.SPLYAMT AS CHARGE_AMT   /*공급가액*/
+		                , A.TAXAMT AS TAX_AMT   	/*세액*/
+		                , A.BYRORGNM                /*공급받는자 상호*/
+		                , A.RCVCD                   /*수신처*/
+		                , A.DOCID                   /*문서번호*/
+		         FROM  TAXINV A
+		        WHERE  A.USEYN='Y'
+		          AND  A.EDIYN = 'Y'
+		          AND  A.NTXYN = 'Y'
+		          AND  A.BYRPRTID = #{SSbizNo}
+		          AND  A.RCVCD = #{SSuthUserId}
+        	   )A WHERE 1=1
+       <if test="F_DTM != null and F_DTM != '' and T_DTM != null and T_DTM != ''">
+           AND A.TAXINVMKDT BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       </if> 
+       <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+       	   <if test="SEARCH_COL == 'DOCID'">
+           		AND A.DOCID LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+		   <if test="SEARCH_COL == 'ORG_NM'">
+           		AND A.ORG_NM LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'BYRORGNM'">
+           		AND A.BYRORGNM LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+       </if>
+        ORDER BY A.TAXINVMKDT DESC
+    </select>       
+    
+    <select id="selectHolidayDiv" resultType="map">
+   	 	SELECT  DIV 
+   	 	  FROM EPCS.EP_HOLIMNG 
+   	 	 WHERE YEAR = #{YEAR} AND MONTH = #{MONTH} AND DAY = #{DAY} 
+    </select> 
+    
+    <select id="selectPcrDtAndShipDt" resultType="map">
+   	 	SELECT    (SELECT MIN(PCR_DT) FROM PCR_ITEM WHERE DOC_ID = #{DOC_ID}) AS MIN_PCR_DT
+   	 	        , (SELECT MAX(PCR_DT) FROM PCR_ITEM WHERE DOC_ID = #{DOC_ID}) AS MAX_PCR_DT
+   	 	        , (SELECT MIN(SHIP_DT) FROM PCR_DOC_INFO WHERE DOC_ID = #{DOC_ID}) AS MIN_SHIP_DT
+   	 	        , (SELECT MAX(SHIP_DT) FROM PCR_DOC_INFO WHERE DOC_ID = #{DOC_ID}) AS MAX_SHIP_DT
+       	  FROM  DUAL 
+    </select> 
+    
+    <select id="selectCmmIdentifier" parameterType="map" resultType="map">
+        SELECT IDENTIFY_ID, MAX(MOD_DTM)
+          FROM CMM_IDENTIFIER
+         WHERE TYPE = #{TYPE}
+           AND USER_ID = #{SSuserId}
+      GROUP BY IDENTIFY_ID  
+    </select>
+    
+    <select	id="selectSendNoticeInfo" parameterType="map" resultType="map">
+        SELECT    A.DOC_ID  		 /*전자문서번호*/
+                , A.BEF_PCR_LIC_ID   /*변경전 구매확인서번호*/  
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'PCR_DOC_RES_TYPE' AND CODE = A.DOC_RES_TYPE_CD) AS DOC_RES_TYPE_NM  /*응답유형*/  
+				, A.DOC_SEND_ID      /*발신자번호*/
+				, A.DOC_RECP_ID      /*수신자번호*/
+				, A.MESSAGE          /*전달내용*/
+				, A.REF_DOC_NAME     /*일반응답과관련된 서류명*/
+				, TO_CHAR(A.NOTICE_RECP_DTM, 'YYYY-MM-DD HH24:MI:SS') AS NOTICE_RECP_DTM /*오류/취소 통보 수신일시*/
+         FROM  PCR_LIC_INFO A
+        WHERE  A.DOC_ID = #{DOC_ID}
+
+    </select>
+
+</mapper>

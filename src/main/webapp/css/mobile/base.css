@@ -1,0 +1,26 @@
+@charset "UTF-8";
+body, div, p, h1, h2, h3, h4, h5, h6, ul, ol, li, dl, dt, dd, table, tr, th, td, caption, form, fieldset, input, select, textarea, blockquote, address, button {margin:0;padding:0;}
+ul, ol, li {list-style:none;}
+img, fieldset, button {border:0 none;}
+button {box-sizing:content-box;background:none;cursor:pointer;}
+address, em {font-style:normal;}
+table {border-spacing:0;border-collapse:collapse;}
+q:before, q:after {content:'';}
+
+body {background:#fff;}
+body, input, select, textarea, button, h1, h2, h3, h4, h5, h6 {color:#555;font-size:14px;font-family:HelveticaNeue-Light, AppleSDGothicNeo-Light, sans-serif;line-height:1;-webkit-text-size-adjust:none;-webkit-appearance: none;-moz-appearance: none; appearance: none;}
+h1, h2, h3, h4, h5, h6 {font-size:100%; font-family:'NanumGothic';}
+input, select, textarea, button { outline:none;vertical-align:middle;}
+a {color:#555; text-decoration:none; -webkit-tap-highlight-color: rgba(0,0,0,0); -webkit-tap-highlight-color: transparent; /* For some Androids */}
+img {vertical-align:top;}
+hr {display:none;}
+
+/* html5 tag */
+article, aside, details, figure, figcaption, footer, header, hgroup, menu, nav, section, main {display:block;margin:0;padding:0;}
+
+/* global */
+.blind {position:absolute;top:-9999px;visibility:hidden;width:0;height:0;font-size:1%;line-height:0;}
+
+/*IE input x지우기*/
+input::-ms-clear {  display: none; width : 0; height: 0; }
+input::-ms-reveal {  display: none; width : 0; height: 0;}

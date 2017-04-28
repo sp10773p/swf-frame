@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="adm">
+    <select	id="selectAdminUsrList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.USER_ID) RNUM
+                , A.USER_ID                    /* 사용자ID */
+                , A.USER_NM                    /* 사용자명 */
+                , '****' AS USER_PW           /* 패스워드 */
+                , A.AUTH_CD                    /* 권한코드 */
+                , A.TEL_NO                     /* 전화번호 */
+                , A.HP_NO                      /* 핸드폰번호 */
+                , A.EMAIL                      /* 이메일 */
+                , TO_CHAR(LOGIN_START, 'YYYY-MM-DD HH24:MI:SS') AS LOGIN_START                /* 최초로그인시간 */
+                , TO_CHAR(LOGIN_LAST, 'YYYY-MM-DD HH24:MI:SS') AS LOGIN_LAST                 /* 최종로그인시간 */
+                , A.LOGIN_ERROR                /* 로그인에러 */
+                , A.PW_PRIOR                   /* 이전비밀번호 */
+                , TO_CHAR(A.PW_CHANGE, 'YYYY-MM-DD') AS PW_CHANGE           /* 비밀번호변경일 */
+                , A.PW_UPDATE                  /* 비밀번호변경주기 */
+                , A.PW_PERIOD                  /* 비밀번호변경기간 */
+                , A.USE_CHK                    /* 사용여부 */
+                , A.EXPIRE_DT                  /* 만료일 */
+                , A.REG_ID                     /* 입력자ID */
+                , A.REG_DTM                    /* 입력일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , A.MOD_DTM                    /* 수정일시 */
+                , A.USER_DIV				   /* 사용자구분 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'USER_DIV' AND CODE = A.USER_DIV) AS USER_DIV_NM
+                , A.BIZ_NO					   /* 사업자등록번호 */
+                , A.APPLICANT_ID			   /* 관세사신고인부호 */
+         FROM  CMM_USER A
+        WHERE  A.USER_DIV IN ('A', 'C')
+            <if test="SEARCH_TXT1 != null and SEARCH_TXT1 != ''">
+                <if test="SEARCH_COL1 == 'USER_ID'">
+                    AND USER_ID LIKE '%'||#{SEARCH_TXT1}||'%'
+                </if>
+                <if test="SEARCH_COL1 == 'USER_NM'">
+                    AND USER_NM LIKE '%'||#{SEARCH_TXT1}||'%'
+                </if>
+            </if>
+            <if test="S_AUTH_CD != null and S_AUTH_CD != ''">
+                AND AUTH_CD LIKE '%'||#{S_AUTH_CD}||'%'
+            </if>
+            <if test="SEARCH_TXT2 != null and SEARCH_TXT2 != ''">
+                <if test="SEARCH_COL2 == 'AUTH_CD'">
+                    AND AUTH_CD LIKE '%'||#{SEARCH_TXT2}||'%'
+                </if>
+                <if test="SEARCH_COL2 == 'TEL_NO'">
+                    AND TEL_NO LIKE '%'||#{SEARCH_TXT2}||'%'
+                </if>
+                <if test="SEARCH_COL2 == 'HP_NO'">
+                    AND HP_NO LIKE '%'||#{SEARCH_TXT2}||'%'
+                </if>
+                <if test="SEARCH_COL2 == 'EMAIL'">
+                    AND EMAIL LIKE '%'||#{SEARCH_TXT2}||'%'
+                </if>
+            </if>
+            <if test="S_USE_CHK != null and S_USE_CHK != ''">
+                AND USE_CHK = #{S_USE_CHK}
+            </if>
+            <if test="USE_CHK != null and USE_CHK != ''">
+                AND USE_CHK = #{USE_CHK}
+            </if>
+        ORDER BY A.USER_ID, A.AUTH_CD
+    </select>
+
+    <select	id="selectAdminUsr" parameterType="map" resultType="map">
+        SELECT   A.USER_ID                    /* 사용자ID */
+                , A.USER_NM                    /* 사용자명 */
+                , '****' AS USER_PW           /* 패스워드 */
+                , A.AUTH_CD                    /* 권한코드 */
+                , A.TEL_NO                     /* 전화번호 */
+                , A.HP_NO                      /* 핸드폰번호 */
+                , A.EMAIL                      /* 이메일 */
+                , TO_CHAR(LOGIN_START, 'YYYY-MM-DD HH24:MI:SS') AS LOGIN_START                /* 최초로그인시간 */
+                , TO_CHAR(LOGIN_LAST, 'YYYY-MM-DD HH24:MI:SS') AS LOGIN_LAST                 /* 최종로그인시간 */
+                , A.LOGIN_ERROR                /* 로그인에러 */
+                , A.PW_PRIOR                   /* 이전비밀번호 */
+                , TO_CHAR(A.PW_CHANGE, 'YYYY-MM-DD') AS PW_CHANGE           /* 비밀번호변경일 */
+                , A.PW_UPDATE                  /* 비밀번호변경주기 */
+                , A.PW_PERIOD                  /* 비밀번호변경기간 */
+                , A.USE_CHK                    /* 사용여부 */
+                , A.EXPIRE_DT                  /* 만료일 */
+                , A.REG_ID                     /* 입력자ID */
+                , A.REG_DTM                    /* 입력일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , A.MOD_DTM                    /* 수정일시 */
+                , A.USER_DIV				   /* 사용자구분 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'USER_DIV' AND CODE = A.USER_DIV) AS USER_DIV_NM
+                , A.BIZ_NO					   /* 사업자등록번호 */
+                , A.APPLICANT_ID			   /* 관세사신고인부호 */
+         FROM  CMM_USER A
+        WHERE  A.USER_ID = #{USER_ID}
+          AND  A.USER_DIV IN ('A', 'C')
+        ORDER BY A.USER_ID, A.AUTH_CD
+    </select>
+
+    <select id="selectAuthCodeList" resultType="map">
+        SELECT  A.AUTH_CD  AS CODE
+                , A.AUTH_NM AS CODE_NM
+          FROM  CMM_AUTH A
+         WHERE  A.USE_YN = 'Y'
+           <if test="LIKE_CODE != null and LIKE_CODE != ''">
+               AND A.AUTH_CD LIKE '%'||#{LIKE_CODE}||'%'
+           </if>
+           <if test="LIKE_NAME != null and LIKE_NAME != ''">
+               AND A.AUTH_NM LIKE '%'||#{LIKE_NAME}||'%'
+           </if>
+        ORDER  BY A.AUTH_CD ASC
+    </select>
+
+    <update id="updateAdmUser" parameterType="map">
+        UPDATE CMM_USER
+           SET  USER_NM     = #{USER_NM}
+                , USER_PW   = #{USER_PW}
+                , TEL_NO    = #{TEL_NO}
+                , HP_NO     = #{HP_NO}
+                , EMAIL     = #{EMAIL}
+                , USER_DIV  = #{USER_DIV}
+                , AUTH_CD   = #{AUTH_CD}
+                , EXPIRE_DT = #{EXPIRE_DT}
+                , USE_CHK   = #{USE_CHK}
+                , MOD_ID    = #{SSuserId}
+                , MOD_DTM   = SYSDATE
+        WHERE USER_ID = #{USER_ID}
+    </update>
+
+    <insert id="insertAdmUser" parameterType="map">
+        INSERT INTO CMM_USER(
+              USER_DIV
+            , USER_ID
+            , USER_NM
+            , USER_STATUS
+            , TEL_NO
+            , HP_NO
+            , EMAIL
+            , AUTH_CD
+            , PW_UPDATE
+            , USE_CHK
+            , EXPIRE_DT
+            , USER_PW
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES(
+              #{USER_DIV:VARCHAR}
+            , #{USER_ID:VARCHAR}
+            , #{USER_NM:VARCHAR}
+            , '1'
+            , #{TEL_NO:VARCHAR}
+            , #{HP_NO:VARCHAR}
+            , #{EMAIL:VARCHAR}
+            , #{AUTH_CD:VARCHAR}
+            , #{PW_UPDATE}
+            , #{USE_CHK:VARCHAR}
+            , #{EXPIRE_DT:VARCHAR}
+            , #{USER_PW:VARCHAR}
+            , #{SSuserId:VARCHAR}
+            , SYSDATE
+            , #{SSuserId:VARCHAR}
+            , SYSDATE
+        )
+    </insert>
+
+    <select id="selectCmmUserCount" parameterType="map" resultType="int">
+        <![CDATA[
+      	 	SELECT  COUNT(*)
+         	  FROM  CMM_USER
+         	 WHERE  USER_ID = #{USER_ID}
+    	]]>
+    </select>
+
+    <delete id="deleteAdminUser" parameterType="map">
+        DELETE FROM CMM_USER
+         WHERE USER_ID = #{USER_ID}
+    </delete>
+
+
+    <delete id="deleteCmmIpAccess" parameterType="map">
+        DELETE FROM CMM_IP_ACCESS
+        WHERE USER_ID = #{USER_ID}
+    </delete>
+
+    <select	id="selectUserPw" parameterType="map" resultType="string">
+        SELECT USER_PW FROM CMM_USER WHERE USER_ID = #{USER_ID}
+    </select>
+</mapper>

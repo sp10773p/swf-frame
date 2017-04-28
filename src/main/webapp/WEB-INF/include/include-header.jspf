@@ -1,0 +1,89 @@
+<%@ page pageEncoding="utf-8"%>
+<%@ page import="kr.pe.frame.cmm.core.base.Constant" %>
+
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%@ taglib prefix="fn" uri="http://java.sun.com/jsp/jstl/functions" %>
+<%@ taglib prefix="s" uri="http://www.springframework.org/tags" %>
+<%@ taglib prefix="attr" uri="/WEB-INF/tlds/attr" %>
+
+<meta charset="utf-8">
+<meta http-equiv="X-UA-Compatible" content="IE=edge"/>
+<meta name="description" content="goGLOBAL">
+<meta name="author" content="한국무역정보통신">
+
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/base.css"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/common.css"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/nicescroll.css">
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/layerPop.css"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/dtree.css"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/myTooltip.css"/>
+<link rel="stylesheet" href="${pageContext.request.contextPath}/css/chosen.css"/>
+
+<script src="${pageContext.request.contextPath}/js/jquery.min.js"></script>
+<script src="${pageContext.request.contextPath}/js/jquery.form.js"></script>
+
+
+<%-- UI Script--%>
+<script src="${pageContext.request.contextPath}/js/jquery-ui.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/jquery.nicescroll.js"></script>
+<script src="${pageContext.request.contextPath}/js/view.js"></script>
+<script src="${pageContext.request.contextPath}/js/myTooltip.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/chosen.jquery.min.js"></script>
+
+<script src="${pageContext.request.contextPath}/js/dtree.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/dateutil.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/common.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/gridConnector.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/popup.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/fileUtil.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/nicEdit.js" charset="utf-8"></script>
+<script src="${pageContext.request.contextPath}/js/print.js" charset="utf-8"></script>
+
+<c:set var="session" value='<%= request.getSession().getAttribute(Constant.SESSION_KEY_USR.getCode())%>'/>
+
+<c:set var="menuBtnAuthList" value="${session.getMenuBtnAuthJson()}" />
+
+<script>
+    var PAGE_GLOBAL_VAR = {};
+
+    gfn_closeDimLoading(); // loading 초기화
+
+    if(window.console == undefined) console = {log : function(){}}
+    $(function() {
+        $.comm.initBtnAuth('${menuBtnAuthList}', '${ACTION_MENU_ID}');
+        $.comm.mandantoryExp(); // 필수항목 표시
+        $.comm.initCalendar();  // 날짜필드 datepicker setting
+        $.comm.initSelect();    // Select 필드 option setting
+        $.comm.initLength();    // Input 필드 minlength, maxlength 속성 setting
+        $.comm.initWrapSearch();// 조회영역 PK 로직 설정
+
+        // 이전에 가지고 있던 값들 셋팅
+        var pageParam = $.comm.getGlobalVar("PAGE_PARAMETER");
+        if (pageParam) {
+            var pageInitParam = JSON.parse(pageParam);
+            var inputData = pageInitParam['${ACTION_MENU_ID}'];
+
+            if (!$.comm.isNull(inputData)) {
+                if('${IS_PAGE_BACK}' == 'T'){
+                    PAGE_GLOBAL_VAR["PAGE_PARAM"] = inputData;
+                    $.comm.bindData(inputData);
+
+                    $.comm.setGlobalVar("PAGE_PARAMETER", JSON.stringify(pageInitParam));
+                }
+
+                delete pageInitParam['${ACTION_MENU_ID}'];
+            }
+        }
+
+        // forward / pageback 이동일때 Left Menu 변경
+        if('${IS_FRAME_PAGE}' == 'Y' && !$.comm.isNull('${ACTION_TOP_MENU_ID}') && parent.$('#leftMenu').length > 0){
+            parent.mfn_leftMenuSelect('${ACTION_TOP_MENU_ID}', '${ACTION_TOP_MENU_NM}', '${ACTION_MENU_ID}');
+        }
+
+        // 타이틀 변경
+        if(!$.comm.isNull('${ACTION_MENU_NM}') && parent.$('#mainTitle').length > 0){
+        	parent.$('#mainTitle').html('${ACTION_MENU_NM}');
+        }
+    });
+</script>
+

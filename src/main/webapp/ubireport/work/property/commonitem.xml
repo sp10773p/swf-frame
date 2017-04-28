@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="EUC-KR"?>
+<CommonItem>
+	<CommonText key="UBIREPORT">http://www.ubireport.com</CommonText>
+	<CommonImage key="MASCOT">mascot.gif</CommonImage>
+</CommonItem>

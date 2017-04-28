@@ -1,0 +1,19 @@
+.lnb ul { list-style: none; padding: 0;}
+
+.lnb ul .inner { background:#373e46; overflow: hidden; display: none;}
+
+.lnb .accordion > li{background:#292f35 url(/images/admin/bg/bg_lnb_down.png) no-repeat 212px 18px;}
+.lnb .accordion > li.on{background:#292f35 url(/images/admin/bg/bg_lnb_up.png) no-repeat 212px 18px;}
+.lnb .accordion > li.on > a{color:#fff; background:url(/images/admin/bg/bg_lnb_dot_click.png) no-repeat 20px 18px; }
+.accordion > li > a{padding:14px 0 0 30px; box-sizing:border-box; background:url(/images/admin/bg/bg_lnb_dot.png) no-repeat 20px 18px;}
+.accordion > li > a.on{color:#f89818; background:url(/images/admin/bg/bg_lnb_dot_hover.png) no-repeat 20px 18px; }
+.lnb ul li { margin: 0; margin-bottom:1px;}
+.lnb ul li a { text-decoration:none; height: 39px; font-size: 12px; font-family: Dotum; font-weight:bold; width: 100%; display: block; box-sizing:border-box; color: #b0b0b0;}
+.lnb ul.inner li{background:#373e46 url(/images/admin/bg/bg_lnbinner_dot.png) no-repeat 36px 18px;}
+.lnb ul.inner li>a { padding:14px 0 0 44px;}
+.lnb ul.inner .inner li{background-position: 56px 18px;}
+.lnb ul.inner .inner li>a {padding:14px 0 0 64px;}
+.lnb ul.inner .inner .inner li{background-position: 76px 18px;}
+.lnb ul.inner .inner .inner li>a { padding:14px 0 0 84px;}
+
+.inner > li.on > a {color:#fff;}

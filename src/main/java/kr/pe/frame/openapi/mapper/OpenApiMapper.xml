@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="openapi">
+    <select id="selectCCUCnt" parameterType="map" resultType="map">
+        SELECT  
+            API_ID, USER_ID, API_KEY, CONNECT_CNT  
+        FROM 
+            CMM_API_CONNECT_LIMIT
+        WHERE 
+			API_ID  = #{API_ID} 
+			AND API_KEY = #{API_KEY}
+    </select>  
+	   
+	<insert id="insertCCUCnt" parameterType="map">
+        INSERT INTO CMM_API_CONNECT_LIMIT (
+            API_ID, USER_ID, API_KEY, CONNECT_CNT
+		) VALUES(
+			#{API_ID}, #{USER_ID}, #{API_KEY}, 1
+		)
+	</insert> 
+	
+	<update id="resetCCUCnt">
+		UPDATE 
+			CMM_API_CONNECT_LIMIT
+		SET 
+			CONNECT_CNT= 0					 	 		 			
+	</update>
+	
+	<update id="updateCCUCnt">
+		UPDATE 
+			CMM_API_CONNECT_LIMIT
+		SET 
+			CONNECT_CNT= (CASE WHEN CONNECT_CNT + #{INC_CNT} &lt; 0 THEN 0 ELSE CONNECT_CNT + #{INC_CNT} END) 
+		WHERE
+			API_ID  = #{API_ID} 
+			AND API_KEY = #{API_KEY} 
+	</update>	
+	
+    <select id="selectDailyCnt" parameterType="map" resultType="map">
+       SELECT  
+           API_ID, USER_ID, API_KEY, WORK_DT, WORK_CNT 
+       FROM 
+           CMM_API_DAILY_USE
+       WHERE 
+		API_ID  = #{API_ID} 
+		AND API_KEY = #{API_KEY} 
+		AND WORK_DT = TO_CHAR(SYSDATE, 'YYYYMMDD') 
+	</select> 
+   
+	<insert id="insertDailyCnt" parameterType="map">
+        INSERT INTO CMM_API_DAILY_USE (
+            API_ID, USER_ID, API_KEY, WORK_DT, WORK_CNT
+		) VALUES(
+			#{API_ID}, #{USER_ID}, #{API_KEY}, TO_CHAR(SYSDATE, 'YYYYMMDD'), 1
+		)
+	</insert> 
+   
+	<update id="updateDailyCnt" >
+		UPDATE 
+			CMM_API_DAILY_USE
+		SET 
+			WORK_CNT = WORK_CNT + 1	
+		WHERE 
+			API_ID  = #{API_ID} 
+			AND API_KEY = #{API_KEY} 
+			AND WORK_DT = TO_CHAR(SYSDATE, 'YYYYMMDD') 						 	 		 			
+	</update>
+    
+    <select id="selectApiInfo" parameterType="map" resultType="map">
+        SELECT  
+            API_ID, API_NM, API_URL, API_VERSION, CLASS_ID, API_DESC, ERR_DESC, ATCH_FILE_ID, LIMIT_DETAIL_CNT, DAILY_CALL_CNT, PER_CALL_CNT, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM 
+        FROM 
+            CMM_API_MNG
+        WHERE 
+        	1 = 1
+		<if test="API_URL != null and API_URL != ''">
+			AND API_URL = #{API_URL}
+		</if>        
+		<if test="API_ID != null and API_ID != ''">
+			AND API_ID = #{API_ID}
+		</if>      		   	
+    </select>  
+    
+    <select id="selectApiKeyInfo" parameterType="string" resultType="map">
+        SELECT  
+           	TO_CHAR(SYSDATE, 'YYYYMMDD') CURR_DATE, USER_ID, API_KEY, VALID_FROM_DT, VALID_TO_DT, API_REQ_STATUS, API_REQ_DT, API_APPORVE_DT, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM 
+        FROM 
+            CMM_API_KEY_MNG
+        WHERE 
+        	API_REQ_STATUS = 'A' 
+			AND API_KEY = #{value}
+			AND ROWNUM = 1
+    </select>     
+    
+    <select id="selectApiKeyDtlInfo" parameterType="string" resultType="map">
+        SELECT  
+           	USER_ID, API_ID, API_KEY, LIMIT_DETAIL_CNT, DAILY_CALL_CNT, PER_CALL_CNT, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM 
+        FROM 
+            CMM_API_KEY_DTL 
+        WHERE 
+        	API_ID = #{API_ID}
+			AND API_KEY = #{API_KEY}
+			AND ROWNUM = 1
+    </select>  
+           
+	<insert id="insertApiLogDetail" parameterType="map">
+        INSERT INTO CMM_API_LOG_DETAIL (
+            LOG_DTM, ACCECP_DTM, API_ID, USER_ID, ORG_JSON, ORG_SEQ, RESULT_CD, ERROR_DESC			
+		) VALUES(
+			SYSDATE, TO_CHAR(SYSDATE, 'YYYYMMDDHH24MISS'), #{API_ID}, #{USER_ID}, #{ORG_JSON}, #{ORG_SEQ}, #{RESULT_CD}, #{ERROR_DESC}			
+		)
+	</insert> 
+</mapper>

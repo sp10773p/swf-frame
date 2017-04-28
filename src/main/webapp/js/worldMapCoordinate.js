@@ -1,0 +1,526 @@
+/**
+ * Created by sdh on 2017-03-09.
+ */
+(function($) {
+    $.latlong = {
+        /**
+         * 지도 차트 생성
+         * @param targetDivId : 대상 DIV 태그 ID
+         * @param data : 생성 데이터
+         * @param codeKeyId : 지도 데이터 국가코드 키 ID
+         * @param nameKeyId : 지도 데이터 국가명 키 ID
+         * @param valueKeyId : 지도 데이터 VALUE 키 ID
+         */
+        drawWorldMap : function (targetDivId, data, codeKeyId, nameKeyId, valueKeyId) {
+            var mapData = this.getMapData(data, codeKeyId, nameKeyId, valueKeyId);
+            var images = this.getImages(mapData);
+
+            // build map
+            var map = AmCharts.makeChart( targetDivId, {
+                "type": "map",
+                "projection": "eckert6",
+                "titles": [ {
+                    "text": "",
+                    "size": 14
+                }, {
+                    "text": "",
+                    "size": 11
+                } ],
+                "areasSettings": {
+                    //"unlistedAreasColor": "#000000",
+                    //"unlistedAreasAlpha": 0.1
+                },
+                "dataProvider": {
+                    "map": "worldLow",
+                    "images": images
+                },
+                "export": {
+                    "enabled": true
+                }
+            } );
+        },
+        getMapData : function (data, codeKeyId, nameKeyId, valueKeyId) {
+            var colorMap = this.getColorMap();
+            var mapData = [];
+            $.each(data, function () {
+                var code  = ($.comm.isNull(codeKeyId) ? this.code : this[codeKeyId]);
+                var name  = ($.comm.isNull(codeKeyId) ? this.name : this[nameKeyId]);
+                var value = ($.comm.isNull(valueKeyId) ? this.value : this[valueKeyId]);
+
+                var map = {"code":code, "name": name, "value":value, "color":colorMap[code] };
+
+                mapData.push(map);
+            })
+
+            return mapData;
+        },
+        getImages : function (mapData) {
+            // get min and max values
+            var minBulletSize = 3;
+            var maxBulletSize = 70;
+            var min = Infinity;
+            var max = -Infinity;
+            for ( var i = 0; i < mapData.length; i++ ) {
+                var value = mapData[ i ].value;
+                if ( value < min ) {
+                    min = value;
+                }
+                if ( value > max ) {
+                    max = value;
+                }
+            }
+
+            // it's better to use circle square to show difference between values, not a radius
+            var maxSquare = maxBulletSize * maxBulletSize * 2 * Math.PI;
+            var minSquare = minBulletSize * minBulletSize * 2 * Math.PI;
+
+            // create circle for each country
+            var images = [];
+            for ( var i = 0; i < mapData.length; i++ ) {
+                var dataItem = mapData[ i ];
+                var value = dataItem.value;
+                // calculate size of a bubble
+                var square = ( value - min ) / ( max - min ) * ( maxSquare - minSquare ) + minSquare;
+                if ( square < minSquare ) {
+                    square = minSquare;
+                }
+                var size = Math.sqrt( square / ( Math.PI * 2 ) );
+                var id = dataItem.code;
+
+                var latlong = this.getLatlong();
+                images.push( {
+                    "type": "circle",
+                    "theme": "light",
+                    "width": size,
+                    "height": size,
+                    "color": dataItem.color,
+                    "longitude": latlong[ id ].longitude,
+                    "latitude": latlong[ id ].latitude,
+                    "title": dataItem.name,
+                    "value": value
+                } );
+            }
+
+            return images;
+        },
+        getColorMap : function () {
+            var mapData = {};
+            mapData["AF"] = "#eea638";
+            mapData["AL"] = "#d8854f";
+            mapData["DZ"] = "#de4c4f";
+            mapData["AO"] = "#de4c4f";
+            mapData["AR"] = "#86a965";
+            mapData["AM"] = "#d8854f";
+            mapData["AU"] = "#8aabb0";
+            mapData["AT"] = "#d8854f";
+            mapData["AZ"] = "#d8854f";
+            mapData["BH"] = "#eea638";
+            mapData["BD"] = "#eea638";
+            mapData["BY"] = "#d8854f";
+            mapData["BE"] = "#d8854f";
+            mapData["BJ"] = "#de4c4f";
+            mapData["BT"] = "#eea638";
+            mapData["BO"] = "#86a965";
+            mapData["BA"] = "#d8854f";
+            mapData["BW"] = "#de4c4f";
+            mapData["BR"] = "#86a965";
+            mapData["BN"] = "#eea638";
+            mapData["BG"] = "#d8854f";
+            mapData["BF"] = "#de4c4f";
+            mapData["BI"] = "#de4c4f";
+            mapData["KH"] = "#eea638";
+            mapData["CM"] = "#de4c4f";
+            mapData["CA"] = "#a7a737";
+            mapData["CV"] = "#de4c4f";
+            mapData["CF"] = "#de4c4f";
+            mapData["TD"] = "#de4c4f";
+            mapData["CL"] = "#86a965";
+            mapData["CN"] = "#eea638";
+            mapData["CO"] = "#86a965";
+            mapData["KM"] = "#de4c4f";
+            mapData["CD"] = "#de4c4f";
+            mapData["CG"] = "#de4c4f";
+            mapData["CR"] = "#a7a737";
+            mapData["CI"] = "#de4c4f";
+            mapData["HR"] = "#d8854f";
+            mapData["CU"] = "#a7a737";
+            mapData["CY"] = "#d8854f";
+            mapData["CZ"] = "#d8854f";
+            mapData["DK"] = "#d8854f";
+            mapData["DJ"] = "#de4c4f";
+            mapData["DO"] = "#a7a737";
+            mapData["EC"] = "#86a965";
+            mapData["EG"] = "#de4c4f";
+            mapData["SV"] = "#a7a737";
+            mapData["GQ"] = "#de4c4f";
+            mapData["ER"] = "#de4c4f";
+            mapData["EE"] = "#d8854f";
+            mapData["ET"] = "#de4c4f";
+            mapData["FJ"] = "#8aabb0";
+            mapData["FI"] = "#d8854f";
+            mapData["FR"] = "#d8854f";
+            mapData["GA"] = "#de4c4f";
+            mapData["GM"] = "#de4c4f";
+            mapData["GE"] = "#d8854f";
+            mapData["DE"] = "#d8854f";
+            mapData["GH"] = "#de4c4f";
+            mapData["GR"] = "#d8854f";
+            mapData["GT"] = "#a7a737";
+            mapData["GN"] = "#de4c4f";
+            mapData["GW"] = "#de4c4f";
+            mapData["GY"] = "#86a965";
+            mapData["HT"] = "#a7a737";
+            mapData["HN"] = "#a7a737";
+            mapData["HK"] = "#eea638";
+            mapData["HU"] = "#d8854f";
+            mapData["IS"] = "#d8854f";
+            mapData["IN"] = "#eea638";
+            mapData["ID"] = "#eea638";
+            mapData["IR"] = "#eea638";
+            mapData["IQ"] = "#eea638";
+            mapData["IE"] = "#d8854f";
+            mapData["IL"] = "#eea638";
+            mapData["IT"] = "#d8854f";
+            mapData["JM"] = "#a7a737";
+            mapData["JP"] = "#eea638";
+            mapData["JO"] = "#eea638";
+            mapData["KZ"] = "#eea638";
+            mapData["KE"] = "#de4c4f";
+            mapData["KP"] = "#eea638";
+            mapData["KR"] = "#eea638";
+            mapData["KW"] = "#eea638";
+            mapData["KG"] = "#eea638";
+            mapData["LA"] = "#eea638";
+            mapData["LV"] = "#d8854f";
+            mapData["LB"] = "#eea638";
+            mapData["LS"] = "#de4c4f";
+            mapData["LR"] = "#de4c4f";
+            mapData["LY"] = "#de4c4f";
+            mapData["LT"] = "#d8854f";
+            mapData["LU"] = "#d8854f";
+            mapData["MK"] = "#d8854f";
+            mapData["MG"] = "#de4c4f";
+            mapData["MW"] = "#de4c4f";
+            mapData["MY"] = "#eea638";
+            mapData["ML"] = "#de4c4f";
+            mapData["MR"] = "#de4c4f";
+            mapData["MU"] = "#de4c4f";
+            mapData["MX"] = "#a7a737";
+            mapData["MD"] = "#d8854f";
+            mapData["MN"] = "#eea638";
+            mapData["ME"] = "#d8854f";
+            mapData["MA"] = "#de4c4f";
+            mapData["MZ"] = "#de4c4f";
+            mapData["MM"] = "#eea638";
+            mapData["NA"] = "#de4c4f";
+            mapData["NP"] = "#eea638";
+            mapData["NL"] = "#d8854f";
+            mapData["NZ"] = "#8aabb0";
+            mapData["NI"] = "#a7a737";
+            mapData["NE"] = "#de4c4f";
+            mapData["NG"] = "#de4c4f";
+            mapData["NO"] = "#d8854f";
+            mapData["OM"] = "#eea638";
+            mapData["PK"] = "#eea638";
+            mapData["PA"] = "#a7a737";
+            mapData["PG"] = "#8aabb0";
+            mapData["PY"] = "#86a965";
+            mapData["PE"] = "#86a965";
+            mapData["PH"] = "#eea638";
+            mapData["PL"] = "#d8854f";
+            mapData["PT"] = "#d8854f";
+            mapData["PR"] = "#a7a737";
+            mapData["QA"] = "#eea638";
+            mapData["RO"] = "#d8854f";
+            mapData["RU"] = "#d8854f";
+            mapData["RW"] = "#de4c4f";
+            mapData["SA"] = "#eea638";
+            mapData["SN"] = "#de4c4f";
+            mapData["RS"] = "#d8854f";
+            mapData["SL"] = "#de4c4f";
+            mapData["SG"] = "#eea638";
+            mapData["SK"] = "#d8854f";
+            mapData["SI"] = "#d8854f";
+            mapData["SB"] = "#8aabb0";
+            mapData["SO"] = "#de4c4f";
+            mapData["ZA"] = "#de4c4f";
+            mapData["ES"] = "#d8854f";
+            mapData["LK"] = "#eea638";
+            mapData["SD"] = "#de4c4f";
+            mapData["SR"] = "#86a965";
+            mapData["SZ"] = "#de4c4f";
+            mapData["SE"] = "#d8854f";
+            mapData["CH"] = "#d8854f";
+            mapData["SY"] = "#eea638";
+            mapData["TW"] = "#eea638";
+            mapData["TJ"] = "#eea638";
+            mapData["TZ"] = "#de4c4f";
+            mapData["TH"] = "#eea638";
+            mapData["TG"] = "#de4c4f";
+            mapData["TT"] = "#a7a737";
+            mapData["TN"] = "#de4c4f";
+            mapData["TR"] = "#d8854f";
+            mapData["TM"] = "#eea638";
+            mapData["UG"] = "#de4c4f";
+            mapData["UA"] = "#d8854f";
+            mapData["AE"] = "#eea638";
+            mapData["GB"] = "#d8854f";
+            mapData["US"] = "#a7a737";
+            mapData["UY"] = "#86a965";
+            mapData["UZ"] = "#eea638";
+            mapData["VE"] = "#86a965";
+            mapData["PS"] = "#eea638";
+            mapData["VN"] = "#eea638";
+            mapData["YE"] = "#eea638";
+            mapData["ZM"] = "#de4c4f";
+            mapData["ZW"] = "#de4c4f";
+
+            return mapData;
+        },
+        getLatlong : function () {
+            var latlong = {};
+            latlong["AD"] = {"latitude":42.5, "longitude":1.5};
+            latlong["AE"] = {"latitude":24, "longitude":54};
+            latlong["AF"] = {"latitude":33, "longitude":65};
+            latlong["AG"] = {"latitude":17.05, "longitude":-61.8};
+            latlong["AI"] = {"latitude":18.25, "longitude":-63.1667};
+            latlong["AL"] = {"latitude":41, "longitude":20};
+            latlong["AM"] = {"latitude":40, "longitude":45};
+            latlong["AN"] = {"latitude":12.25, "longitude":-68.75};
+            latlong["AO"] = {"latitude":-12.5, "longitude":18.5};
+            latlong["AP"] = {"latitude":35, "longitude":105};
+            latlong["AQ"] = {"latitude":-90, "longitude":0};
+            latlong["AR"] = {"latitude":-34, "longitude":-64};
+            latlong["AS"] = {"latitude":-14.3333, "longitude":-170};
+            latlong["AT"] = {"latitude":47.3333, "longitude":13.3333};
+            latlong["AU"] = {"latitude":-27, "longitude":133};
+            latlong["AW"] = {"latitude":12.5, "longitude":-69.9667};
+            latlong["AZ"] = {"latitude":40.5, "longitude":47.5};
+            latlong["BA"] = {"latitude":44, "longitude":18};
+            latlong["BB"] = {"latitude":13.1667, "longitude":-59.5333};
+            latlong["BD"] = {"latitude":24, "longitude":90};
+            latlong["BE"] = {"latitude":50.8333, "longitude":4};
+            latlong["BF"] = {"latitude":13, "longitude":-2};
+            latlong["BG"] = {"latitude":43, "longitude":25};
+            latlong["BH"] = {"latitude":26, "longitude":50.55};
+            latlong["BI"] = {"latitude":-3.5, "longitude":30};
+            latlong["BJ"] = {"latitude":9.5, "longitude":2.25};
+            latlong["BM"] = {"latitude":32.3333, "longitude":-64.75};
+            latlong["BN"] = {"latitude":4.5, "longitude":114.6667};
+            latlong["BO"] = {"latitude":-17, "longitude":-65};
+            latlong["BR"] = {"latitude":-10, "longitude":-55};
+            latlong["BS"] = {"latitude":24.25, "longitude":-76};
+            latlong["BT"] = {"latitude":27.5, "longitude":90.5};
+            latlong["BV"] = {"latitude":-54.4333, "longitude":3.4};
+            latlong["BW"] = {"latitude":-22, "longitude":24};
+            latlong["BY"] = {"latitude":53, "longitude":28};
+            latlong["BZ"] = {"latitude":17.25, "longitude":-88.75};
+            latlong["CA"] = {"latitude":54, "longitude":-100};
+            latlong["CC"] = {"latitude":-12.5, "longitude":96.8333};
+            latlong["CD"] = {"latitude":0, "longitude":25};
+            latlong["CF"] = {"latitude":7, "longitude":21};
+            latlong["CG"] = {"latitude":-1, "longitude":15};
+            latlong["CH"] = {"latitude":47, "longitude":8};
+            latlong["CI"] = {"latitude":8, "longitude":-5};
+            latlong["CK"] = {"latitude":-21.2333, "longitude":-159.7667};
+            latlong["CL"] = {"latitude":-30, "longitude":-71};
+            latlong["CM"] = {"latitude":6, "longitude":12};
+            latlong["CN"] = {"latitude":35, "longitude":105};
+            latlong["CO"] = {"latitude":4, "longitude":-72};
+            latlong["CR"] = {"latitude":10, "longitude":-84};
+            latlong["CU"] = {"latitude":21.5, "longitude":-80};
+            latlong["CV"] = {"latitude":16, "longitude":-24};
+            latlong["CX"] = {"latitude":-10.5, "longitude":105.6667};
+            latlong["CY"] = {"latitude":35, "longitude":33};
+            latlong["CZ"] = {"latitude":49.75, "longitude":15.5};
+            latlong["DE"] = {"latitude":51, "longitude":9};
+            latlong["DJ"] = {"latitude":11.5, "longitude":43};
+            latlong["DK"] = {"latitude":56, "longitude":10};
+            latlong["DM"] = {"latitude":15.4167, "longitude":-61.3333};
+            latlong["DO"] = {"latitude":19, "longitude":-70.6667};
+            latlong["DZ"] = {"latitude":28, "longitude":3};
+            latlong["EC"] = {"latitude":-2, "longitude":-77.5};
+            latlong["EE"] = {"latitude":59, "longitude":26};
+            latlong["EG"] = {"latitude":27, "longitude":30};
+            latlong["EH"] = {"latitude":24.5, "longitude":-13};
+            latlong["ER"] = {"latitude":15, "longitude":39};
+            latlong["ES"] = {"latitude":40, "longitude":-4};
+            latlong["ET"] = {"latitude":8, "longitude":38};
+            latlong["EU"] = {"latitude":47, "longitude":8};
+            latlong["FI"] = {"latitude":62, "longitude":26};
+            latlong["FJ"] = {"latitude":-18, "longitude":175};
+            latlong["FK"] = {"latitude":-51.75, "longitude":-59};
+            latlong["FM"] = {"latitude":6.9167, "longitude":158.25};
+            latlong["FO"] = {"latitude":62, "longitude":-7};
+            latlong["FR"] = {"latitude":46, "longitude":2};
+            latlong["GA"] = {"latitude":-1, "longitude":11.75};
+            latlong["GB"] = {"latitude":54, "longitude":-2};
+            latlong["GD"] = {"latitude":12.1167, "longitude":-61.6667};
+            latlong["GE"] = {"latitude":42, "longitude":43.5};
+            latlong["GF"] = {"latitude":4, "longitude":-53};
+            latlong["GH"] = {"latitude":8, "longitude":-2};
+            latlong["GI"] = {"latitude":36.1833, "longitude":-5.3667};
+            latlong["GL"] = {"latitude":72, "longitude":-40};
+            latlong["GM"] = {"latitude":13.4667, "longitude":-16.5667};
+            latlong["GN"] = {"latitude":11, "longitude":-10};
+            latlong["GP"] = {"latitude":16.25, "longitude":-61.5833};
+            latlong["GQ"] = {"latitude":2, "longitude":10};
+            latlong["GR"] = {"latitude":39, "longitude":22};
+            latlong["GS"] = {"latitude":-54.5, "longitude":-37};
+            latlong["GT"] = {"latitude":15.5, "longitude":-90.25};
+            latlong["GU"] = {"latitude":13.4667, "longitude":144.7833};
+            latlong["GW"] = {"latitude":12, "longitude":-15};
+            latlong["GY"] = {"latitude":5, "longitude":-59};
+            latlong["HK"] = {"latitude":22.25, "longitude":114.1667};
+            latlong["HM"] = {"latitude":-53.1, "longitude":72.5167};
+            latlong["HN"] = {"latitude":15, "longitude":-86.5};
+            latlong["HR"] = {"latitude":45.1667, "longitude":15.5};
+            latlong["HT"] = {"latitude":19, "longitude":-72.4167};
+            latlong["HU"] = {"latitude":47, "longitude":20};
+            latlong["ID"] = {"latitude":-5, "longitude":120};
+            latlong["IE"] = {"latitude":53, "longitude":-8};
+            latlong["IL"] = {"latitude":31.5, "longitude":34.75};
+            latlong["IN"] = {"latitude":20, "longitude":77};
+            latlong["IO"] = {"latitude":-6, "longitude":71.5};
+            latlong["IQ"] = {"latitude":33, "longitude":44};
+            latlong["IR"] = {"latitude":32, "longitude":53};
+            latlong["IS"] = {"latitude":65, "longitude":-18};
+            latlong["IT"] = {"latitude":42.8333, "longitude":12.8333};
+            latlong["JM"] = {"latitude":18.25, "longitude":-77.5};
+            latlong["JO"] = {"latitude":31, "longitude":36};
+            latlong["JP"] = {"latitude":36, "longitude":138};
+            latlong["KE"] = {"latitude":1, "longitude":38};
+            latlong["KG"] = {"latitude":41, "longitude":75};
+            latlong["KH"] = {"latitude":13, "longitude":105};
+            latlong["KI"] = {"latitude":1.4167, "longitude":173};
+            latlong["KM"] = {"latitude":-12.1667, "longitude":44.25};
+            latlong["KN"] = {"latitude":17.3333, "longitude":-62.75};
+            latlong["KP"] = {"latitude":40, "longitude":127};
+            latlong["KR"] = {"latitude":37, "longitude":127.5};
+            latlong["KW"] = {"latitude":29.3375, "longitude":47.6581};
+            latlong["KY"] = {"latitude":19.5, "longitude":-80.5};
+            latlong["KZ"] = {"latitude":48, "longitude":68};
+            latlong["LA"] = {"latitude":18, "longitude":105};
+            latlong["LB"] = {"latitude":33.8333, "longitude":35.8333};
+            latlong["LC"] = {"latitude":13.8833, "longitude":-61.1333};
+            latlong["LI"] = {"latitude":47.1667, "longitude":9.5333};
+            latlong["LK"] = {"latitude":7, "longitude":81};
+            latlong["LR"] = {"latitude":6.5, "longitude":-9.5};
+            latlong["LS"] = {"latitude":-29.5, "longitude":28.5};
+            latlong["LT"] = {"latitude":55, "longitude":24};
+            latlong["LU"] = {"latitude":49.75, "longitude":6};
+            latlong["LV"] = {"latitude":57, "longitude":25};
+            latlong["LY"] = {"latitude":25, "longitude":17};
+            latlong["MA"] = {"latitude":32, "longitude":-5};
+            latlong["MC"] = {"latitude":43.7333, "longitude":7.4};
+            latlong["MD"] = {"latitude":47, "longitude":29};
+            latlong["ME"] = {"latitude":42.5, "longitude":19.4};
+            latlong["MG"] = {"latitude":-20, "longitude":47};
+            latlong["MH"] = {"latitude":9, "longitude":168};
+            latlong["MK"] = {"latitude":41.8333, "longitude":22};
+            latlong["ML"] = {"latitude":17, "longitude":-4};
+            latlong["MM"] = {"latitude":22, "longitude":98};
+            latlong["MN"] = {"latitude":46, "longitude":105};
+            latlong["MO"] = {"latitude":22.1667, "longitude":113.55};
+            latlong["MP"] = {"latitude":15.2, "longitude":145.75};
+            latlong["MQ"] = {"latitude":14.6667, "longitude":-61};
+            latlong["MR"] = {"latitude":20, "longitude":-12};
+            latlong["MS"] = {"latitude":16.75, "longitude":-62.2};
+            latlong["MT"] = {"latitude":35.8333, "longitude":14.5833};
+            latlong["MU"] = {"latitude":-20.2833, "longitude":57.55};
+            latlong["MV"] = {"latitude":3.25, "longitude":73};
+            latlong["MW"] = {"latitude":-13.5, "longitude":34};
+            latlong["MX"] = {"latitude":23, "longitude":-102};
+            latlong["MY"] = {"latitude":2.5, "longitude":112.5};
+            latlong["MZ"] = {"latitude":-18.25, "longitude":35};
+            latlong["NA"] = {"latitude":-22, "longitude":17};
+            latlong["NC"] = {"latitude":-21.5, "longitude":165.5};
+            latlong["NE"] = {"latitude":16, "longitude":8};
+            latlong["NF"] = {"latitude":-29.0333, "longitude":167.95};
+            latlong["NG"] = {"latitude":10, "longitude":8};
+            latlong["NI"] = {"latitude":13, "longitude":-85};
+            latlong["NL"] = {"latitude":52.5, "longitude":5.75};
+            latlong["NO"] = {"latitude":62, "longitude":10};
+            latlong["NP"] = {"latitude":28, "longitude":84};
+            latlong["NR"] = {"latitude":-0.5333, "longitude":166.9167};
+            latlong["NU"] = {"latitude":-19.0333, "longitude":-169.8667};
+            latlong["NZ"] = {"latitude":-41, "longitude":174};
+            latlong["OM"] = {"latitude":21, "longitude":57};
+            latlong["PA"] = {"latitude":9, "longitude":-80};
+            latlong["PE"] = {"latitude":-10, "longitude":-76};
+            latlong["PF"] = {"latitude":-15, "longitude":-140};
+            latlong["PG"] = {"latitude":-6, "longitude":147};
+            latlong["PH"] = {"latitude":13, "longitude":122};
+            latlong["PK"] = {"latitude":30, "longitude":70};
+            latlong["PL"] = {"latitude":52, "longitude":20};
+            latlong["PM"] = {"latitude":46.8333, "longitude":-56.3333};
+            latlong["PR"] = {"latitude":18.25, "longitude":-66.5};
+            latlong["PS"] = {"latitude":32, "longitude":35.25};
+            latlong["PT"] = {"latitude":39.5, "longitude":-8};
+            latlong["PW"] = {"latitude":7.5, "longitude":134.5};
+            latlong["PY"] = {"latitude":-23, "longitude":-58};
+            latlong["QA"] = {"latitude":25.5, "longitude":51.25};
+            latlong["RE"] = {"latitude":-21.1, "longitude":55.6};
+            latlong["RO"] = {"latitude":46, "longitude":25};
+            latlong["RS"] = {"latitude":44, "longitude":21};
+            latlong["RU"] = {"latitude":60, "longitude":100};
+            latlong["RW"] = {"latitude":-2, "longitude":30};
+            latlong["SA"] = {"latitude":25, "longitude":45};
+            latlong["SB"] = {"latitude":-8, "longitude":159};
+            latlong["SC"] = {"latitude":-4.5833, "longitude":55.6667};
+            latlong["SD"] = {"latitude":15, "longitude":30};
+            latlong["SE"] = {"latitude":62, "longitude":15};
+            latlong["SG"] = {"latitude":1.3667, "longitude":103.8};
+            latlong["SH"] = {"latitude":-15.9333, "longitude":-5.7};
+            latlong["SI"] = {"latitude":46, "longitude":15};
+            latlong["SJ"] = {"latitude":78, "longitude":20};
+            latlong["SK"] = {"latitude":48.6667, "longitude":19.5};
+            latlong["SL"] = {"latitude":8.5, "longitude":-11.5};
+            latlong["SM"] = {"latitude":43.7667, "longitude":12.4167};
+            latlong["SN"] = {"latitude":14, "longitude":-14};
+            latlong["SO"] = {"latitude":10, "longitude":49};
+            latlong["SR"] = {"latitude":4, "longitude":-56};
+            latlong["ST"] = {"latitude":1, "longitude":7};
+            latlong["SV"] = {"latitude":13.8333, "longitude":-88.9167};
+            latlong["SY"] = {"latitude":35, "longitude":38};
+            latlong["SZ"] = {"latitude":-26.5, "longitude":31.5};
+            latlong["TC"] = {"latitude":21.75, "longitude":-71.5833};
+            latlong["TD"] = {"latitude":15, "longitude":19};
+            latlong["TF"] = {"latitude":-43, "longitude":67};
+            latlong["TG"] = {"latitude":8, "longitude":1.1667};
+            latlong["TH"] = {"latitude":15, "longitude":100};
+            latlong["TJ"] = {"latitude":39, "longitude":71};
+            latlong["TK"] = {"latitude":-9, "longitude":-172};
+            latlong["TM"] = {"latitude":40, "longitude":60};
+            latlong["TN"] = {"latitude":34, "longitude":9};
+            latlong["TO"] = {"latitude":-20, "longitude":-175};
+            latlong["TR"] = {"latitude":39, "longitude":35};
+            latlong["TT"] = {"latitude":11, "longitude":-61};
+            latlong["TV"] = {"latitude":-8, "longitude":178};
+            latlong["TW"] = {"latitude":23.5, "longitude":121};
+            latlong["TZ"] = {"latitude":-6, "longitude":35};
+            latlong["UA"] = {"latitude":49, "longitude":32};
+            latlong["UG"] = {"latitude":1, "longitude":32};
+            latlong["UM"] = {"latitude":19.2833, "longitude":166.6};
+            latlong["US"] = {"latitude":38, "longitude":-97};
+            latlong["UY"] = {"latitude":-33, "longitude":-56};
+            latlong["UZ"] = {"latitude":41, "longitude":64};
+            latlong["VA"] = {"latitude":41.9, "longitude":12.45};
+            latlong["VC"] = {"latitude":13.25, "longitude":-61.2};
+            latlong["VE"] = {"latitude":8, "longitude":-66};
+            latlong["VG"] = {"latitude":18.5, "longitude":-64.5};
+            latlong["VI"] = {"latitude":18.3333, "longitude":-64.8333};
+            latlong["VN"] = {"latitude":16, "longitude":106};
+            latlong["VU"] = {"latitude":-16, "longitude":167};
+            latlong["WF"] = {"latitude":-13.3, "longitude":-176.2};
+            latlong["WS"] = {"latitude":-13.5833, "longitude":-172.3333};
+            latlong["YE"] = {"latitude":15, "longitude":48};
+            latlong["YT"] = {"latitude":-12.8333, "longitude":45.1667};
+            latlong["ZA"] = {"latitude":-29, "longitude":24};
+            latlong["ZM"] = {"latitude":-15, "longitude":30};
+            latlong["ZW"] = {"latitude":-20, "longitude":30};
+
+            return latlong;
+        },
+    }
+})(jQuery);

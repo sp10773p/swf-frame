@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="euc-kr" ?>
+<ReportInfos>
+	<DefaultOptions ResourceID="DEMO" ViewerOptionID="DEFALT" />
+
+	<Report ID="TEST" FileName="ubi_sample2.jrf" Title="DRM 샘플파일" Comment="">
+		<ViewerOption	ExecType="TYPE4" Scale="100" ProgressBar="true" Toolbar="true"
+						Margin="true" PopupMenu="false" Params="true" ImageCache="true"
+						FontElement="" InvisibleToolbar="" CopyFonts="" Background=""
+						BackgroundToolbar="" ExportDS="" ExportFileName="" InvisibleExportTypes=""
+						InitPage="" />
+		<!-- BCQRE DocName="출원사실증명원" PageNames="온라인발급$" -->
+	</Report>
+	<Report ID="TEST01" FileName="test01.jrf" Title="샘플파일" />
+	<Report ID="TEST02" FileName="test01.jrf" Title="샘플파일_01" />
+</ReportInfos>

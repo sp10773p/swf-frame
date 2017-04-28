@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="commonValidator">
+    
+    <select	id="selectExchangeRate" parameterType="map" resultType="java.lang.String">
+        SELECT NATION
+          FROM CMM_EXCHANGE_RATE
+         WHERE APPLY_DATE > TO_NUMBER(TO_CHAR(SYSDATE - 7, 'YYYYMMDD'))
+           AND APPLY_DATE <![CDATA[<=]]> TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD'))
+           AND NATION = #{NATION}
+           AND IMPORT_EXPORT = 'E'
+    </select>
+    
+    <select	id="selectCommonCode" parameterType="map" resultType="java.lang.String">
+        SELECT CODE
+          FROM CMM_STD_CODE
+         WHERE CLASS_ID = #{CLASS_ID}
+           AND CODE = #{CODE}
+    </select>
+    
+    <select	id="selectTbHsCd" parameterType="map" resultType="java.lang.String">
+        SELECT HS_CD
+          FROM CMM_HS_CD
+         WHERE HS_CD = #{HS_CD}
+    </select>
+
+</mapper>

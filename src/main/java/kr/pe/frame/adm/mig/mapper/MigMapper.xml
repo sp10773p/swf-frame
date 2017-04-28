@@ -1,0 +1,536 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mig">
+    <select	id="selectMigTableList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY TOBE_TABLE) RNUM,
+                ASIS_TABLE, TOBE_TABLE, MIG_TYPE, DATA_MIG_TYPE, JOIN,
+                CASE WHEN DATA_MIG_TYPE = 'X' THEN
+                  '필요없음'
+                WHEN DATA_MIG_TYPE = 'A' THEN
+                  '1:1이관'
+                WHEN DATA_MIG_TYPE = 'C' THEN
+                  'N:1이관'
+                WHEN DATA_MIG_TYPE = 'N' THEN
+                  '신규이관'
+                END AS DATA_MIG_TYPE_NM,
+                CASE WHEN MIG_TYPE = 'M' THEN
+                  '테이블변경'
+                WHEN MIG_TYPE = 'N' THEN
+                  '신규생성'
+                END AS MIG_TYPE_NM
+          FROM X_MIG_TABLE_MNG
+        WHERE 1=1
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            <if test="SEARCH_COL == 'ASIS_TABLE'">
+                AND ASIS_TABLE LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEARCH_COL == 'TOBE_TABLE'">
+                AND TOBE_TABLE LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+        </if>
+        <if test="DATA_MIG_TYPE != null and DATA_MIG_TYPE != ''">
+            AND DATA_MIG_TYPE = #{DATA_MIG_TYPE}
+        </if>
+        <if test="MIG_TYPE != null and MIG_TYPE != ''">
+            AND MIG_TYPE = #{MIG_TYPE}
+        </if>
+        ORDER BY TOBE_TABLE
+    </select>
+
+    <select	id="selectMigTableMngExcel" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY TOBE_TABLE) RNUM,
+                (SELECT COMMENTS FROM USER_TAB_COMMENTS WHERE TABLE_NAME = X_MIG_TABLE_MNG.TOBE_TABLE) AS TABLE_COMMENT,
+                ASIS_TABLE AS ASIS_TABLE_NAME,
+                TOBE_TABLE AS TOBE_TABLE_NAME,
+                DATA_MIG_TYPE,
+                MIG_TYPE,
+                CASE WHEN DATA_MIG_TYPE = 'X' THEN
+                          '필요없음'
+                     WHEN DATA_MIG_TYPE = 'A' THEN
+                          '1:1이관'
+                     WHEN DATA_MIG_TYPE = 'C' THEN
+                          'N:1이관'
+                     WHEN DATA_MIG_TYPE = 'N' THEN
+                          '신규이관'
+                END AS DATA_MIG_TYPE_NM,
+                CASE WHEN MIG_TYPE = 'M' THEN
+                    '테이블변경'
+                WHEN MIG_TYPE = 'N' THEN
+                    '신규생성'
+                END AS MIG_TYPE_NM
+          FROM X_MIG_TABLE_MNG
+        WHERE 1=1
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            <if test="SEARCH_COL == 'ASIS_TABLE'">
+                AND ASIS_TABLE LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEARCH_COL == 'TOBE_TABLE'">
+                AND TOBE_TABLE LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+        </if>
+        <if test="P_DATA_MIG_TYPE != null and P_DATA_MIG_TYPE != ''">
+            AND DATA_MIG_TYPE = #{P_DATA_MIG_TYPE}
+        </if>
+        <if test="P_MIG_TYPE != null and P_MIG_TYPE != ''">
+            AND MIG_TYPE = #{P_MIG_TYPE}
+        </if>
+         ORDER BY TOBE_TABLE
+    </select>
+
+    <select	id="selectAsisTableColumnInfoStrList" parameterType="string" resultType="string">
+          SELECT 'SELECT '''||TABLE_NAME||''' AS ASIS_TABLE_NAME, '''||COLUMN_NAME||''' AS ASIS_COLUMN_NAME, '''||
+                    DATA_TYPE||''' AS ASIS_DATA_TYPE, '''||
+                    CASE WHEN DATA_TYPE = 'NUMBER' THEN
+                        DECODE(DATA_PRECISION, NULL, '', DATA_PRECISION||','||DATA_SCALE)
+                    WHEN INSTR(DATA_TYPE, 'TIMESTAMP') > 0 THEN
+                        ''
+                    ELSE
+                        TO_CHAR(DATA_LENGTH)
+                    END||''' AS ASIS_DATA_LENGTH, '''||
+                    NULLABLE||''' AS ASIS_NULLABLE FROM DUAL UNION ALL '
+              FROM USER_TAB_COLUMNS
+             WHERE TABLE_NAME IN (${value})
+    </select>
+
+    <select	id="selectAsisTableColumnInfoStrList2" parameterType="string" resultType="string">
+        SELECT 'SELECT '''||A.TABLE_NAME||''' AS ASIS_TABLE_NAME, '''||
+                A.COLUMN_NAME||''' AS ASIS_COLUMN_NAME, '''||
+                A.DATA_TYPE||''' AS ASIS_DATA_TYPE, '''||
+                CASE WHEN A.DATA_TYPE = 'NUMBER' THEN
+                          DECODE(DATA_PRECISION, NULL, '', DATA_PRECISION||','||DATA_SCALE)
+                     WHEN A.DATA_TYPE = 'DATE' OR INSTR(A.DATA_TYPE, 'TIMESTAMP') > 0 THEN
+                        '' ELSE TO_CHAR(A.DATA_LENGTH)
+                END||''' AS ASIS_DATA_LENGTH, '''||
+                REPLACE(B.COMMENTS, '''', '''''')||''' AS ASIS_COMMENTS, '''||
+                A.NULLABLE||''' AS ASIS_NULLABLE FROM DUAL UNION ALL '
+          FROM USER_TAB_COLUMNS A, USER_COL_COMMENTS B
+        WHERE A.TABLE_NAME = B.TABLE_NAME
+          AND A.COLUMN_NAME = B.COLUMN_NAME
+          AND A.TABLE_NAME IN (${value})
+    </select>
+
+    <select	id="selectNewTableColumnInfoList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY TOBE_TABLE) RNUM
+               , ASIS_TABLE AS ASIS_TABLE
+               , DATA_MIG_TYPE
+               , JOIN
+               , MIG_TYPE
+               , TOBE_TABLE AS TOBE_TABLE_NAME
+               , 'N' AS MODIFY_DESC
+               , B.COMMENTS AS TABLE_COMMENT
+               , CASE WHEN MIG_TYPE = 'M' THEN
+                        '테이블변경'
+                      WHEN MIG_TYPE = 'N' THEN
+                        '신규생성'
+                END AS MIG_TYPE_NM
+                , CASE WHEN DATA_MIG_TYPE = 'X' THEN
+                        '필요없음'
+                      WHEN DATA_MIG_TYPE = 'A' THEN
+                        '1:1이관'
+                      WHEN DATA_MIG_TYPE = 'C' THEN
+                        'N:1이관'
+                      WHEN DATA_MIG_TYPE = 'N' THEN
+                        '신규이관'
+                END AS DATA_MIG_TYPE_NM
+          FROM X_MIG_TABLE_MNG A, USER_TAB_COMMENTS B
+         WHERE A.TOBE_TABLE = B.TABLE_NAME(+)
+           AND MIG_TYPE = 'N'
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            <if test="SEARCH_COL == 'ASIS_TABLE'">
+                AND ASIS_TABLE LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEARCH_COL == 'TOBE_TABLE'">
+                AND TOBE_TABLE LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+        </if>
+        ORDER BY TOBE_TABLE
+    </select>
+
+    <select	id="selectTableColumnInfoList" parameterType="map" resultType="map">
+        WITH ASIS AS(
+            ${ASIS_QUERY}
+        ),
+        TOBE AS (
+            SELECT B.ASIS_TABLE, B.TOBE_TABLE AS TOBE_TABLE_NAME, B.MIG_TYPE, B.DATA_MIG_TYPE, COLUMN_NAME AS TOBE_COLUMN_NAME, DATA_TYPE AS TOBE_DATA_TYPE,
+                    CASE WHEN DATA_TYPE = 'NUMBER' THEN
+                        DECODE(DATA_PRECISION, NULL, '', DATA_PRECISION||','||DATA_SCALE)
+                    WHEN INSTR(DATA_TYPE, 'TIMESTAMP') > 0 THEN
+                        ''
+                    ELSE
+                        TO_CHAR(DATA_LENGTH)
+                    END AS TOBE_DATA_LENGTH, NULLABLE AS TOBE_NULLABLE
+            FROM USER_TAB_COLUMNS A, X_MIG_TABLE_MNG B
+            WHERE A.TABLE_NAME  = B.TOBE_TABLE
+            AND B.MIG_TYPE='M'
+            AND A.TABLE_NAME IN (${TOBE_TABLE_NAMES})
+        )
+        SELECT ROW_NUMBER() OVER (ORDER BY TOBE_TABLE_NAME) RNUM, A.*
+          FROM (
+                SELECT ASIS_TABLE_NAME,
+                        TOBE_TABLE_NAME,
+                        (SELECT COMMENTS FROM USER_TAB_COMMENTS WHERE TABLE_NAME = TOBE_TABLE_NAME) AS TABLE_COMMENT,
+                        MAX(MODIFY_DESC) AS IS_COL_MOD,
+                        MAX(MIG_TYPE) AS MIG_TYPE,
+                        CASE WHEN MAX(MIG_TYPE) = 'M' THEN
+                                '테이블변경'
+                              WHEN MAX(MIG_TYPE) = 'N' THEN
+                                '신규생성'
+                        END AS MIG_TYPE_NM,
+                        MAX(DATA_MIG_TYPE) AS DATA_MIG_TYPE,
+                        CASE WHEN MAX(DATA_MIG_TYPE) = 'X' THEN
+                                '필요없음'
+                              WHEN MAX(DATA_MIG_TYPE) = 'A' THEN
+                                '1:1이관'
+                              WHEN MAX(DATA_MIG_TYPE) = 'C' THEN
+                                'N:1이관'
+                              WHEN MAX(DATA_MIG_TYPE) = 'N' THEN
+                                '신규이관'
+                        END AS DATA_MIG_TYPE_NM
+                FROM (
+                        SELECT NVL(ASIS_TABLE_NAME, ASIS_TABLE) AS ASIS_TABLE_NAME,
+                                NVL(TOBE_TABLE_NAME, (SELECT TOBE_TABLE FROM X_MIG_TABLE_MNG WHERE ASIS_TABLE = ASIS_TABLE_NAME)) AS TOBE_TABLE_NAME,
+                                CASE WHEN ASIS_COLUMN_NAME IS NULL OR TOBE_COLUMN_NAME IS NULL
+                                        OR ASIS_DATA_TYPE != TOBE_DATA_TYPE OR ASIS_DATA_LENGTH != TO_CHAR(TOBE_DATA_LENGTH)
+                                        OR ASIS_NULLABLE != TOBE_NULLABLE THEN 'Y' ELSE 'N' END MODIFY_DESC,
+                                DATA_MIG_TYPE, MIG_TYPE
+                        FROM (
+                                SELECT ASIS.*, TOBE.*
+                                FROM ASIS FULL OUTER JOIN TOBE
+                                ON ASIS.ASIS_TABLE_NAME = TOBE.ASIS_TABLE
+                                AND ASIS.ASIS_COLUMN_NAME = TOBE.TOBE_COLUMN_NAME
+                            ) M
+                       ) A
+                GROUP BY ASIS_TABLE_NAME, TOBE_TABLE_NAME
+                ) A
+        WHERE 1=1
+        <if test="IS_COL_MOD != null and IS_COL_MOD != ''">
+            AND IS_COL_MOD = #{IS_COL_MOD}
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            <if test="SEARCH_COL == 'ASIS_TABLE'">
+                AND ASIS_TABLE_NAME LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEARCH_COL == 'TOBE_TABLE'">
+                AND TOBE_TABLE_NAME LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+        </if>
+        ORDER BY TOBE_TABLE_NAME
+    </select>
+
+
+    <select	id="selectTableColModInfoList" parameterType="map" resultType="map">
+        WITH ASIS AS(
+            ${ASIS_QUERY}
+        ),
+        TOBE AS (
+                SELECT B.ASIS_TABLE, B.TOBE_TABLE AS TOBE_TABLE_NAME, COLUMN_NAME AS TOBE_COLUMN_NAME, DATA_TYPE AS TOBE_DATA_TYPE,
+                        CASE WHEN DATA_TYPE = 'NUMBER' THEN
+                            DECODE(DATA_PRECISION, NULL, '', DATA_PRECISION||','||DATA_SCALE)
+                        WHEN INSTR(DATA_TYPE, 'TIMESTAMP') > 0 THEN
+                            ''
+                        ELSE
+                            TO_CHAR(DATA_LENGTH)
+                        END AS TOBE_DATA_LENGTH,
+                        NULLABLE AS TOBE_NULLABLE
+                  FROM USER_TAB_COLUMNS A, X_MIG_TABLE_MNG B
+                 WHERE A.TABLE_NAME  = B.TOBE_TABLE
+                   AND A.TABLE_NAME IN (${TOBE_TABLE_NAMES})
+        )
+        SELECT A.*
+        FROM (
+                SELECT NVL(TOBE_TABLE_NAME, #{TOBE_TABLE_NAME}) AS TABLE_NAME,
+                        NVL(ASIS_COLUMN_NAME, TOBE_COLUMN_NAME) AS COLUMN_NAME,
+                        CASE WHEN ASIS_COLUMN_NAME IS NULL THEN
+                        '컬럼추가'
+                        WHEN TOBE_COLUMN_NAME IS NULL THEN
+                        '컬럼삭제'
+                        WHEN ASIS_DATA_TYPE != TOBE_DATA_TYPE THEN
+                        '데이터타입['||ASIS_DATA_TYPE||' to '||TOBE_DATA_TYPE||']'
+                        WHEN ASIS_DATA_LENGTH != TOBE_DATA_LENGTH THEN
+                        '데이터길이['||ASIS_DATA_LENGTH||' to '||TOBE_DATA_LENGTH||']'
+                        WHEN ASIS_NULLABLE != TOBE_NULLABLE THEN
+                        '널가능여부['||ASIS_NULLABLE||' to '||TOBE_NULLABLE||']'
+                        END MODIFY_DESC
+                FROM (
+                        SELECT ASIS.*, TOBE.*
+                        FROM ASIS FULL OUTER JOIN TOBE
+                        ON ASIS.ASIS_TABLE_NAME = TOBE.ASIS_TABLE
+                        AND ASIS.ASIS_COLUMN_NAME = TOBE.TOBE_COLUMN_NAME
+                        ) M
+                ) A
+        WHERE MODIFY_DESC IS NOT NULL
+    </select>
+
+    <select	id="selectTableIndexInfoList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY COLUMN_POSITION) RNUM,
+                INDEX_NAME, COLUMN_NAME, COLUMN_POSITION
+          FROM USER_IND_COLUMNS
+         WHERE TABLE_NAME = #{TABLE_NAME}
+        ORDER BY COLUMN_POSITION
+    </select>
+
+    <select	id="selectTableCount" parameterType="string" resultType="int">
+        SELECT COUNT(*) FROM USER_TABLES
+         WHERE TABLE_NAME = #{value}
+    </select>
+
+
+    <select	id="selectMigTableMngCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM X_MIG_TABLE_MNG
+         WHERE NVL(ASIS_TABLE, ' ') = NVL(#{ASIS_TABLE}, ' ')
+           AND TOBE_TABLE = #{TOBE_TABLE}
+    </select>
+
+    <insert id="insertMigTableMng" parameterType="map">
+        INSERT INTO X_MIG_TABLE_MNG(
+            ASIS_TABLE,
+            TOBE_TABLE,
+            DATA_MIG_TYPE,
+            MIG_TYPE
+        )VALUES(
+            #{ASIS_TABLE},
+            #{TOBE_TABLE},
+            #{DATA_MIG_TYPE},
+            #{MIG_TYPE}
+        )
+    </insert>
+
+    <update id="updateMigTableMng" parameterType="map">
+        UPDATE X_MIG_TABLE_MNG
+           SET DATA_MIG_TYPE = #{DATA_MIG_TYPE},
+                MIG_TYPE     = #{MIG_TYPE}
+        WHERE 1=1
+        <if test="ORG_ASIS_TABLE != null and ORG_ASIS_TABLE != ''">
+          AND ASIS_TABLE = #{ORG_ASIS_TABLE}
+        </if>
+          AND TOBE_TABLE = #{ORG_TOBE_TABLE}
+    </update>
+
+    <update id="deleteMigTableMng" parameterType="map">
+        DELETE FROM  X_MIG_TABLE_MNG
+        WHERE NVL(ASIS_TABLE, ' ') = NVL(#{ASIS_TABLE_NAME},' ')
+          AND TOBE_TABLE = #{TOBE_TABLE_NAME}
+    </update>
+
+    <select	id="selectDataMigList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY B.COLUMN_ID) RNUM
+                , A.ASIS_TABLE
+                , A.ASIS_COL
+                , NVL(A.TOBE_TABLE, B.TABLE_NAME) AS TOBE_TABLE
+                , NVL(A.TOBE_COL, B.COLUMN_NAME) AS TOBE_COL
+                , A.SUB
+          FROM X_MIG_COL_MNG A, USER_TAB_COLUMNS B
+         WHERE A.TOBE_TABLE(+) = B.TABLE_NAME
+           AND A.TOBE_COL(+) = B.COLUMN_NAME
+           AND B.TABLE_NAME = #{TABLE_NAME}
+        ORDER BY B.COLUMN_ID
+    </select>
+
+    <delete id="deleteMigColMng" parameterType="string">
+        DELETE FROM X_MIG_COL_MNG
+        WHERE TOBE_TABLE = #{value}
+    </delete>
+
+    <insert id="insertMigColMng" parameterType="map">
+        INSERT INTO X_MIG_COL_MNG(
+            ASIS_TABLE
+            , ASIS_COL
+            , TOBE_TABLE
+            , TOBE_COL
+            , SUB
+        )VALUES(
+            #{ASIS_TABLE}
+            , #{ASIS_COL}
+            , #{TOBE_TABLE}
+            , #{TOBE_COL}
+            , #{SUB}
+        )
+    </insert>
+
+    <update id="updateJoin" parameterType="map">
+        UPDATE X_MIG_TABLE_MNG
+           SET JOIN = #{JOIN}
+        WHERE TOBE_TABLE = #{TOBE_TABLE}
+    </update>
+
+    <select id="selectAsisTable" parameterType="map" resultType="string">
+        SELECT SUBSTR(xmlagg(xmlelement(a,',' || ASIS_TABLE) order by ASIS_TABLE).extract('//text()').getStringVal(), 2)
+          FROM X_MIG_TABLE_MNG
+         WHERE TOBE_TABLE = #{TOBE_TABLE}
+    </select>
+
+    <select id="selectSourceColumn" parameterType="map" resultType="map">
+         SELECT CASE WHEN SUB IS NOT NULL THEN
+                    SUB
+                WHEN ASIS_TABLE IS NOT NULL THEN
+                    ASIS_TABLE||'.'||ASIS_COL
+                ELSE '' END ASIS_COL,
+                NVL(A.TOBE_COL, B.COLUMN_NAME) AS TOBE_COL
+           FROM X_MIG_COL_MNG A, USER_TAB_COLUMNS B
+          WHERE A.TOBE_TABLE(+) = B.TABLE_NAME
+            AND A.TOBE_COL(+) = B.COLUMN_NAME
+            AND B.TABLE_NAME = #{TOBE_TABLE}
+    </select>
+
+    <select id="executeMakeQuery" parameterType="string" resultType="string">
+        ${value}
+    </select>
+
+    <select id="selectMigTable" resultType="map">
+        SELECT DISTINCT TOBE_TABLE, DATA_MIG_TYPE, JOIN
+          FROM X_MIG_TABLE_MNG
+         WHERE DATA_MIG_TYPE != 'X'
+    </select>
+
+    <select id="selectTobeTableCount" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM ${TOBE_TABLE}
+    </select>
+
+    <select id="selectMakeQuery" parameterType="map" resultType="string">
+        WITH VTBL AS
+        (
+                SELECT  ROWNUM      AS RNO
+                        , TO_NUMBER(#{STMT_CNT})       AS STMT_CNT     /* PARAMETER : 한 번에 INSERT할 ROW수 */
+                        , TNAME     AS TBL
+                FROM    TAB
+                WHERE   TNAME IN (#{TOBE_TABLE})   /* PARAMETER : INSERT QUERY를 생성할 테이블명 */
+        )
+        SELECT  'SELECT ''INSERT INTO '||TBL||' NOLOGGING ('||INSERT_COLS||')VALUES('||SELECT_COLS||');'' AS QRY FROM (SELECT A.* FROM '||TBL||' A)'
+                AS INSERT_QUERY_GENERATOR
+        FROM    (
+                SELECT  MIN(RNO)    AS RNO
+                        , MIN(STMT_CNT) AS STMT_CNT
+                        , TBL
+                        , SUBSTR(MAX(SYS_CONNECT_BY_PATH(COLUMN_NAME, ',')), 2) AS INSERT_COLS
+                        , REPLACE(SUBSTR(MAX(SYS_CONNECT_BY_PATH(SEL_COL, '$')), 2), '$', ', ') AS SELECT_COLS
+                FROM    (
+                        SELECT  ROW_NUMBER() OVER (PARTITION BY A.TBL ORDER BY B.COLUMN_ID) AS RNUM
+                                , A.RNO
+                                , A.STMT_CNT
+                                , A.TBL
+                                , B.COLUMN_ID
+                                , B.COLUMN_NAME
+                                , B.DATA_TYPE
+                                , CASE
+                                  WHEN DATA_TYPE IN ('CHAR','VARCHAR2')           THEN '''''''||REPLACE('||COLUMN_NAME||','''''''','''''''''''')||'''''''
+                                  WHEN DATA_TYPE IN ('NUMBER','INTEGER','LONG')   THEN '''||NVL2('||COLUMN_NAME||',TO_CHAR('||COLUMN_NAME||'),''NULL'')||'''
+                                  WHEN DATA_TYPE IN ('DATE')                      THEN 'TO_DATE(''''''||TO_CHAR('||COLUMN_NAME||',''YYYYMMDDHH24MISS'')||'''''',''''YYYYMMDDHH24MISS'''')'
+                                  END AS SEL_COL
+                        FROM    VTBL A
+                                , COLS B
+                        WHERE   A.TBL = B.TABLE_NAME
+                        )
+                START WITH RNUM = 1
+                CONNECT BY PRIOR RNUM = RNUM - 1 AND PRIOR TBL = TBL
+                GROUP BY TBL
+                ) A
+        ORDER BY RNO
+    </select>
+
+    <select	id="selectMappingTableList" parameterType="string" resultType="map">
+         SELECT ASIS_TABLE AS SOURCE_TABLE,
+                TOBE_TABLE AS TARGET_TABLE,
+                JOIN
+           FROM X_MIG_TABLE_MNG
+         WHERE TOBE_TABLE = #{value}
+    </select>
+
+    <select id="selectTableComment" parameterType="string" resultType="string">
+        SELECT SUBSTR(xmlagg(xmlelement(a,',' || COMMENTS||'('||TABLE_NAME ||')') order by COMMENTS).extract('//text()').getStringVal(), 2)
+          FROM USER_TAB_COMMENTS
+         WHERE TABLE_NAME IN (${value})
+    </select>
+
+    <select	id="selectTableColumnInfoList2" parameterType="map" resultType="map">
+        WITH ASIS AS(
+            ${ASIS_QUERY}
+        ),
+        TOBE AS (
+            SELECT B.ASIS_TABLE,
+                    B.ASIS_COL,
+                    B.TOBE_TABLE AS TOBE_TABLE_NAME,
+                    A.COLUMN_NAME AS TOBE_COLUMN_NAME,
+                    A.DATA_TYPE AS TOBE_DATA_TYPE,
+                    CASE WHEN A.DATA_TYPE = 'NUMBER' THEN
+                              DECODE(A.DATA_PRECISION, NULL, '', A.DATA_PRECISION||','||A.DATA_SCALE)
+                          WHEN A.DATA_TYPE = 'DATE' OR INSTR(A.DATA_TYPE, 'TIMESTAMP') > 0 THEN
+                             '' ELSE TO_CHAR(A.DATA_LENGTH)
+                    END AS TOBE_DATA_LENGTH,
+                    A.NULLABLE AS TOBE_NULLABLE,
+                    A.COLUMN_ID,
+                    C.COMMENTS AS TOBE_COMMENTS
+              FROM USER_TAB_COLUMNS A, X_MIG_COL_MNG B, USER_COL_COMMENTS C
+             WHERE A.TABLE_NAME  = B.TOBE_TABLE
+               AND A.COLUMN_NAME = B.TOBE_COL
+               AND A.TABLE_NAME = C.TABLE_NAME
+               AND A.COLUMN_NAME = C.COLUMN_NAME
+               AND A.TABLE_NAME = #{TOBE_TABLE_NAME}
+        )
+        SELECT ASIS_TABLE_NAME AS ASIS_TABLE,
+                ASIS_COLUMN_NAME AS ASIS_COL,
+                ASIS_DATA_TYPE||DECODE(ASIS_DATA_LENGTH, NULL, '', '('||ASIS_DATA_LENGTH||')') AS ASIS_DATA_TYPE,
+                ASIS_COMMENTS,
+                TOBE_TABLE_NAME AS TOBE_TABLE,
+                TOBE_COLUMN_NAME AS TOBE_COL,
+                TOBE_DATA_TYPE||DECODE(TOBE_DATA_LENGTH, NULL, '', '('||TOBE_DATA_LENGTH||')') AS TOBE_DATA_TYPE,
+                TOBE_COMMENTS,
+                ASIS_DATA_LENGTH, TOBE_DATA_LENGTH,
+                CASE WHEN ASIS_COLUMN_NAME IS NULL THEN
+                     '컬럼추가'
+                 WHEN TOBE_COLUMN_NAME IS NULL THEN
+                     '컬럼삭제'
+                 WHEN ASIS_DATA_TYPE != TOBE_DATA_TYPE THEN
+                     '데이터타입['||ASIS_DATA_TYPE||' -> '||TOBE_DATA_TYPE||']'
+                 WHEN ASIS_DATA_LENGTH != TO_CHAR(TOBE_DATA_LENGTH) THEN
+                     '데이터길이['||ASIS_DATA_LENGTH||' -> '||TOBE_DATA_LENGTH||']'
+                 WHEN ASIS_NULLABLE != TOBE_NULLABLE THEN
+                     '널가능여부['||ASIS_NULLABLE||' -> '||TOBE_NULLABLE||']'
+                END MODIFY_DESC
+          FROM ASIS A, TOBE B
+         WHERE A.ASIS_TABLE_NAME = B.ASIS_TABLE
+           AND A.ASIS_COLUMN_NAME = B.ASIS_COL
+        ORDER BY B.COLUMN_ID
+    </select>
+
+    <select	id="selectTobeTableNameList" resultType="string">
+        SELECT TOBE_TABLE
+          FROM X_MIG_TABLE_MNG A
+         WHERE EXISTS (SELECT X FROM X_MIG_COL_MNG
+                        WHERE TOBE_TABLE = A.TOBE_TABLE)
+        GROUP BY TOBE_TABLE
+    </select>
+
+    <select	id="selectTableDDL" resultType="string">
+         SELECT REPLACE(DBMS_METADATA.GET_DDL('TABLE',TOBE_TABLE,'GOGLOBAL'), '"GOGLOBAL".', '')
+           FROM X_MIG_TABLE_MNG A, USER_TABLES B
+          WHERE A.TOBE_TABLE = B.TABLE_NAME
+         GROUP BY A.TOBE_TABLE
+    </select>
+
+    <select	id="selectIndexDDL" resultType="string">
+         SELECT REPLACE(DBMS_METADATA.GET_DDL('INDEX',A.INDEX_NAME,'GOGLOBAL'), '"GOGLOBAL".', '')
+          FROM USER_INDEXES A, (SELECT TOBE_TABLE FROM X_MIG_TABLE_MNG GROUP BY TOBE_TABLE) B
+         WHERE A.TABLE_NAME = B.TOBE_TABLE
+           AND NOT EXISTS (SELECT 'X' FROM USER_CONSTRAINTS WHERE A.INDEX_NAME = CONSTRAINT_NAME)
+           AND A.INDEX_TYPE = 'NORMAL'
+    </select>
+
+    <select	id="selectSequenceDDL" resultType="string">
+          SELECT REPLACE(DBMS_METADATA.GET_DDL('SEQUENCE',SEQUENCE_NAME,'GOGLOBAL'), '"GOGLOBAL".', '')
+            FROM USER_SEQUENCES
+    </select>
+
+    <select	id="selectTableCommentDDL" resultType="string">
+          SELECT 'COMMENT ON TABLE '||'"'||A.TABLE_NAME||'" IS '||''''||REPLACE(A.COMMENTS, '''', '''''')||''';'
+           FROM USER_TAB_COMMENTS A, X_MIG_TABLE_MNG B
+          WHERE A.TABLE_NAME = B.TOBE_TABLE
+    </select>
+
+    <select	id="selectColumnCommentDDL" resultType="string">
+           SELECT 'COMMENT ON COLUMN '||'"'||A.TABLE_NAME||'"."'||A.COLUMN_NAME||'" IS '||''''||REPLACE(A.COMMENTS, '''', '''''')||''';'
+             FROM USER_COL_COMMENTS A, X_MIG_TABLE_MNG B
+            WHERE A.TABLE_NAME = B.TOBE_TABLE
+    </select>
+</mapper>

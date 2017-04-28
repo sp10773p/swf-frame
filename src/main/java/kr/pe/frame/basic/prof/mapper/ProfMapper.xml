@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="prof">
+    <select	id="selectUser" parameterType="map" resultType="map">
+        SELECT A.USER_ID                    	/* 사용자ID */
+                , A.USER_NM                     /* 사용자명 */
+                , A.AUTH_CD                     /* 권한코드 */
+                , TEL_NO                        /* 전화번호 */
+                , HP_NO                         /* 휴대폰번호 */
+                , EMAIL				            /* 이메일 */
+                , A.USER_DIV                    /* 사용자구분 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'USER_DIV' AND CODE = A.USER_DIV) AS USER_DIV_NM
+                , A.BIZ_NO                      /* 사업자등록번호 */
+                , A.BIZ_DIV                     /* 사업자구분 */
+                , A.CHARGE_NM                   /* 담당자명 */
+                , A.BIZ_CONDITION               /* 업태 */
+                , A.BIZ_LINE                    /* 종목 */
+                , A.ATCH_FILE_ID                /* 첨부파일 */
+                , (SELECT ORIGNL_FILE_NM FROM CMM_FILE_DTL B WHERE B.ATCH_FILE_ID = A.ATCH_FILE_ID) AS FILE_NM /* 첨부파일명 */
+                , A.USER_STATUS                 /* 가입상태 */
+                , A.FAX_NO                      /* 팩스번호 */
+                , A.APPLICANT_ID                /* 관세사신고인부호 */
+                , A.DEPT					    /* 부서 */
+                , A.POS						    /* 직위 */
+                , A.CO_NM_ENG					/* 업체영문명 */
+                , A.REP_NM						/* 대표자명 */
+                , A.REP_NM_ENG					/* 대표자영문명 */
+                , A.ZIP_CD						/* 우편번호 */
+                , A.ADDRESS					    /* 주소 */
+                , A.ADDRESS2					/* 상세주소 */
+                , A.ADDRESS_EN					/* 영문주소 */
+                , A.TG_NO						/* 통관고유부호 */
+                , A.UTH_USER_ID					/* UTH사용자ID */
+                , A.SIGN_VALUE					/* 전자서명 */
+                , A.REG_MALL_ID                 /* 등록몰ID */
+        FROM CMM_USER A
+        WHERE A.USER_ID = #{SSuserId}
+    </select>
+
+	<update id="updateUser" parameterType="map">
+        UPDATE CMM_USER
+           SET   USER_PW           = #{USER_PW} 
+                ,EMAIL             = #{EMAIL}
+                ,APPLICANT_ID      = #{APPLICANT_ID}
+                ,CHARGE_NM         = #{CHARGE_NM}
+                ,DEPT              = #{DEPT}
+                ,POS               = #{POS}
+                ,TEL_NO            = #{TEL_NO}
+                ,HP_NO             = #{HP_NO}
+                ,ZIP_CD            = #{ZIP_CD}
+                ,ADDRESS           = #{ADDRESS}
+                ,ADDRESS2          = #{ADDRESS2}
+                ,ADDRESS_EN        = #{ADDRESS_EN}
+                ,TG_NO             = #{TG_NO}
+                ,UTH_USER_ID       = #{UTH_USER_ID}
+                ,SIGN_VALUE        = BIZ_NO
+                ,MOD_ID            = #{USER_ID}
+                ,MOD_DTM           = SYSDATE
+         WHERE USER_ID = #{USER_ID}
+    </update>
+	
+    <update id="updateCmmUserAttachFile" parameterType="map">
+        UPDATE CMM_USER
+           SET
+                 ATCH_FILE_ID      = #{ATCH_FILE_ID}
+                ,MOD_ID            = #{USER_ID}
+                ,MOD_DTM           = SYSDATE
+        WHERE USER_ID = #{USER_ID}
+    </update>
+    
+    <update id="updateWithdrawStat" parameterType="map">
+        UPDATE CMM_USER
+           SET 
+           		 WITHDRAW_REASON = #{WITHDRAW_REASON}
+                ,USER_STATUS = '8'
+                ,WITHDRAW_DT = TO_CHAR(SYSDATE, 'YYYYMMDD')
+                ,MOD_ID          = #{USER_ID}
+                ,MOD_DTM         = SYSDATE
+         WHERE USER_ID = #{USER_ID}
+    </update>
+ 
+</mapper>

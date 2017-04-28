@@ -1,0 +1,157 @@
+/*공통*/
+/*sub page background frame*/
+.bg_frame_content{ position:relative; min-width:1300px; width:80.247%;}
+@media only screen and (max-width : 1300px){
+    .bg_frame_content{ position:relative;min-width:100%;width:100%;}
+    .inner-box{background:#fff !important;}
+}
+/*오른쪽 bg 이미지*/
+.inner-box.bg_sky{background:url(/images/bg/bg_sub_login.png) right bottom no-repeat; background-size:auto 100%;}
+
+.form_area{ box-sizing:border-box; margin:0 auto; padding:30px; max-width:845px; width:100%; border:1px solid #ebebeb; border-radius:3px; background:#fff; text-align:center;font-size:12px;}
+.form_area input{ padding-top:1px; height:33px; border:1px solid #c4c4c4; border-radius:3px; font-size:12px;}
+.form_area .radio{padding-top:8px;}
+.gray > table tbody tr td:nth-child(odd) span, .bg_frame_content > p span{color:#15a4fa; font-weight:bold;}
+.bg_frame_content > p{ margin-bottom:13px;font-size:12px;}
+/*타이틀 문구*/
+.bg_frame_content > .wc_tit{ padding:48px 0 63px; width:100%; color:#5d5d5d; text-align:center; font-weight:bold; font-size:22px;font-family:'Nanum Gothic', nanumgothic, sans-serif; line-height:36px;}
+.bg_frame_content > .wc_tit strong{ color:#15a4fa;font-size:25px;}
+
+/*버튼*/
+.btn_area{margin:15px auto 0; width:431px;}
+.btn_area.btn_1{width:137px;}
+.btn_area.btn_3{width:431px;}
+.btn_area .b_btn{display:block; float:left; margin-right:10px; padding:12px 0 11px;width:137px; border-radius:3px; color:#fff; text-align:center; font-weight:bold; font-size:12px; line-height:1em;}
+.btn_area .b_btn.blue_btn{border:none; background:#15a4fa;}
+.btn_area .b_btn.gray_btn{background:#b6b8bc;}
+.btn_area .b_btn.dkgray_btn{background:#757575;}
+.btn_area :last-child{margin:0;}
+
+/*로그인*/
+.login #user_id{margin-bottom:5px;}
+.login form{ margin:0 auto;width:549px;}
+.login fieldset{float:left; margin-bottom:20px;}
+.login input{ width:268px;height:38px;}
+.login .btn_area{float:right; overflow:hidden; margin:0; width:auto;}
+.login .btn_area *{ float:left;height:87px; border-radius:3px; color:#fff; font-weight:bold; font-size:12px; line-height:87px;}
+.login .login_btn{ margin-right:5px;width:137px; border:none; background-color:#15a4fa; color:#fff; font-weight:bold;}
+.login .join_btn{ display:block;width:107px; background:#6b6b6b;}
+.login .find_id {clear:both; text-align:left;}
+.login .find_id p{display:inline-block; text-indent:-6px;}
+.login .find_id p:last-child{ margin-left:78px; color:#ffa800; text-indent:0;font-weight:bold;}
+.login .find_id p a:hover{ border-bottom:1px solid #ffa800;color:#ffa800;}
+.login .find_id p:first-child span{color:#c5c5c5;}
+.login .find_id p:last-child span{color:#d5d5d5; font-weight:normal;}
+
+/*아이디 비밀번호 찾기*/
+.find{text-align:left;}
+.find label{ display:inline-block;width:106px; vertical-align:sub; font-weight: bold;}
+.find .radio label{font-weight: normal;}
+.find fieldset{ padding:13px;border:1px solid #ebebeb; border-radius:3px; background:#fff;}
+.find fieldset > div *{margin-right:-4px;}
+.find fieldset > div { margin:0 auto 11px;width:536px;}
+.find fieldset > div:last-child{margin-bottom:0;}
+.find .company_num input:nth-child(2){width:96px;}
+.find .company_num input:nth-child(4){width:79px;}
+.find .company_num input:nth-child(6){width:137px;}
+.find .company_num span{display:inline-block; width:25px; text-align:center;}
+.find.form_area{ padding:0;border:none; background:transparent;}
+.find #user_mail, #user_id{width:405px;}
+/*확인 결과*/
+.blue_box{ margin:60px auto 0; padding:16px; max-width:805px; border:1px solid #ebebeb; border-radius:3px; background:#f0f6f8; color:#939393; text-align:center;font-size:12px; line-height:20px;}
+.blue_box p:first-child{color:#555;}
+.blue_box .find_info strong{color:#ffa800;}
+#find_result{display:none;}
+
+/*회원가입 과정*/
+.join_step{ box-sizing:border-box; margin-bottom:25px; padding:15px; min-width:846px;width:100%; height:145px; border:1px solid #ebebeb; border-radius:3px; background:#e2eef1; vertical-align:middle; text-align:center;}
+.join_step img{ max-width:845px;width:100%; vertical-align:middle;}
+/*약관 내용부분*/
+.policy_txt{ overflow:auto; box-sizing:border-box; padding:15px 18px;width:100%; height:149px; border:1px solid #d7d7d7; border-radius:3px; background:#fff; color:#7c7c7c; font-size:12px; line-height:18px;}
+.policy_txt p{margin:0 0 18px;}
+.policy_txt .tit_article{ margin-bottom:18px; padding-top:10px;font-weight:bold;}
+.policy_txt .tit_article:first-child{margin-top:0;}
+.policy_txt dl{margin-bottom:18px;}
+.policy_txt dt{font-weight:bold;}
+.policy_txt ul{margin-left:14px;}
+.policy_txt ~ .bottom_util{text-align:right;}
+.policy_txt ~ .bottom_util .radio:last-child{margin-right:0;}
+.agree{text-align:center;}
+.agree strong{ color:#7c7c7c;vertical-align:middle;}
+
+/*테이블 관련 추가*/
+table{table-layout:fixed;}
+/*회색 table td 내부 인풋 및 버튼 유형 추가*/
+.gray td:nth-child(even) span{ display:block; float:left; float:left; margin-left:0px; vertical-align:middle; text-align:center; font-size:12px; line-height:24px;}/*인풋 구분 부호(/,-)*/
+.gray .auto_btn{float:left; margin-left:0; padding-top:7px; height:24px;} /*테이블 내부 자동사이즈 버튼*/
+.gray .auto_btn:nth-child(2){margin-right:12px;}
+.gray .td_recheck{float:left;}/*중복확인 버튼*/
+.gray .td_input.td_input_harf{ margin-right:0;width:calc(50% - 12px);}/*저해상도 100% 방지*/
+/*3단 인풋(연락처)*/
+.td_input_3 .td_input:first-child{width:calc(30% - 12px);}
+.td_input_3 .td_input{ float:left; margin-right:0px;width:calc(35% - 12px);}
+/*2단 라인 맞춘 2단 인풋(상세주소)*/
+.adress_input .td_input.td_input_harf{ margin-right:12px;width:calc(50% - 83px);}
+.adress_input .td_input.td_input_harf:last-child{width:calc(50% + 59px);}
+/*2단 라인 맞춘 1단 인풋+버튼(아이디,우편주소)*/
+.td_input.td_input_btn_harf{ float:left; margin-right:5px;width:calc(50% - 164px);}
+/*2단 라인 맞춘 2단 인풋+버튼 (이메일)*/
+.mail_input .td_input.td_input_btn_harf:nth-child(1){width:calc(43% - 151px);}
+.mail_input .td_input.td_input_btn_harf:nth-child(3){width:calc(57% - 152px);}
+
+
+/*기존 소스 추가 작성*/
+input[type="radio"] + label{vertical-align:sub;}
+.radio input[type="radio"] + label span{width:19px;}
+
+/*placeholder 색*/
+::-webkit-input-placeholder { /* Chrome */ color: #c2c2c2;}
+::-moz-placeholder { /* Firefox 19+ */ color: #c2c2c2; opacity: 1;}
+:-moz-placeholder { /* Firefox 4 - 18 */color: #c2c2c2;opacity: 1;}
+
+/*20170329 추가작성*/
+/*list 추가 사항*/
+.bg_frame_content table{background:#fff;}
+.tit_left table tbody tr td:nth-child(2){text-align:left; padding-left:39px;}
+.tit_left table tbody tr td:nth-child(2).reply{padding-left: 55px; background: url(/images/bg/bg_bbs_reply.png) 39px center no-repeat;}
+.tit_left table tbody tr td:nth-child(2).re_second{padding-left: 71px; background: url(/images/bg/bg_bbs_reply.png) 56px center no-repeat;}
+.tit_left table tbody tr td:nth-child(2).re_third{padding-left: 87px; background: url(/images/bg/bg_bbs_reply.png) 72px center no-repeat;}
+.tit_left table tbody tr td:nth-child(2).re_fourth{padding-left: 103px; background: url(/images/bg/bg_bbs_reply.png) 88px center no-repeat;}
+.tit_left table tbody tr td:nth-child(2) span{color: #888; font-weight: normal;}
+.tit_left table tbody tr td:nth-child(2) strong{color: #ccc; font-weight: normal; margin: 0 4px;}
+
+/*search 영역 1단 구조*/
+.search_sectionD{display:block; float:left; width:calc(100% - 117px);}
+.search_sectionD > li{display:block; float:left; width:100%; margin-bottom:5px; min-width:383px;}
+
+/*openAPI 상세 페이지*/
+tr, td, th{height:36px;}
+
+/*20170330추가 작성*/
+/*openAPI 소개*/
+.box{padding:11px 15px; border-radius:3px; border:1px solid #ebebeb; font-size:12px; background:#fff; margin-bottom:40px;}
+.info_box{background:#e2eef1;}
+.box li{line-height:20px; text-indent:-14px; padding-left:8px;}
+.box li span{color:#ccc; font-weight:bold;}
+.box li:last-child{margin-bottom:0;}
+/*.btn.center{left:50%; transform:translateX(-50%);  -webkit-transform:translateX(-50%);}*/
+.data_sample{background:#f6f6f6; white-space:pre; line-height:20px;}
+.policy_txt.api{height:249px;}
+.type_view tr:last-child *{vertical-align:inherit;}
+
+/*url 영역 폰트 타입*/
+.url p {font-size:12px; color:#ffa800;}
+
+/*테이블 타입 추가*/
+/*table_typeC : 상단 + 좌측 제목영역*/
+.table_typeC{text-align:center;}
+.table_typeC tr{border-bottom:1px solid #dedede;}
+.table_typeC thead{background:#ebeced; border-top:1px solid #dedede;}
+.table_typeC tbody th{font-weight:bold; background:#fbfbfc;}
+.table_typeC th,.table_typeC td{border-right:1px solid #dedede;}.table_typeC th:last-child,.table_typeC td:last-child{border-right:none;}
+
+
+/*소개 페이지 관련*/
+.title_frame .info_box{margin-bottom:10px;}
+.title_frame .box:nth-child(3){text-align:center; padding:40px;}
+.orange_btn{background:#ffa800;}

@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="apiguide">
+    <select	id="selectCmmApiKeyMng" parameterType="map" resultType="map">
+        SELECT A.USER_ID                    /* 사용자ID */
+             , A.API_KEY                    /* APIKey */
+             , TO_CHAR(TO_DATE(A.VALID_FROM_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS VALID_FROM_DT             /* 유효기간시작 */
+             , TO_CHAR(TO_DATE(A.VALID_TO_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS VALID_TO_DT              /* 유효기간종료 */
+             , A.API_REQ_STATUS             /* API키상태 */
+             , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'API_REQ_STATUS' AND CODE = A.API_REQ_STATUS) AS API_REQ_STATUS_NM
+             , TO_CHAR(TO_DATE(A.API_REQ_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS API_REQ_DT                 	/* API신청일자 */
+             , TO_CHAR(TO_DATE(A.API_APPORVE_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS API_APPORVE_DT          /* API승인일자 */
+             , A.REG_ID                     /* 등록자ID */
+             , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+             , A.MOD_ID                     /* 수정자ID */
+             , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+          FROM CMM_API_KEY_MNG A
+         WHERE A.USER_ID = #{USER_ID}
+    </select>
+    
+	<select id="selectCmmApiKeyDetailList" resultType="map">
+		SELECT A.USER_ID                    /* 사용자ID */
+		     , A.API_ID                     /* API ID */
+		     , A.API_KEY                    /* APIKey */
+		     , A.LIMIT_DETAIL_CNT           /* 월최대처리건수 */
+		     , A.DAILY_CALL_CNT             /* 일일호출건수 */
+		     , A.PER_CALL_CNT               /* 회당처리건수 */
+		     , A.REG_ID                     /* 등록자ID */
+		     , B.API_NM						/*API 설명*/
+		FROM CMM_API_KEY_DTL A LEFT JOIN CMM_API_MNG B ON A.API_ID = B.API_ID
+		WHERE 1 = 1
+		AND	A.USER_ID = #{USER_ID}
+		AND	A.API_KEY = #{API_KEY}
+		ORDER 	BY A.USER_ID DESC, A.API_ID DESC, A.API_KEY DESC
+	</select>
+	
+	<insert id="insertCmmApiKeyMng" parameterType="map">
+		INSERT INTO CMM_API_KEY_MNG (
+			  USER_ID
+			, API_REQ_STATUS 
+			, API_REQ_DT
+			, REG_ID
+			, REG_DTM
+			, MOD_ID
+			, MOD_DTM
+		)VALUES (
+			  #{USER_ID}
+			, 'R'
+			, TO_CHAR(SYSDATE, 'YYYYMMDD')
+			, #{USER_ID}
+			, SYSDATE
+			, #{USER_ID}
+			, SYSDATE
+		) 
+	</insert>
+	
+	<select	id="selectCmmApiMngList" parameterType="map" resultType="map">
+        SELECT    A.API_ID                     /* API ID */
+                , A.API_NM                     /* 설명 */
+          FROM CMM_API_MNG A
+         WHERE 1 = 1
+        ORDER 	BY A.API_ID 
+    </select>
+
+</mapper>

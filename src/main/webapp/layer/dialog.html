@@ -1,0 +1,48 @@
+<style>
+	/* 레이어 프레임 */
+	.layerContainer {position:absolute;left:50%;top:50%;width:800px;height:746px; overflow-y:hidden; box-sizing:border-box; padding:30px; margin:-400px 0 0 -350px; background:#fff; border-radius:5px; font-size:12px; color:#5b5b5b;}
+	.layer_content {width:100%; height:601px; overflow-x:hidden; box-sizing:border-box;}
+
+	/*레이어 팝업 제목요소*/
+	.layerTitle{width:100%; height:32px; border-bottom:2px solid #eaebec;}
+	.layerTitle h1{font-family:nanumgothic; font-size:20px; color:#343844;}
+	.layerTitle a{display:block; position:absolute; right:30px; top:30px; width:22px; height:22px; background:url(/images/btn/btn_popup_close.png) no-repeat;}
+
+	/* layer_bottom부분 */
+	.layer_bottom{text-align:center; _margin-bottom:20px;}
+	.layer_bottom > .layer_btn {display:inline-block; background:#008ee1; margin-left:5px; color:#fff; padding:9px 15px 0 15px; box-sizing:border-box;}
+	.layer_bottom > .layer_btn:first-child{margin-left:0;}
+
+	/* dialog */
+	.layerContainer.dialog {position:absolute;left:50%;top:50%;width:400px;height:220px; overflow-y:hidden; box-sizing:border-box; padding:30px; margin:-100px 0 0 -200px; background:#fff; border-radius:5px; font-size:12px; color:#5b5b5b;}
+	.layerContainer.dialog > .layer_content {width:100%; height:auto; overflow-x:hidden; padding-top:35px; box-sizing:border-box; text-align:center; vertical-align:middle;}
+	.layerContainer.dialog > .layer_content p {font-family:nanumgothic; font-size:14px; margin-bottom:3px;}
+	.layerContainer.dialog > .layer_bottom{text-align:center; margin:10px 0 10px 0;}
+</style>
+<script>
+	function fn_close(){
+    	var wTop = $(window).scrollTop();
+        $('#layer').fadeOut(200);
+        $('body').removeClass('layer');
+        wTop = parseInt($('#container').css('top')) * -1;
+        $('#container').css('top', '0');
+        $(window).scrollTop(wTop);
+        setTimeout(function(){
+            $(".layer_content.inner-box").niceScroll().remove();
+        }, 300);
+        $('#header').css('top', '0');
+    }
+
+</script>
+<div class="bg"></div>
+<div class="layerContainer dialog">
+	<div class="layerTitle">
+		<h1></h1>
+		<a href="javascript:fn_close()"></a><!-- 닫기버튼 -->
+	</div><!-- layerTitle -->
+<div class="layer_content">
+</div><!-- //layer_content -->
+<div class="layer_bottom">
+	<a href="javascript:fn_close()" class="btn layer_btn">닫기</a>
+</div><!-- //layer_bottom -->
+</div><!-- //layerContainer -->

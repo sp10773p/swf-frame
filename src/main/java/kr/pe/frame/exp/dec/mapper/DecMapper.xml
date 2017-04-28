@@ -1,0 +1,2376 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="dec">
+
+    <select	id="selectDecList" parameterType="map" resultType="map">
+        
+      SELECT  ROW_NUMBER() OVER (ORDER BY AA.RPT_NO DESC, AA.RPT_SEQ) RNUM
+            , AA.RPT_NO                    	                                                 /* 수출신고번호 */
+			, AA.RPT_SEQ                    	                                                 /* 제출차수 */
+			, AA.SEND                    	                                                 /* 전송(상태) */
+			, AA.RECE                    	                                                 /* 수신(상태) */
+			, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1001' AND CODE = AA.SEND) AS SEND_NM
+			, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1002' AND CODE = AA.RECE) AS RECE_NM
+			, AA.EXP_FIRM                    	                                             /* 수출화주 */
+			, AA.BUY_FIRM                    	                                             /* 해외거래처구매자상호 */
+			, AA.MAK_FIRM                    	                                             /* 제조자상호 */
+			, AA.TA_ST_ISO                    	                                             /* 목적국코드 */
+			, AA.FOD_CODE                    	                                             /* 적재항코드 */
+			, RTRIM(TO_CHAR(AA.TOT_PACK_CNT, 'FM999,999,999.99'), '.') TOT_PACK_CNT           /* 총포장수 */
+			, AA.TOT_PACK_UT                                                                  /* 총포장단위 */
+			, AA.TOT_WT                       												 /* 총중량 */
+			, RTRIM(TO_CHAR(AA.TOT_RPT_KRW, 'FM999,999,999.99'), '.') TOT_RPT_KRW             /* 총신고금액원화 */
+			, RTRIM(TO_CHAR(AA.TOT_RPT_USD, 'FM999,999,999.99'), '.') TOT_RPT_USD             /* 총신고금액미화 */
+			, AA.AMT_COD                    	                                                 /* 인도조건 */
+			, AA.CUR                    	                                                     /* 결제통화 */
+			, RTRIM(TO_CHAR(AA.AMT, 'FM999,999,999.99'), '.') AMT                    	     /* 결제금액 */
+			, RTRIM(TO_CHAR(AA.EXC_RATE_USD, 'FM999,999,999.99'), '.') EXC_RATE_USD           /* 미화환율 */
+			, RTRIM(TO_CHAR(AA.EXC_RATE_CUR, 'FM999,999,999.99'), '.') EXC_RATE_CUR           /* 결제환율 */
+			, TO_CHAR(AA.REG_DTM , 'YYYY-MM-DD') REG_DTM                                      /* 신청일자 */
+			, TO_CHAR(TO_DATE(AA.RPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DAY			 /* 신고일자 */
+			, TO_CHAR(TO_DATE(AA.EXP_LIS_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') EXP_LIS_DAY  /* 수리일시 */
+			, AA.ORDER_ID                    	                                             /* 주문번호 */		
+			, TO_CHAR(TO_DATE(AA.JUK_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') JUK_DAY			 /* 적재의무기한	*/			
+	  		, TO_CHAR(TO_DATE(AA.SHIP_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') SHIP_DAY		 /* 선적일자	*/			
+       		, TO_CHAR(TO_DATE(AA.LEAVE_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LEAVE_DAY		 /* 출항일자	*/			
+			, AA.REG_ID																		 /* 등록자ID */
+       FROM(   
+          SELECT A.*
+		    FROM EXP_CUSDEC830 A
+           WHERE 1=1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DTM} BETWEEN #{F_REG_DTM} AND #{T_REG_DTM}
+            </if>
+            <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND ${SEARCH_COL} LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEND != null and SEND != ''">
+                AND A.SEND = #{SEND}
+            </if>
+            <if test="RECE != null and RECE != ''">
+                AND A.RECE = #{RECE}
+            </if>
+            <if test='LEAVE_YN == "Y"'>
+	            AND A.LEAVE_DAY IS NOT NULL
+            </if>
+            	AND (
+                CASE 
+                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(A.EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(A.EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(A.RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+                 AND (
+	                  (EXISTS ( SELECT 1 FROM EXP_CUSDEC830 B WHERE B.RPT_NO = A.RPT_NO AND B.SEND = '05' ) AND RPT_SEQ != '00') OR 
+	                  (NOT EXISTS( SELECT 1 FROM EXP_CUSDEC830 B WHERE B.RPT_NO = A.RPT_NO AND B.SEND = '05' ) )
+	                  )
+	      MINUS
+	      SELECT A.*
+		    FROM EXP_CUSDEC830 A
+           WHERE 1=1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DTM} BETWEEN #{F_REG_DTM} AND #{T_REG_DTM}
+            </if>
+            <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND ${SEARCH_COL} LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEND != null and SEND != ''">
+                AND A.SEND = #{SEND}
+            </if>
+            <if test="RECE != null and RECE != ''">
+                AND A.RECE = #{RECE}
+            </if>
+            <if test='LEAVE_YN == "Y"'>
+	            AND A.LEAVE_DAY IS NOT NULL
+            </if>
+            	AND (
+                CASE 
+                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(A.EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(A.EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(A.RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+                 AND A.SEND = '03'  
+                 AND A.RPT_SEQ != '00'   
+           ) AA   
+           ORDER BY AA.RPT_NO DESC, AA.RPT_SEQ
+        
+    </select>
+    
+    
+    <select	id="selectDecDetail" parameterType="map" resultType="map">
+          SELECT  A.RPT_NO							/* 	제출번호	*/
+				, A.RPT_SEQ							/* 	제출차수	*/
+				, A.SEND							/* 	전송결과	*/
+				, A.RECE							/* 	수신결과	*/
+				, A.RPT_FIRM						/* 	신고자상호	*/
+				, A.RPT_MARK						/* 	신고자부호	*/
+				, A.RPT_BOSS_NM						/* 	신고자대표자	*/
+				, A.COMM_CODE						/* 	수출대행자 코드	*/
+				, A.COMM_FIRM						/* 	수출대행자 상호	*/
+				, A.COMM_TGNO						/* 	수출대행자 통관부호	*/
+				, A.EXP_DIVI						/* 	수출자구분	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0027' AND CODE = A.EXP_DIVI) AS EXP_DIVI_NM
+				, A.EXP_CODE						/* 	수출화주 코드	*/
+				, A.EXP_FIRM						/* 	수출화주 상호	*/
+				, A.EXP_BOSS_NAME					/* 	수출화주 대표자성명	*/
+				, A.EXP_ADDR1						/* 	수출화주 주소1	*/
+				, A.EXP_ADDR2						/* 	수출화주 주소2	*/
+				, A.EXP_SDNO						/* 	수출화주 사업자번호	*/
+				, A.EXP_SDNO_DIVI					/* 	수출화주 사업자번호구분	*/
+				, A.EXP_TGNO						/* 	수출화주 통관부호	*/
+				, A.EXP_POST						/* 	수출화주 소재지우편번호	*/
+				, A.MAK_CODE						/* 	제조자코드	*/
+				, A.MAK_FIRM						/* 	제조자상호	*/
+				, A.MAK_TGNO						/* 	제조자통관부호	*/
+				, A.MAK_POST						/* 	제조자지역코드	*/
+				, A.INLOCALCD						/* 	제조장소산업단지부호	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0013' AND CODE = A.INLOCALCD) AS INLOCALCD_NM
+				, A.BUY_FIRM						/* 	해외거래처구매자상호	*/
+				, A.BUY_MARK						/* 	해외거래처구매자부호	*/
+				, A.RPT_CUS							/* 	신고세관	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = A.RPT_CUS) AS RPT_CUS_NM
+				, A.RPT_SEC							/* 	신고세관과부호	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = A.RPT_SEC) AS RPT_SEC_NM
+				, TO_CHAR(TO_DATE(A.RPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DAY		/* 	신고일자	*/
+				, A.RPT_DIVI						/* 	수출신고구분	*/
+				, A.RPT_DIVINM						/* 	수출신고구분명	*/
+				, A.EXC_DIVI						/* 	수출거래구분	*/
+				, A.EXC_DIVINM						/* 	수출거래구분명	*/
+				, A.EXP_KI							/* 	수출종류	*/
+				, A.EXP_KINM						/* 	수출종류명	*/
+				, A.CON_MET							/* 	결제방법	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0003' AND CODE = A.CON_MET) AS CON_MET_NM
+				, A.CON_METNM						/* 	결제방법명	*/
+				, A.TA_ST_ISO						/* 	목적국국가코드	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0005' AND CODE = A.TA_ST_ISO) AS TA_ST_ISO_NM
+				, A.TA_ST_ISONM						/* 	목적국명	*/
+				, A.FOD_CODE						/* 	적재항코드	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0046' AND CODE = A.FOD_CODE) AS FOD_CODE_NM
+				, A.FOD_CODENM						/* 	적재항명	*/
+				, A.ARR_MARK						/* 	적재항 구분코드	*/
+				, A.TRA_MET							/* 	운송형태	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0034' AND CODE = A.TRA_MET) AS TRA_MET_NM
+				, A.TRA_METNM						/* 	운송형태명	*/
+				, A.TRA_CTA							/* 	운송용기	*/
+				, A.TRA_CTANM						/* 	운송용기명	*/
+				, A.CHK_MET_GBN						/* 	검사방법코드	*/
+				, A.MAK_FIN_DAY						/* 	검사희망일	*/
+				, A.GDS_USG_CODE					/* 	물품소재지코드	*/
+				, A.GDS_POST						/* 	물품소재지우편번호	*/
+				, A.GDS_ADDR1						/* 	물품소재지주소1	*/
+				, A.LCNO							/* 	L/C번호	*/
+				, A.USED_DIVI						/* 	물품상태구분코드	*/
+				, A.UP5AC_DIVI						/* 	사전임시개청신청여부	*/
+				, A.BAN_DIVI						/* 	반송사유부호	*/
+				, A.BAN_DIVINM						/* 	반송사유명	*/
+				, A.REF_DIVI						/* 	환급신청자구분(수출자1,제조자2)	*/
+				, A.RET_DIVI						/* 	간이환급신청구분	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0001' AND CODE = A.RET_DIVI) AS RET_DIVI_NM
+				, A.MRN_DIVI						/* 	화물관리번호전송여부	*/
+				, A.CONT_IN_GBN						/* 	컨테이너적입여부	*/
+				, A.TOT_WT																			/* 	총중량	*/
+				, A.UT																				/* 	총중량단위	*/
+				, RTRIM(TO_CHAR(A.TOT_PACK_CNT, 'FM999,999,999.99'), '.') TOT_PACK_CNT				/* 	총포장수	*/
+				, A.TOT_PACK_UT																		/* 	총포장수단위	*/
+				, (SELECT CODE||' ['||CODE_NM||']' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0043' AND CODE = A.TOT_PACK_UT) AS TOT_PACK_UT_NM
+				, RTRIM(TO_CHAR(A.TOT_RPT_KRW, 'FM999,999,999.99'), '.') TOT_RPT_KRW				/* 	총신고금액원화	*/
+				, RTRIM(TO_CHAR(A.TOT_RPT_USD, 'FM999,999,999.99'), '.') TOT_RPT_USD				/* 	총신고금액미화	*/
+				, A.FRE_KRW																			/* 	운임금액원화	*/
+				, A.FRE_UT																			/* 	운임금액통화	*/
+				, A.FRE_AMT																			/* 	운임금액	*/
+				, A.INSU_KRW																		/* 	보험금액원화	*/
+				, A.INSU_UT																			/* 	보험금액통화	*/
+				, RTRIM(TO_CHAR(A.INSU_AMT, 'FM999,999,999.99'), '.') INSU_AMT						/* 	보험금액	*/
+				, A.AMT_COD																			/* 	인도조건	*/
+				, (SELECT CODE||' ['||CODE_NM||']' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0038' AND CODE = A.AMT_COD) AS AMT_COD_NM
+				, A.CUR																				/* 	결제통화	*/
+				, (SELECT CODE||' ['||CODE_NM||']' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0042' AND CODE = A.CUR) AS CUR_NM
+				, RTRIM(TO_CHAR(A.AMT, 'FM999,999,999.99'), '.') AMT								/* 	결제금액	*/
+				, RTRIM(TO_CHAR(DECODE(NVL(A.EXC_RATE_USD, 0) ,  0 , 
+				  (SELECT DECODE(IMPORT_EXPORT, 'E', CURR_VAL, 0) AS EXP_CURR_VAL
+		             FROM CMM_EXCHANGE_RATE
+		            WHERE APPLY_DATE > TO_NUMBER(TO_CHAR(SYSDATE - 7, 'YYYYMMDD'))
+		              AND APPLY_DATE <![CDATA[<=]]> TO_NUMBER(TO_CHAR(SYSDATE, 'YYYYMMDD'))
+		              AND NATION = 'USD'
+		              AND IMPORT_EXPORT = 'E'), A.EXC_RATE_USD ), 'FM999,999,999.99'), '.') EXC_RATE_USD				/* 	미화환율	*/
+				, RTRIM(TO_CHAR(A.EXC_RATE_CUR, 'FM999,999,999.99'), '.') EXC_RATE_CUR				/* 	결제환율	*/
+				, A.FOB_YN																			/* 	FOB사용	*/
+				, A.BOSE_RPT_CODE																	/* 	보세운송인코드	*/
+				, A.BOSE_RPT_FIRM																	/* 	보세운송인명	*/
+				, TO_CHAR(TO_DATE(A.BOSE_RPT_DAY1, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') BOSE_RPT_DAY1	/* 	보세운송기간시작	*/
+				, TO_CHAR(TO_DATE(A.BOSE_RPT_DAY2, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') BOSE_RPT_DAY2	/* 	보세운송기간종료	*/
+				, A.TRA_MARK																		/* 	운송사부호	*/
+				, TO_CHAR(TO_DATE(A.EXP_LIS_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') EXP_LIS_DAY		/* 	수리일자	*/
+				, TO_CHAR(TO_DATE(A.JUK_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') JUK_DAY				/* 	적재의무기한	*/
+				, A.SEND_DIVI																		/* 	송신구분	*/
+				, A.RES_YN																			/* 	응답형태	*/
+				, A.MODI_RPT																		/* 	수출정정구분	*/
+				, RTRIM(TO_CHAR(A.TOT_RAN, 'FM999,999,999.99'), '.') TOT_RAN						/* 	총란수	*/
+				, A.EXP_REQ_NO						/* 	의뢰문서번호	*/
+				, A.MD_REFE_NO						/* 	무역업체 참조번호	*/
+				, A.RPT_USG							/* 	신고인기재란	*/
+				, A.FILE_NO							/* 	파일번호	*/
+				, A.BLNO							/* 	B/L번호	*/
+				, A.IDATETIME						/* 	입력일시	*/
+				, A.PDATETIME						/* 	서류준비일시	*/
+				, A.SDATETIME						/* 	수리일시	*/
+				, A.GS_CHK							/* 	개성공단반입구분	*/
+				, A.SHIP_DAY						/* 	출항일자	*/
+				, A.STNCODE							/* 	지소코드	*/
+				, A.SN_DIVI							/* 	남북교역 과세,비과세구분	*/
+				, A.HSUSER							/* 	세번분류자	*/
+				, A.JU_MARK							/* 	심사담당자 직원부호	*/
+				, A.JU_NAME							/* 	심사담당자 성명	*/
+				, A.UCRNO							/* 	화물식별부호	*/
+				, A.PO_NO							/* 	발주번호	*/
+				, A.SHIP_CODE						/* 	선사부호	*/
+				, A.SHIP_CO							/* 	선사명	*/
+				, A.SHIP_NAME						/* 	선박명편명	*/
+				, A.CHK_PA_MARK						/* 	적재예정보세구역	*/
+				, A.PLAN_SHIP_DAY					/* 	출항예정일	*/
+				, A.CUS_USER_ID						/* 	관세사ID	*/
+				, A.WARE_MARK						/* 	반입장치장부호	*/
+				, A.REQ_NO							/* 	요청관리번호	*/
+				, A.MAK_LOC_SEQ						/* 	제조자 사업장 일련번호	*/
+				, A.IN_BASIS_NO						/* 	반입근거번호	*/
+				, A.MRN_NO							/* 	화물관리번호	*/
+				, A.EXP_REGNO						/* 	수출화주 사업장일련번호	*/
+				, A.COMM_REGNO						/* 	수출대행자 사업장일련번호	*/
+				, A.EXP_ROAD_CD						/* 	수출자도로명코드	*/
+				, A.EXP_BLDG_NO						/* 	수출자건물관리번호	*/
+				, A.MAK_REGNO						/* 	제조자 사업장일련번호	*/
+				, A.RC_DAY							/* 	접수일자	*/
+				, A.CUS_NOTICE						/* 	세관기재란	*/								
+				, A.REG_ID							/* 	등록자ID	*/
+				, A.REG_DTM							/* 	등록일시	*/
+				, A.MOD_ID							/* 	수정자ID	*/
+				, A.MOD_DTM							/* 	수정일시	*/
+				, A.ORDER_ID                    	/*  주문번호 */					
+		   FROM EXP_CUSDEC830 A
+          WHERE 1=1
+            AND A.RPT_NO = #{RPT_NO}
+            <if test="S_RPT_SEQ == null or S_RPT_SEQ == ''">
+	            AND A.RPT_SEQ = '00'
+	        </if> 
+            <if test="S_RPT_SEQ != null and S_RPT_SEQ != ''">
+	        	AND A.RPT_SEQ = #{S_RPT_SEQ}
+	        </if>   
+           
+    </select>
+    
+    <select	id="selectDecRanList" parameterType="map" resultType="map">
+ 		
+		  SELECT  ROW_NUMBER() OVER (ORDER BY RPT_NO, RPT_SEQ, RAN_NO) RNUM
+		        , RPT_NO					/* 	제출번호	*/
+				, RPT_SEQ					/* 	제출차수	*/
+				, RAN_NO					/* 	란번호	*/
+				, HS						/* 	세번부호	*/
+				, STD_GNM					/* 	표준품명	*/
+				, EXC_GNM					/* 	거래품명	*/
+				, MG_CODE					/* 	송품장부호	*/
+				, MODEL_GNM					/* 	상표명	*/
+				, RPT_KRW					/* 	신고가격원화	*/
+				, RPT_USD					/* 	신고가격미화	*/
+				, CUR_UT					/* 	결제통화	*/
+				, AMT_COD					/* 	인도조건	*/
+				, CON_AMT					/* 	결제금액	*/
+				, SUN_WT					/* 	순중량	*/
+				, SUN_UT					/* 	순중량단위	*/
+				, WT						/* 	수량	*/
+				, UT						/* 	수량단위	*/
+				, IMP_RPT_SEND				/* 	수입신고번호	*/
+				, IMP_RAN_NO				/* 	수입 란번호	*/
+				, PACK_CNT					/* 	포장갯수	*/
+				, PACK_UT					/* 	포장단위	*/
+				, ORI_ST_MARK1				/* 	원산지국가부호	*/
+				, ORI_ST_NM					/* 	원산지국가약어	*/
+				, ORI_ST_MARK2				/* 	수출원산결정기준	*/
+				, ORI_ST_MARK3				/* 	수출원산표시여부	*/
+				, ORI_FTA_YN				/* 	원산지 자율발급 여부	*/
+				, ATT_YN					/* 	첨부여부	*/
+				, MODIRAN					/* 	정정구분	*/
+				, REG_ID					/* 	등록자ID	*/
+				, REG_DTM					/* 	등록일시	*/
+				, MOD_ID					/* 	수정자ID	*/
+				, MOD_DTM					/* 	수정일시	*/
+		   FROM EXP_CUSDEC830_RAN
+		  WHERE RPT_NO = #{RPT_NO}
+		    AND RPT_SEQ = #{RPT_SEQ}
+		  ORDER BY RPT_NO, RPT_SEQ, RAN_NO 
+		
+    </select>
+    
+    <select	id="selectDecRanDetail" parameterType="map" resultType="map">
+		  SELECT  RPT_NO					/* 	제출번호	*/
+				, RPT_SEQ					/* 	제출차수	*/
+				, RAN_NO					/* 	란번호	*/
+				, HS						/* 	세번부호	*/
+				, STD_GNM					/* 	표준품명	*/
+				, EXC_GNM					/* 	거래품명	*/
+				, MG_CODE					/* 	송품장부호	*/
+				, MODEL_GNM					/* 	상표명	*/
+				, RPT_KRW					/* 	신고가격원화	*/
+				, RPT_USD					/* 	신고가격미화	*/
+				, CUR_UT					/* 	결제통화	*/
+				, AMT_COD AS AMT_COD_RAN	/* 	인도조건	*/
+				, CON_AMT					/* 	결제금액	*/
+				, SUN_WT					/* 	순중량	*/
+				, SUN_UT					/* 	순중량단위	*/
+				, WT						/* 	수량	*/
+				, UT AS RAN_UT				/* 	수량단위	*/
+				, IMP_RPT_SEND				/* 	수입신고번호	*/
+				, IMP_RAN_NO				/* 	수입 란번호	*/
+				, PACK_CNT					/* 	포장갯수	*/
+				, PACK_UT					/* 	포장단위	*/
+				, ORI_ST_MARK1				/* 	원산지국가부호	*/
+				, ORI_ST_NM					/* 	원산지국가약어	*/
+				, ORI_ST_MARK2				/* 	수출원산결정기준	*/
+				, ORI_ST_MARK3				/* 	수출원산표시여부	*/
+				, ORI_FTA_YN				/* 	원산지 자율발급 여부	*/
+				, ATT_YN					/* 	첨부여부	*/
+				, MODIRAN					/* 	정정구분	*/
+				, REG_ID					/* 	등록자ID	*/
+				, REG_DTM					/* 	등록일시	*/
+				, MOD_ID					/* 	수정자ID	*/
+				, MOD_DTM					/* 	수정일시	*/
+		   FROM EXP_CUSDEC830_RAN
+		  WHERE RPT_NO = #{RPT_NO} 
+		    AND RPT_SEQ = #{RPT_SEQ}
+		    AND RAN_NO = #{RAN_NO}
+    </select>
+
+    <select	id="selectDecModelList" parameterType="map" resultType="map">
+		  SELECT  ROW_NUMBER() OVER (ORDER BY RPT_NO, RPT_SEQ, RAN_NO, SIL) RNUM
+		        , RPT_NO					/* 	제출번호	*/
+				, RPT_SEQ					/* 	제출순번	*/
+				, RAN_NO					/* 	란번호	*/
+				, SIL						/* 	규격일련번호	*/
+				, MG_CD						/* 	제품코드	*/
+				, GNM						/* 	모델규격	*/
+				, COMP						/* 	성분	*/
+				, QTY						/* 	수량	*/
+				, QTY_UT					/* 	수량단위	*/
+				, PRICE						/* 	단가	*/
+				, AMT						/* 	금액	*/
+				, SUN_WT					/* 	순중량	*/
+				, SUN_UT					/* 	순중량단위	*/
+				, MODIRAN					/* 	정정구분	*/
+				, REG_ID					/* 	등록자ID	*/
+				, REG_DTM					/* 	등록일시	*/
+				, MOD_ID					/* 	수정자ID	*/
+				, MOD_DTM					/* 	수정일시	*/
+		   FROM EXP_CUSDEC830_RAN_ITEM
+		  WHERE RPT_NO = #{RPT_NO} 
+		    AND RPT_SEQ = #{RPT_SEQ}
+		    AND RAN_NO = #{RAN_NO}
+	   ORDER BY RPT_NO, RPT_SEQ, RAN_NO , SIL
+    </select>
+    
+    <select	id="selectDecModelDetail" parameterType="map" resultType="map">
+		  SELECT  RPT_NO					/* 	제출번호	*/
+				, RPT_SEQ					/* 	제출순번	*/
+				, RAN_NO					/* 	란번호	*/
+				, SIL						/* 	규격일련번호	*/
+				, MG_CD						/* 	제품코드	*/
+				, GNM						/* 	모델규격	*/
+				, COMP						/* 	성분	*/
+				, QTY						/* 	수량	*/
+				, QTY_UT					/* 	수량단위	*/
+				, PRICE						/* 	단가	*/
+				, AMT AS M_AMT				/* 	금액	*/
+				, SUN_WT AS M_SUN_WT		/* 	순중량	*/
+				, SUN_UT					/* 	순중량단위	*/
+				, MODIRAN					/* 	정정구분	*/
+				, REG_ID					/* 	등록자ID	*/
+				, REG_DTM					/* 	등록일시	*/
+				, MOD_ID					/* 	수정자ID	*/
+				, MOD_DTM					/* 	수정일시	*/
+		   FROM EXP_CUSDEC830_RAN_ITEM
+		  WHERE RPT_NO = #{RPT_NO} 
+		    AND RPT_SEQ = #{RPT_SEQ}
+		    AND RAN_NO = #{RAN_NO}
+		    AND SIL    = #{SIL}
+    </select>
+    
+    <update id="updateDecSend" parameterType="map">
+        UPDATE EXP_CUSDEC830
+           SET SEND = #{SEND}
+             , MOD_ID  = #{USER_ID}
+             , MOD_DTM = SYSDATE
+        WHERE RPT_NO = #{RPT_NO}
+          AND RPT_SEQ = #{RPT_SEQ}
+    </update>
+    
+    <insert id="insertExpdecReq" parameterType="map">                    									
+		<![CDATA[                                                		
+		INSERT INTO EXP_EXPDEC_REQ 
+		(
+		  REQ_NO
+	    , MALL_ID
+	    , SELL_MALL
+		, ORDER_ID
+	    , PAYMENTAMOUNT
+	    , PAYMENTAMOUNT_CUR
+	    , BUYERPARTYORGNAME
+	    , DESTINATIONCOUNTRYCODE
+	    , SELL_MALL_DOMAIN
+	    , STATUS
+	    , EOCPARTYPARTYIDID1
+	    , REGIST_METHOD
+	    , SELLER_ID
+	    , SUMMARY_TOTALWEIGHT
+	    , MANUPARTYORGNAME
+	    , MANUPARTYREGID
+	    , MANUPARTYLOCSEQ
+	    , MANUPARTYORGID
+	    , MANUPARTYLOCID
+	    , GOODSLOCATIONID2
+	    , DELIVERYTERMSCODE
+	    , INSU_KRW
+	    , FRE_KRW
+	    , SEND_CHECK
+	    , REG_ID
+	    , REG_DTM
+	    , MOD_ID
+	    , MOD_DTM
+		)
+		SELECT DISTINCT REQ_NO
+			 , MALL_ID
+			 , MALL_ID
+		     , ORDER_ID
+		     , PAYMENTAMOUNT
+		     , PAYMENTAMOUNT_CUR
+		     , BUYERPARTYORGNAME
+		     , DESTINATIONCOUNTRYCODE
+		     , SELL_MALL_DOMAIN
+		     ,( SELECT DECODE(AUTO_SEND_YN, 'Y', '01', #{STATUS}) FROM CMM_USER WHERE BIZ_NO = #{BIZ_NO:VARCHAR} AND AUTH_CD ='SELLER' AND ROWNUM = 1)
+		     , NVL(EOCPARTYPARTYIDID1, #{BIZ_NO:VARCHAR}) /* 몰관리자가 처리하는 경우 EXP_EXPREG_EXCEL_DETAIL.EOCPARTYPARTYIDID1 값에 판매자의 사업자번호가 들어있음 */
+		     , 'EXCEL'
+		     , #{SELLER_ID:VARCHAR}
+		     , ( SELECT SUM(NVL(NETWEIGHTMEASURE,0)) FROM EXP_EXPREG_EXCEL_DETAIL WHERE SN = #{SN} AND STATUS IS NULL AND ORDER_ID = A.ORDER_ID )
+		     , MAKER_NM
+		     , MAKER_REG_ID
+		     , MAKER_LOC_SEQ
+		     , MAKER_ORG_ID
+		     , MAKER_POST_CD
+		     , NVL2(MAKER_NM, NVL(MAKER_LOC_CD, '999'), '') AS MAKER_LOC_CD
+		     , NVL(AMT_COD, 'FOB')
+		     , INSU_KRW
+		     , FRE_KRW
+		     ,( SELECT NVL(AUTO_SEND_YN, 'N') FROM CMM_USER WHERE BIZ_NO = #{BIZ_NO:VARCHAR} AND AUTH_CD ='SELLER' AND ROWNUM = 1)
+		     , #{USER_ID}
+		     , SYSDATE
+		     , #{USER_ID}
+		     , SYSDATE
+		  FROM EXP_EXPREG_EXCEL_DETAIL A
+		 WHERE 1 = 1
+		   AND SN= #{SN}   
+		   AND STATUS IS NULL
+		 ORDER BY ORDER_ID
+		]]>
+	</insert>
+	
+	<insert id="insertExpdecReqItem" parameterType="map">                    									
+		<![CDATA[                                                		
+		INSERT INTO EXP_EXPDEC_REQ_ITEM
+		(
+		  REQ_NO
+	    , SN
+	    , MALL_ITEM_NO
+	    , ITEMNAME_EN
+	    , LINEITEMQUANTITY
+	    , LINEITEMQUANTITY_UC
+	    , CLASSIDHSID
+	    , NETWEIGHTMEASURE
+	    , DECLARATIONAMOUNT
+	    , BASEPRICEAMT
+	    , COMP
+	    , REG_ID
+	    , REG_DTM
+	    , MOD_ID
+	    , MOD_DTM
+		)	
+		SELECT A.REQ_NO
+		     , A.SEQ
+		     , A.MALL_ITEM_NO
+		     , A.ITEMNAME_EN
+		     , A.LINEITEMQUANTITY
+		     , NVL(A.LINEITEMQUANTITY_UC, 'U')														
+		     , A.CLASSIDHSID
+		     , A.NETWEIGHTMEASURE
+		     , (NVL(A.DECLARATIONAMOUNT,0) * A.LINEITEMQUANTITY) AS DECLARATIONAMOUNT
+		     , A.DECLARATIONAMOUNT
+		     , A.COMP
+		     , #{USER_ID}
+		     , SYSDATE
+		     , #{USER_ID}
+		     , SYSDATE
+		  FROM EXP_EXPREG_EXCEL_DETAIL A 
+		 WHERE A.SN = #{SN}
+		   AND NOT EXISTS ( SELECT *
+						      FROM EXP_EXPDEC_REQ_ITEM B
+						     WHERE B.REQ_NO = A.REQ_NO
+						       AND B.SN = A.SEQ )
+		   AND A.STATUS IS NULL
+		]]>
+	</insert>
+	
+	<select id="selectExpdecReqNoExcel" parameterType="map" resultType="map">
+      SELECT DISTINCT REQ_NO
+        FROM EXP_EXPREG_EXCEL_DETAIL
+       WHERE SN = #{SN}
+       ORDER BY REQ_NO
+  	</select>
+  	
+  	<select id="selectExpdecReqNo" parameterType="map" resultType="map">
+      SELECT REQ_NO
+           , SN
+        FROM EXP_EXPDEC_REQ_ITEM
+       WHERE REQ_NO = #{REQ_NO}
+       ORDER BY REQ_NO
+  	</select>
+	
+	<update id="updateExpdecReqItemSeq" parameterType="map">
+		UPDATE EXP_EXPDEC_REQ_ITEM
+		   SET SN = #{P_SN}
+		 WHERE REQ_NO = #{REQ_NO}
+		   AND SN = #{SN}
+	</update>
+	
+	<update id="updateExpdecReqStatus" parameterType="map">
+		UPDATE EXP_EXPDEC_REQ
+		   SET STATUS = #{STATUS}
+		 WHERE STATUS = '01'
+		   AND EOCPARTYPARTYIDID1 = #{BIZ_NO}
+	</update>   
+	
+    <select id="selectExpDecReqList" parameterType="map" resultType="map">
+      SELECT REQ_NO
+        FROM EXP_EXPDEC_REQ
+       WHERE STATUS = '02'
+         AND EOCPARTYPARTYIDID1 = #{BIZ_NO}
+    ORDER BY REQ_NO
+  	</select>
+  	
+  	<!-- 수출신고요청 정보조회 -->
+    <select id="selectExpReqInfo" parameterType="map" resultType="map">
+      
+	      SELECT  A.REQ_NO                          									/* 요청관리번호 */
+	            , A.STATUS                          									/* 상태 */
+	            , A.MALL_ID                         									/* 몰ID */
+	            , A.SELLER_ID                       									/* 판매자ID */
+	            , A.ORDER_ID                        									/* 주문번호  */
+	            , A.DELIVERY_CHECK                  									/* 배송구분  */
+	            , A.DELIVERY_METHOD                 									/* 배송방법  */
+	            , A.REQUEST_DIV                     									/* 요청구분  */
+	            , A.PAYMENTAMOUNT                   									/* 결제금액  */
+	            , A.PAYMENTAMOUNT_CUR               									/* 결제통화코드 */
+	            , A.DESTINATIONCOUNTRYCODE          									/* 목적국국가코드 */
+	            , A.BUYERPARTYORGNAME               									/* 구매자상호명 */
+	            , A.SUMMARY_TOTALQUANTITY           									/* 총포장갯수 */
+	            , A.SUMMARY_TOTALQUANTITY_UC        									/* 포장단위 */
+	            , A.SUMMARY_TOTALWEIGHT             									/* 중량합계 */
+	            , A.SUMMARY_TOTALWEIGHT_UC          									/* 중량단위 */
+	            , NVL(A.EOCPARTYORGNAME2 , B.USER_NM)       AS EOCPARTYORGNAME2     	/* 판매자상호 */
+	            , NVL(A.EOCPARTYADDRLINE , B.ADDRESS)       AS EOCPARTYADDRLINE     	/* 판매자주소 */
+	            , NVL(A.EOCPARTYORGCEONAME , B.REP_NM)      AS EOCPARTYORGCEONAME   	/* 판매자대표자명 */
+	            , NVL(A.EOCPARTYLOCID , B.ZIP_CD)           AS EOCPARTYLOCID        	/* 판매자우편번호 */
+	            , A.EOCPARTYPARTYIDID1              								 	/* 판매자사업자등록번호 */
+	            , NVL(A.EOCPARTYPARTYIDID2, B.TG_NO)         AS  EOCPARTYPARTYIDID2 	/* 판매자통관고유부호 */
+	            , NVL(A.APPLICANTPARTYORGID, B.APPLICANT_ID) AS  APPLICANTPARTYORGID 	/* 판매자신고인부호 */
+	            , A.GOODSLOCATIONID1                									/* 물품소재지우편번호 */
+	            , A.GOODSLOCATIONNAME               									/* 물품소재지 */
+	            , A.LODINGLOCATIONTYPECODE          									/* 적재항종류 */
+	            , A.LODINGLOCATIONID                									/* 적재항코드 */
+	            , A.TRANSPORTMEANSCODE              									/* 주운송수단 */
+	            , A.CUSTOMORGANIZATIONID            									/* 세관코드 */
+	            , A.CUSTOMDEPARTMENTID              									/* 과코드 */
+	            , A.GOODSLOCATIONID2                									/* 산업단지부호 */
+	            , A.PAYMENTTERMSTYPECODE            									/* 결제방법코드 */
+	            , A.EXPORTERCLASSCODE               									/* 수출자구분 */
+	            , A.SIMPLEDRAWAPPINDICATOR          									/* 간이환급신청여부 */
+	            , A.INSPECTIONCODE                  									/* 검사방법 */
+	            , A.MANUPARTYORGID              									    /* 제조자통관고유부호 */
+	            , A.MANUPARTYORGNAME            									    /* 제조자상호명 */
+	            , A.MANUPARTYLOCID              									    /* 제조자우편번호 */
+	            , A.MANUPARTYLOCSEQ             									    /* 제조자사업장일련번호 */
+	            , A.TOTALDECAMOUNT              									    /* 총신고가격금액 */
+	            , A.TOTALDECAMOUNT_CUR           									    /* 총신고가격통화코드 */
+	            , A.SEND_CHECK                  									    /* 자동전송여부 */
+	            , A.DELIVERY_NO                  									    /* 배송번호 */
+	            , A.ERROR_DESC                   									    /* 작성오류 */
+	            , A.REGIST_METHOD                   									/* 등록방법, API, EXCEL */
+	            , (SELECT C.IDENTIFY_ID FROM  CMM_IDENTIFIER C WHERE C.USER_ID = A.SELLER_ID AND ROWNUM = 1) AS IDENTIFY_ID /* 판매자 식별자ID */
+	            , A.DELIVERYTERMSCODE           									    /* 인도조건 */
+	            , A.INSU_KRW           									    			/* 보험금액원화 */
+				, A.FRE_KRW           									    			/* 운임금액원화 */
+				, A.REG_ID
+	       FROM EXP_EXPDEC_REQ A
+	          , CMM_USER B
+	      WHERE A.SELLER_ID = B.USER_ID(+)
+	        AND A.REQ_NO  = #{REQ_NO}
+    
+    </select>
+  
+    <!-- 수출신고요청 란 정보 조회 -->
+    <select id="selectExpReqRanList"  parameterType="map" resultType="map">
+    
+	      SELECT  AAAA.CLASSIDHSID
+		        , MAX(AAAA.ORIGINLOCID) AS ORIGINLOCID                			/* 원산지국가코드 */
+		        , SUM(AAAA.NETWEIGHTMEASURE) AS NETWEIGHTMEASURE           		/* 중량 */
+		        , MAX(AAAA.NETWEIGHTMEASURE_UC) AS NETWEIGHTMEASURE_UC        	/* 중량단위 */
+		        , SUM(AAAA.LINEITEMQUANTITY) AS LINEITEMQUANTITY           		/* 수량 */
+		        , MAX(AAAA.LINEITEMQUANTITY_UC) AS LINEITEMQUANTITY_UC        	/* 수량단위 */
+		        , MAX(AAAA.BRANDNAME_EN) AS BRANDNAME_EN               			/* 상표명 */
+		        , MAX(AAAA.ITEMNAME_EN) AS ITEMNAME_EN                			/* 거래품명 */
+		        , MAX(AAAA.ITEMNAME_HS) AS ITEMNAME_HS               			/* HS품명 */    
+		        , SUM(AAAA.PACKAGINGQUANTITY) AS PACKAGINGQUANTITY          	/* 포장갯수 */
+		        , MAX(AAAA.PACKAGINGQUANTITY_UC) AS PACKAGINGQUANTITY_UC       	/* 포장단위 */
+		        , SUM(AAAA.DECLARATIONAMOUNT) AS DECLARATIONAMOUNT          	/* 가격 */
+		        , MAX(AAAA.DECLARATIONAMOUNT_CUR) AS DECLARATIONAMOUNT_CUR      /* 통화코드 */
+		        , MAX(AAAA.DOCREFUSAGETEXT) AS DOCREFUSAGETEXT     				/* 서류첨부여부 */
+				, MAX(AAAA.HS_WT_UNIT) AS HS_WT_UNIT       						/* HS 중량단위 */
+				, MAX(AAAA.HS_PKG_UNIT) AS HS_PKG_UNIT      					/* HS 수량단위 */
+		  		, MAX(AAAA.DELIVERYTERMSCODE) AS DELIVERYTERMSCODE				/* 인도조건 */
+		  FROM(
+		        SELECT  AAA.ORIGINLOCID                		/* 원산지국가코드 */
+			          , AAA.NETWEIGHTMEASURE           		/* 중량 */
+			          , AAA.NETWEIGHTMEASURE_UC        		/* 중량단위 */
+			          , AAA.LINEITEMQUANTITY           		/* 수량 */
+			          , AAA.LINEITEMQUANTITY_UC        		/* 수량단위 */
+			          , AAA.BRANDNAME_EN               		/* 상표명 */
+			          , AAA.ITEMNAME_EN                		/* 거래품명 */
+			          , AAA.ITEMNAME_HS                		/* HS품명 */
+			          , AAA.CLASSIDHSID                		/* HS부호 */
+			          , AAA.PACKAGINGQUANTITY          		/* 포장갯수 */
+			          , AAA.PACKAGINGQUANTITY_UC       		/* 포장단위 */
+			          , AAA.DECLARATIONAMOUNT          		/* 가격 */
+			          , AAA.DECLARATIONAMOUNT_CUR      		/* 통화코드 */
+			          , AAA.ATTACHCODE AS DOCREFUSAGETEXT     
+			          , AAA.BASEPRICEAMT   					
+			          , NVL(AAA.GNM, AAA.ITEMNAME_EN) AS GNM  
+			          , AAA.INGREDIENTS                		
+			          , AAA.HS_WT_UNIT       					
+			          , AAA.HS_PKG_UNIT 
+			          , AAA.DELIVERYTERMSCODE				/* 인도조건 */     					
+			     FROM (
+			          SELECT  AA.ORIGINLOCID                		/* 원산지국가코드 */
+			                , CASE AA.NETWEIGHTMEASURE 
+			                	WHEN 0 THEN AA.ITEM_WEIGHT 
+			                	ELSE AA.NETWEIGHTMEASURE 
+			                  END AS  NETWEIGHTMEASURE      		/* 중량   */
+			                , AA.NETWEIGHTMEASURE_UC        		/* 중량단위 */
+			                , AA.LINEITEMQUANTITY           		/* 수량 */
+			                , AA.LINEITEMQUANTITY_UC        		/* 수량단위 */
+			                , AA.BRANDNAME_EN               		/* 상표명 */
+			                , AA.ITEMNAME_EN                		/* 거래품명 */
+			                , BB.STD_NM_EN AS  ITEMNAME_HS  		/* HS품명 JOIN되는 HS가 없으면 항목오류가 남.    */
+			                , AA.CLASSIDHSID                		/* HS부호 */
+			                , AA.PACKAGINGQUANTITY          		/* 포장갯수 */
+			                , AA.PACKAGINGQUANTITY_UC       		/* 포장단위 */
+			                , AA.DECLARATIONAMOUNT          		/* 가격 */
+			                , AA.DECLARATIONAMOUNT_CUR      		/* 통화코드 */
+			                , AA.ATTACHCODE                 		/* 서류첨부여부 */
+			                , AA.BASEPRICEAMT   					/* 단가 */
+			                , AA.GNM                         		/* 규격 */
+			                , AA.INGREDIENTS                 		/* 성분 */
+			                , NVL(BB.WT_UNIT, 'KG')  AS HS_WT_UNIT  /* HS 중량단위 */
+			                , BB.PKG_UNIT AS HS_PKG_UNIT     		/* HS 수량단위 */
+			                , AA.DELIVERYTERMSCODE					/* 인도조건 */
+			          FROM (
+			              SELECT  A.REQ_NO                     											/* 요청관리번호 */
+			                    , A.SN                         											/* 번호(PK) */
+			                    , A.MALL_ITEM_NO               											/* 몰상품코드 */
+			                    , NVL(A.ORIGINLOCID, B.ORG_NAT_CD) 		  AS ORIGINLOCID               	/* 원산지국가코드 */
+			                    , NVL(A.NETWEIGHTMEASURE, 0) 			  AS NETWEIGHTMEASURE          	/* 중량 */
+			                    , NVL(A.NETWEIGHTMEASURE_UC, B.WEIGHT_UT) AS NETWEIGHTMEASURE_UC        /* 중량단위 */
+			                    , NVL(A.LINEITEMQUANTITY, 0) 			  AS LINEITEMQUANTITY         	/* 수량 */
+			                    , NVL(A.LINEITEMQUANTITY_UC, B.QUANTY_UT) AS LINEITEMQUANTITY_UC        /* 수량단위 */
+			                    , NVL(A.BRANDNAME_EN, B.BRAND_NM)   	  AS BRANDNAME_EN            	/* 상표명 */
+			                    , NVL(A.ITEMNAME_EN , B.ITEM_NM)    	  AS ITEMNAME_EN           		/* 거래품명 */
+			                    , A.ITEMNAME_HS                											/* HS품명  인터페이스항목아님 */
+			                    , NVL(A.CLASSIDHSID, B.HS_CD) 			  AS CLASSIDHSID              	/* HS부호 */
+			                    , NVL(A.PACKAGINGQUANTITY,0)  			  AS PACKAGINGQUANTITY         	/* 포장갯수 */
+			                    , A.PACKAGINGQUANTITY_UC       											/* 포장단위 */
+			                    , A.DECLARATIONAMOUNT          											/* 가격 */
+			                    , A.DECLARATIONAMOUNT_CUR      											/* 통화코드 */
+			                    , A.ATTACHCODE                 											/* 서류첨부여부 */
+			                    , A.BASEPRICEAMT   														/* 단가 */
+			                    , B.GNM                        											/* 규격 */
+			                    , B.INGREDIENTS                											/* 성분 */
+			                    , NVL(B.WEIGHT, 0) AS ITEM_WEIGHT                    					/* 상품정보중량 */
+			                    , A1.DELIVERYTERMSCODE													/* 인도조건 */
+			                 FROM EXP_EXPDEC_REQ_ITEM A
+		               INNER JOIN EXP_EXPDEC_REQ A1 
+		                       ON A1.REQ_NO = A.REQ_NO
+		          LEFT OUTER JOIN CMM_ITEM_INFO B
+		                       ON B.MALL_ID=A1.MALL_ID 
+		                      AND B.BIZ_NO=A1.EOCPARTYPARTYIDID1 
+		                      AND B.MALL_ITEM_NO=A.MALL_ITEM_NO
+		                    WHERE A.REQ_NO = #{REQ_NO}
+			          ) AA
+			          , CMM_HS_CD BB
+			      WHERE AA.CLASSIDHSID = BB.HS_CD(+)
+			      ) AAA
+		   ) AAAA
+		   GROUP BY AAAA.CLASSIDHSID
+    
+    </select>
+    
+    <!-- 수출신고요청 모델규격 정보 조회 -->
+    <select id="selectExpReqModelList"  parameterType="map" resultType="map">
+    
+	      SELECT  AAA.ORIGINLOCID                		/* 원산지국가코드 */
+	            , AAA.NETWEIGHTMEASURE           		/* 중량 */
+	            , AAA.NETWEIGHTMEASURE_UC        		/* 중량단위 */
+	            , AAA.LINEITEMQUANTITY           		/* 수량 */
+	            , AAA.LINEITEMQUANTITY_UC        		/* 수량단위 */
+	            , AAA.BRANDNAME_EN               		/* 상표명 */
+	            , AAA.ITEMNAME_EN                		/* 거래품명 */
+	            , AAA.ITEMNAME_HS                		/* HS품명 */
+	            , AAA.CLASSIDHSID                		/* HS부호 */
+	            , AAA.PACKAGINGQUANTITY          		/* 포장갯수 */
+	            , AAA.PACKAGINGQUANTITY_UC       		/* 포장단위 */
+	            , AAA.DECLARATIONAMOUNT          		/* 가격 */
+	            , AAA.DECLARATIONAMOUNT_CUR      		/* 통화코드 */
+	            , AAA.ATTACHCODE AS DOCREFUSAGETEXT     /* 서류첨부여부 */
+	            , AAA.BASEPRICEAMT   					/* 단가 */
+	            , NVL(AAA.GNM, AAA.ITEMNAME_EN) AS GNM  /* 규격 */
+	            , AAA.INGREDIENTS                		/* 성분 */
+	            , AAA.HS_WT_UNIT       						/* HS 중량단위 */
+	            , NVL(AAA.HS_PKG_UNIT, 'U') AS HS_PKG_UNIT 	/* HS 수량단위 */
+	     FROM (
+	          SELECT  AA.ORIGINLOCID                		/* 원산지국가코드 */
+	                , CASE AA.NETWEIGHTMEASURE 
+	                	WHEN 0 THEN AA.ITEM_WEIGHT 
+	                	ELSE AA.NETWEIGHTMEASURE 
+	                  END AS  NETWEIGHTMEASURE      		/* 중량   */
+	                , AA.NETWEIGHTMEASURE_UC        		/* 중량단위 */
+	                , AA.LINEITEMQUANTITY           		/* 수량 */
+	                , AA.LINEITEMQUANTITY_UC        		/* 수량단위 */
+	                , AA.BRANDNAME_EN               		/* 상표명 */
+	                , AA.ITEMNAME_EN                		/* 거래품명 */
+	                , BB.STD_NM_EN AS  ITEMNAME_HS  		/* HS품명 JOIN되는 HS가 없으면 항목오류가 남.    */
+	                , AA.CLASSIDHSID                		/* HS부호 */
+	                , AA.PACKAGINGQUANTITY          		/* 포장갯수 */
+	                , AA.PACKAGINGQUANTITY_UC       		/* 포장단위 */
+	                , AA.DECLARATIONAMOUNT          		/* 가격 */
+	                , AA.DECLARATIONAMOUNT_CUR      		/* 통화코드 */
+	                , AA.ATTACHCODE                 		/* 서류첨부여부 */
+	                , AA.BASEPRICEAMT   					/* 단가 */
+	                , AA.GNM                         		/* 규격 */
+	                , AA.INGREDIENTS                 		/* 성분 */
+	                , NVL(BB.WT_UNIT, 'KG')  AS HS_WT_UNIT  /* HS 중량단위 */
+	                , BB.PKG_UNIT AS HS_PKG_UNIT     		/* HS 수량단위 */
+	          FROM (
+	              SELECT  A.REQ_NO                     											/* 요청관리번호 */
+	                    , A.SN                         											/* 번호(PK) */
+	                    , A.MALL_ITEM_NO               											/* 몰상품코드 */
+	                    , NVL(A.ORIGINLOCID, B.ORG_NAT_CD) 		  AS ORIGINLOCID               	/* 원산지국가코드 */
+	                    , NVL(A.NETWEIGHTMEASURE, 0) 			  AS NETWEIGHTMEASURE          	/* 중량 */
+	                    , NVL(A.NETWEIGHTMEASURE_UC, B.WEIGHT_UT) AS NETWEIGHTMEASURE_UC        /* 중량단위 */
+	                    , NVL(A.LINEITEMQUANTITY, 0) 			  AS LINEITEMQUANTITY         	/* 수량 */
+	                    , NVL(A.LINEITEMQUANTITY_UC, B.QUANTY_UT) AS LINEITEMQUANTITY_UC        /* 수량단위 */
+	                    , NVL(A.BRANDNAME_EN, B.BRAND_NM)   	  AS BRANDNAME_EN            	/* 상표명 */
+	                    , NVL(A.ITEMNAME_EN , B.ITEM_NM)    	  AS ITEMNAME_EN           		/* 거래품명 */
+	                    , A.ITEMNAME_HS                											/* HS품명  인터페이스항목아님 */
+	                    , NVL(A.CLASSIDHSID, B.HS_CD) 			  AS CLASSIDHSID              	/* HS부호 */
+	                    , NVL(A.PACKAGINGQUANTITY,0)  			  AS PACKAGINGQUANTITY         	/* 포장갯수 */
+	                    , A.PACKAGINGQUANTITY_UC       											/* 포장단위 */
+	                    , A.DECLARATIONAMOUNT          											/* 가격 */
+	                    , A.DECLARATIONAMOUNT_CUR      											/* 통화코드 */
+	                    , A.ATTACHCODE                 											/* 서류첨부여부 */
+	                    , A.BASEPRICEAMT   														/* 단가 */
+	                    , B.GNM                        											/* 규격 */
+	                    , NVL(A.COMP, B.INGREDIENTS)			  AS INGREDIENTS                /* 성분 */
+	                    , NVL(B.WEIGHT, 0) AS ITEM_WEIGHT                    					/* 상품정보중량 */
+	                 FROM EXP_EXPDEC_REQ_ITEM A
+               INNER JOIN EXP_EXPDEC_REQ A1 
+                       ON A1.REQ_NO = A.REQ_NO
+          LEFT OUTER JOIN CMM_ITEM_INFO B
+                       ON B.MALL_ID=A1.MALL_ID 
+                      AND B.BIZ_NO=A1.EOCPARTYPARTYIDID1 
+                      AND B.MALL_ITEM_NO=A.MALL_ITEM_NO
+                    WHERE A.REQ_NO = #{REQ_NO}
+	          ) AA
+	          , CMM_HS_CD BB
+	      WHERE AA.CLASSIDHSID = BB.HS_CD(+)
+	      ) AAA
+	      ORDER BY AAA.CLASSIDHSID
+    
+    </select>
+    
+    <!-- 신고서항목조회 -->
+	<select id="selectExpDecBaseVal" parameterType="map" resultType="map">
+	    
+	      SELECT  A.DOC_ID
+	            , A.DOC_ITEM
+	            , A.ITEM_DESC
+	            , A.API_ITEM_NM
+	            , A.BASE_VAL
+	            , A.BASE_VAL_DIV
+	            , A.NODE_NM
+	            , A.TABLE_NM
+	            , A.COLUMN_NM
+	            , A.CHECK_SIZE
+	            , A.CHECK_CODE
+	            , A.ORDR
+	            , S.BASE_VAL AS BASE_VAL_SELLER
+	         FROM CMM_BASEVAL A
+	            , CMM_BASEVAL_SELLER S
+	        WHERE A.DOC_ID = S.DOC_ID(+)
+	          AND A.DOC_ITEM = S.DOC_ITEM(+) 
+	          AND S.BIZ_NO(+) =  #{BIZ_NO:VARCHAR}
+	          AND A.DOC_ID = #{DOC_ID}
+	          AND A.TABLE_NM = #{TABLE_NM}
+	      ORDER BY A.ORDR
+	    
+	</select>
+    
+    <!-- 환율조회 -->
+    <select id="selectExchangeRate" parameterType="map" resultType="string">
+      SELECT  A.CURR_VAL
+        FROM  CMM_EXCHANGE_RATE A
+       WHERE  1=1
+         AND  A.APPLY_DATE  = #{APPLY_DATE}
+         AND  A.NATION      = #{NATION}
+         AND  A.IMPORT_EXPORT  = #{IMPORT_EXPORT}
+    </select>
+      
+  <!-- 문서작성 방식 설정조회 -->
+  <!-- <select id="selectDocSendType" resultType="String">
+    <![CDATA[
+      SELECT  MAX(DOC_SEND_TYPE) AS DOC_SEND_TYPE
+        FROM  TB_SYSTEM_CONFIG
+    ]]>
+  </select> -->
+  
+   <!-- 수출신고 정보조회 요청번호로 등록된 수출신고를 먼저 조회한다. -->
+  <select id="selectExpDecOldInfo" parameterType="map" resultType="map">
+      SELECT  RPT_NO
+            , RECE 
+        FROM  EXP_CUSDEC830
+       WHERE  REQ_NO = #{REQ_NO:VARCHAR}
+         AND  RPT_SEQ = '00'
+  </select>
+  
+  <select id="selectDocIdCount" parameterType="map" resultType="int">
+      SELECT  COUNT(DOC_ID) AS DOC_CNT
+        FROM  CMM_SUBMIT_NO_MNG
+       WHERE  APPLICANT_ID = #{APPLICANT_ID}
+         AND  DOC_ID = #{DOC_ID}
+         AND  RPT_YEAR = TO_CHAR(SYSDATE,'YYYY')
+  </select>
+  
+  <select id="selectRptNoNew" parameterType="map" resultType="string">
+      SELECT  MAX(RPT_NO)+1
+        FROM  CMM_SUBMIT_NO_MNG
+       WHERE  APPLICANT_ID = #{APPLICANT_ID}
+         AND  DOC_ID = #{DOC_ID}
+         AND  RPT_YEAR = TO_CHAR(SYSDATE,'YYYY')
+  </select>
+  
+  <insert id="insertSubmitNoMng" parameterType="map">                    									
+	<![CDATA[                                                		
+		INSERT INTO CMM_SUBMIT_NO_MNG
+		(
+		  APPLICANT_ID
+		, DOC_ID
+		, RPT_YEAR
+		, RPT_NO
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)
+		VALUES
+		(
+		  #{APPLICANT_ID:VARCHAR}
+		, #{DOC_ID:VARCHAR}
+		, TO_CHAR(SYSDATE,'YYYY')
+		, #{RPT_NO:VARCHAR}
+		, #{REG_ID}
+		, SYSDATE
+		, #{MOD_ID}
+		, SYSDATE 
+		)	
+	]]>
+  </insert>
+  
+  <update id="updateSubmitNoMng" parameterType="map">
+      UPDATE  CMM_SUBMIT_NO_MNG
+         SET  RPT_NO = #{RPT_NO:VARCHAR}
+       WHERE  APPLICANT_ID = #{APPLICANT_ID:VARCHAR}
+         AND  DOC_ID = #{DOC_ID:VARCHAR}
+         AND  RPT_YEAR = TO_CHAR(SYSDATE,'YYYY')
+  </update>
+	
+  <update id="updateCUSDEC830" parameterType="map">
+	   UPDATE EXP_CUSDEC830
+		  SET SEND = #{SEND:VARCHAR}
+			, RECE = #{RECE:VARCHAR}
+			, RPT_FIRM = #{RPT_FIRM:VARCHAR}
+			, RPT_MARK = #{RPT_MARK:VARCHAR}
+			, RPT_BOSS_NM = #{RPT_BOSS_NM:VARCHAR}
+			, EXP_FIRM = #{EXP_FIRM:VARCHAR}
+			, COMM_FIRM = #{COMM_FIRM:VARCHAR}
+			, COMM_TGNO = #{COMM_TGNO:VARCHAR}
+			, EXP_DIVI = #{EXP_DIVI:VARCHAR}
+			, EXP_BOSS_NAME = #{EXP_BOSS_NAME:VARCHAR}
+			, EXP_ADDR1 = #{EXP_ADDR1:VARCHAR}
+			, EXP_ADDR2 = #{EXP_ADDR2:VARCHAR}
+			, EXP_SDNO = #{EXP_SDNO:VARCHAR}
+			, EXP_SDNO_DIVI = #{EXP_SDNO_DIVI:VARCHAR}
+			, EXP_TGNO = #{EXP_TGNO:VARCHAR}
+			, EXP_POST = #{EXP_POST:VARCHAR}
+			, MAK_FIRM = #{MAK_FIRM:VARCHAR}
+			, MAK_TGNO = #{MAK_TGNO:VARCHAR}
+			, MAK_POST = #{MAK_POST:VARCHAR}
+			, INLOCALCD = #{INLOCALCD:VARCHAR}
+			, BUY_FIRM = #{BUY_FIRM:VARCHAR}
+			, RPT_CUS = #{RPT_CUS:VARCHAR}
+			, RPT_SEC = #{RPT_SEC:VARCHAR}
+			, RPT_DAY = #{RPT_DAY:VARCHAR}
+			, RPT_DIVI = #{RPT_DIVI:VARCHAR}
+			, RPT_DIVINM = #{RPT_DIVINM:VARCHAR}
+			, EXC_DIVI = #{EXC_DIVI:VARCHAR}
+			, EXC_DIVINM = #{EXC_DIVINM:VARCHAR}
+			, EXP_KI = #{EXP_KI:VARCHAR}
+			, EXP_KINM = #{EXP_KINM:VARCHAR}
+			, CON_MET = #{CON_MET:VARCHAR}
+			, CON_METNM = #{CON_METNM:VARCHAR}
+			, TA_ST_ISO = #{TA_ST_ISO:VARCHAR}
+			, TA_ST_ISONM = #{TA_ST_ISONM:VARCHAR}
+			, FOD_CODE = #{FOD_CODE:VARCHAR}
+			, FOD_CODENM = #{FOD_CODENM:VARCHAR}
+			, ARR_MARK = #{ARR_MARK:VARCHAR}
+			, TRA_MET = #{TRA_MET:VARCHAR}
+			, TRA_METNM = #{TRA_METNM:VARCHAR}
+			, CHK_MET_GBN = #{CHK_MET_GBN:VARCHAR}
+			, GDS_POST = #{GDS_POST:VARCHAR}
+			, GDS_ADDR1 = #{GDS_ADDR1:VARCHAR}
+			, RET_DIVI = #{RET_DIVI:VARCHAR}
+			, TOT_WT = #{TOT_WT:VARCHAR}
+			, UT = #{UT:VARCHAR}
+			, TOT_PACK_CNT = #{TOT_PACK_CNT:VARCHAR}
+			, TOT_PACK_UT = #{TOT_PACK_UT:VARCHAR}
+			, TOT_RPT_KRW = #{TOT_RPT_KRW:VARCHAR}
+			, CUR = #{CUR:VARCHAR}
+			, AMT = #{AMT:VARCHAR}
+			, EXC_RATE_CUR = #{EXC_RATE_CUR:VARCHAR}
+			, RES_YN = #{RES_YN:VARCHAR}
+			, TOT_RAN = #{TOT_RAN:VARCHAR}
+			, REQ_NO = #{REQ_NO:VARCHAR}
+			, MAK_LOC_SEQ = #{MAK_LOC_SEQ:VARCHAR}
+			, AMT_COD = #{AMT_COD:VARCHAR}
+			, FRE_KRW = #{FRE_KRW}
+			, FRE_UT = #{FRE_UT}
+			, FRE_AMT = #{FRE_AMT}
+			, INSU_KRW = #{INSU_KRW}
+			, INSU_UT = #{INSU_UT}
+			, INSU_AMT = #{INSU_AMT}
+			, MOD_ID = #{USER_ID:VARCHAR}
+			, MOD_DTM = SYSDATE
+	    WHERE RPT_NO = #{RPT_NO:VARCHAR}
+		  AND RPT_SEQ = #{RPT_SEQ:VARCHAR}
+
+  </update>
+  
+  <!-- 이미등록된 수출신고요청의 수출신고를 *오류통보의 경우* 재생성할때 품목은 삭제후 재생성처리 -->
+  <delete id="deleteExpDecOldRanInfo">
+    <![CDATA[
+      DELETE EXP_CUSDEC830_RAN
+      WHERE RPT_NO = #{RPT_NO:VARCHAR}
+      AND RPT_SEQ='00'
+    ]]>
+  </delete>
+  
+  <delete id="deleteExpDecOldModelInfo">
+    <![CDATA[
+      DELETE EXP_CUSDEC830_RAN_ITEM
+      WHERE RPT_NO = #{RPT_NO:VARCHAR}
+      AND RPT_SEQ='00'
+    ]]>
+  </delete>
+  
+  <insert id="insertCUSDEC830" parameterType="map">                    									
+	<![CDATA[                                                		
+		INSERT INTO EXP_CUSDEC830
+		(
+		  RPT_NO
+	    , RPT_SEQ
+		, SEND
+		, RECE
+		, RPT_FIRM
+		, RPT_MARK
+		, RPT_BOSS_NM
+		, COMM_FIRM
+		, COMM_TGNO
+		, EXP_DIVI
+		, EXP_FIRM
+		, EXP_BOSS_NAME
+		, EXP_ADDR1
+		, EXP_ADDR2
+		, EXP_SDNO
+		, EXP_SDNO_DIVI
+		, EXP_TGNO
+		, EXP_POST
+		, MAK_FIRM
+		, MAK_TGNO
+		, MAK_POST
+		, INLOCALCD
+		, BUY_FIRM
+		, RPT_CUS
+		, RPT_SEC
+		, RPT_DAY
+		, RPT_DIVI
+		, RPT_DIVINM
+		, EXC_DIVI
+		, EXC_DIVINM
+		, EXP_KI
+		, EXP_KINM
+		, CON_MET
+		, CON_METNM
+		, TA_ST_ISO
+		, TA_ST_ISONM
+		, FOD_CODE
+		, FOD_CODENM
+		, ARR_MARK
+		, TRA_MET
+		, TRA_METNM
+		, CHK_MET_GBN
+		, GDS_POST
+		, GDS_ADDR1
+		, RET_DIVI
+		, TOT_WT
+		, UT
+		, TOT_PACK_CNT
+		, TOT_PACK_UT
+		, TOT_RPT_KRW
+		, AMT_COD
+		, CUR
+		, AMT
+		, EXC_RATE_CUR
+		, RES_YN
+		, TOT_RAN
+		, REQ_NO
+		, MAK_LOC_SEQ
+		, FRE_KRW
+		, FRE_UT 
+		, FRE_AMT
+		, INSU_KRW
+		, INSU_UT
+		, INSU_AMT
+		, ORDER_ID
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)
+		VALUES
+		(
+		  #{RPT_NO:VARCHAR}
+	    , #{RPT_SEQ:VARCHAR}
+		, #{SEND:VARCHAR}
+		, #{RECE:VARCHAR}
+		, #{RPT_FIRM:VARCHAR}
+		, #{RPT_MARK:VARCHAR}
+		, #{RPT_BOSS_NM:VARCHAR}
+		, #{COMM_FIRM:VARCHAR}
+		, #{COMM_TGNO:VARCHAR}
+		, #{EXP_DIVI:VARCHAR}
+		, #{EXP_FIRM:VARCHAR}
+		, #{EXP_BOSS_NAME:VARCHAR}
+		, #{EXP_ADDR1:VARCHAR}
+		, #{EXP_ADDR2:VARCHAR}
+		, #{EXP_SDNO:VARCHAR}
+		, #{EXP_SDNO_DIVI:VARCHAR}
+		, #{EXP_TGNO:VARCHAR}
+		, #{EXP_POST:VARCHAR}
+		, #{MAK_FIRM:VARCHAR}
+		, #{MAK_TGNO:VARCHAR}
+		, #{MAK_POST:VARCHAR}
+		, #{INLOCALCD:VARCHAR}
+		, #{BUY_FIRM:VARCHAR}
+		, #{RPT_CUS:VARCHAR}
+		, #{RPT_SEC:VARCHAR}
+		, #{RPT_DAY:VARCHAR}
+		, #{RPT_DIVI:VARCHAR}
+		, #{RPT_DIVINM:VARCHAR}
+		, #{EXC_DIVI:VARCHAR}
+		, #{EXC_DIVINM:VARCHAR}
+		, #{EXP_KI:VARCHAR}
+		, #{EXP_KINM:VARCHAR}
+		, #{CON_MET:VARCHAR}
+		, #{CON_METNM:VARCHAR}
+		, #{TA_ST_ISO:VARCHAR}
+		, #{TA_ST_ISONM:VARCHAR}
+		, #{FOD_CODE:VARCHAR}
+		, #{FOD_CODENM:VARCHAR}
+		, #{ARR_MARK:VARCHAR}
+		, #{TRA_MET:VARCHAR}
+		, #{TRA_METNM:VARCHAR}
+		, #{CHK_MET_GBN:VARCHAR}
+		, #{GDS_POST:VARCHAR}
+		, #{GDS_ADDR1:VARCHAR}
+		, #{RET_DIVI:VARCHAR}
+		, #{TOT_WT:VARCHAR}
+		, #{UT:VARCHAR}
+		, #{TOT_PACK_CNT:VARCHAR}
+		, #{TOT_PACK_UT:VARCHAR}
+		, #{TOT_RPT_KRW:VARCHAR}
+		, #{AMT_COD:VARCHAR}
+		, #{CUR:VARCHAR}
+		, #{AMT:VARCHAR}
+		, #{EXC_RATE_CUR:VARCHAR}
+		, #{RES_YN:VARCHAR}
+		, #{TOT_RAN:VARCHAR}
+		, #{REQ_NO:VARCHAR}
+		, #{MAK_LOC_SEQ:VARCHAR}
+		, #{FRE_KRW}
+		, #{FRE_UT}
+		, #{FRE_AMT}
+		, #{INSU_KRW}
+		, #{INSU_UT}
+		, #{INSU_AMT}
+		, #{ORDER_ID}
+		, #{USER_ID:VARCHAR}
+		, SYSDATE
+		, #{USER_ID:VARCHAR}
+		, SYSDATE 
+		)
+				
+	]]>
+  </insert>
+  
+  <!-- 수출신고서 전송상태업데이트 -->
+  <update id="updateSendCUSDEC830" parameterType="map">
+    <![CDATA[
+      UPDATE EXP_CUSDEC830
+         SET SEND = #{SEND:VARCHAR}
+       WHERE RPT_NO = #{RPT_NO:VARCHAR}
+         AND RPT_SEQ = '00'
+    ]]>
+  </update>
+  
+  <!-- 요청정보업데이트 -->
+  <update id="updateExpReqStatus" parameterType="map">
+    <![CDATA[
+      UPDATE EXP_EXPDEC_REQ
+         SET STATUS = #{STATUS}
+           , ERROR_DESC = #{ERROR_DESC:VARCHAR}
+           , ERROR_JSON = #{ERROR_JSON:VARCHAR}
+       WHERE REQ_NO = #{REQ_NO:VARCHAR}
+    ]]>
+  </update>
+  
+  <insert id="insertCUSDEC830_RAN" parameterType="map">                    									
+	<![CDATA[                                                		
+		INSERT INTO EXP_CUSDEC830_RAN
+		(
+		  RPT_NO
+		, RPT_SEQ
+		, RAN_NO
+		, HS
+		, STD_GNM
+		, EXC_GNM
+		, MG_CODE
+		, MODEL_GNM
+		, RPT_KRW
+		, RPT_USD
+		, CUR_UT
+		, AMT_COD
+		, CON_AMT
+		, SUN_WT
+		, SUN_UT
+		, WT
+		, UT
+		, IMP_RPT_SEND
+		, IMP_RAN_NO
+		, PACK_CNT
+		, PACK_UT
+		, ORI_ST_MARK1
+		, ORI_ST_NM
+		, ORI_ST_MARK2
+		, ORI_ST_MARK3
+		, ORI_FTA_YN
+		, ATT_YN
+		, MODIRAN
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)
+		VALUES
+		(
+		  #{RPT_NO:VARCHAR}
+		, #{RPT_SEQ:VARCHAR}
+		, #{RAN_NO:VARCHAR}
+		, #{HS:VARCHAR}
+		, #{STD_GNM:VARCHAR}
+		, #{EXC_GNM:VARCHAR}
+		, #{MG_CODE:VARCHAR}
+		, #{MODEL_GNM:VARCHAR}
+		, #{RPT_KRW}
+		, #{RPT_USD}
+		, #{CUR_UT:VARCHAR}
+		, #{AMT_COD:VARCHAR}
+		, #{CON_AMT}
+		, #{SUN_WT:VARCHAR}
+		, #{SUN_UT:VARCHAR}
+		, #{WT}
+		, #{UT:VARCHAR}
+		, #{IMP_RPT_SEND:VARCHAR}
+		, #{IMP_RAN_NO:VARCHAR}
+		, #{PACK_CNT}
+		, #{PACK_UT:VARCHAR}
+		, #{ORI_ST_MARK1:VARCHAR}
+		, #{ORI_ST_NM:VARCHAR}
+		, #{ORI_ST_MARK2:VARCHAR}
+		, #{ORI_ST_MARK3:VARCHAR}
+		, #{ORI_FTA_YN:VARCHAR}
+		, #{ATT_YN:VARCHAR}
+		, #{MODIRAN:VARCHAR}
+		, #{USER_ID:VARCHAR}
+		, SYSDATE
+		, #{USER_ID:VARCHAR}
+		, SYSDATE 
+		)
+				
+	]]>
+  </insert>
+  
+  <update id="upateCUSDEC830_RAN_AMT" parameterType="map">
+	   UPDATE EXP_CUSDEC830_RAN
+		  SET CON_AMT = (SELECT SUM(AMT)
+						   FROM EXP_CUSDEC830_RAN_ITEM A
+						  WHERE RPT_NO = #{RPT_NO}
+						    AND RPT_SEQ = '00'
+						    AND RAN_NO = #{RAN_NO})
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND RPT_SEQ = '00'
+		  AND RAN_NO = #{RAN_NO}
+	</update>  
+  
+  <insert id="insertCUSDEC830_MODEL" parameterType="map">                    									
+	<![CDATA[                                                		
+		INSERT INTO EXP_CUSDEC830_RAN_ITEM
+		(
+		  RPT_NO
+		, RPT_SEQ
+		, RAN_NO
+		, SIL
+		, MG_CD
+		, GNM
+		, COMP
+		, QTY
+		, QTY_UT
+		, PRICE
+		, AMT
+		, SUN_WT
+		, SUN_UT
+		, MODIRAN
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)
+		VALUES
+		(
+		  #{RPT_NO:VARCHAR}
+		, #{RPT_SEQ:VARCHAR}
+		, #{RAN_NO:VARCHAR}
+		, #{SIL:VARCHAR}
+		, #{MG_CD:VARCHAR}
+		, #{GNM:VARCHAR}
+		, #{COMP:VARCHAR}
+		, #{QTY:VARCHAR}
+		, #{QTY_UT:VARCHAR}
+		, #{PRICE:VARCHAR}
+		, #{AMT:VARCHAR}
+		, #{SUN_WT:VARCHAR}
+		, #{SUN_UT:VARCHAR}
+		, #{MODIRAN:VARCHAR}
+		, #{USER_ID:VARCHAR}
+		, SYSDATE
+		, #{USER_ID:VARCHAR}
+		, SYSDATE  
+		)
+				
+	]]>
+  </insert>
+  
+  <!-- 수출정정신고 출력시 상태체크 -->
+  <select id="selectExpDecStatusForPrint" parameterType="map" resultType="map">
+      SELECT DECODE(RECE, '02', 'Y', '05', 'Y', '07', 'Y', '09', 'Y', 'N') AS STATUS
+	    FROM EXP_CUSDMR5AS
+	   WHERE RPT_NO = #{RPT_NO}
+	     AND MODI_SEQ = #{MODI_SEQ}
+  </select>
+  
+  <insert id="insertExpDec830Copy" parameterType="map">                    									
+		<![CDATA[                                                		
+		INSERT INTO EXP_CUSDEC830
+		(
+		  RPT_NO
+		, RPT_SEQ
+		, SEND
+		, RECE
+		, RPT_FIRM
+		, RPT_MARK
+		, RPT_BOSS_NM
+		, COMM_CODE
+		, COMM_FIRM
+		, COMM_TGNO
+		, EXP_DIVI
+		, EXP_CODE
+		, EXP_FIRM
+		, EXP_BOSS_NAME
+		, EXP_ADDR1
+		, EXP_ADDR2
+		, EXP_SDNO
+		, EXP_SDNO_DIVI
+		, EXP_TGNO
+		, EXP_POST
+		, MAK_CODE
+		, MAK_FIRM
+		, MAK_TGNO
+		, MAK_POST
+		, INLOCALCD
+		, BUY_FIRM
+		, BUY_MARK
+		, RPT_CUS
+		, RPT_SEC
+		, RPT_DAY
+		, RPT_DIVI
+		, RPT_DIVINM
+		, EXC_DIVI
+		, EXC_DIVINM
+		, EXP_KI
+		, EXP_KINM
+		, CON_MET
+		, CON_METNM
+		, TA_ST_ISO
+		, TA_ST_ISONM
+		, FOD_CODE
+		, FOD_CODENM
+		, ARR_MARK
+		, TRA_MET
+		, TRA_METNM
+		, TRA_CTA
+		, TRA_CTANM
+		, CHK_MET_GBN
+		, MAK_FIN_DAY
+		, GDS_USG_CODE
+		, GDS_POST
+		, GDS_ADDR1
+		, LCNO
+		, USED_DIVI
+		, UP5AC_DIVI
+		, BAN_DIVI
+		, BAN_DIVINM
+		, REF_DIVI
+		, RET_DIVI
+		, MRN_DIVI
+		, CONT_IN_GBN
+		, TOT_WT
+		, UT
+		, TOT_PACK_CNT
+		, TOT_PACK_UT
+		, TOT_RPT_KRW
+		, TOT_RPT_USD
+		, FRE_KRW
+		, FRE_UT
+		, FRE_AMT
+		, INSU_KRW
+		, INSU_UT
+		, INSU_AMT
+		, AMT_COD
+		, CUR
+		, AMT
+		, EXC_RATE_USD
+		, EXC_RATE_CUR
+		, FOB_YN
+		, BOSE_RPT_CODE
+		, BOSE_RPT_FIRM
+		, BOSE_RPT_DAY1
+		, BOSE_RPT_DAY2
+		, TRA_MARK
+		, EXP_LIS_DAY
+		, JUK_DAY
+		, SEND_DIVI
+		, RES_YN
+		, MODI_RPT
+		, TOT_RAN
+		, EXP_REQ_NO
+		, MD_REFE_NO
+		, RPT_USG
+		, FILE_NO
+		, BLNO
+		, IDATETIME
+		, PDATETIME
+		, SDATETIME
+		, GS_CHK
+		, SHIP_DAY
+		, STNCODE
+		, SN_DIVI
+		, HSUSER
+		, JU_MARK
+		, JU_NAME
+		, UCRNO
+		, PO_NO
+		, SHIP_CODE
+		, SHIP_CO
+		, SHIP_NAME
+		, CHK_PA_MARK
+		, PLAN_SHIP_DAY
+		, CUS_USER_ID
+		, WARE_MARK
+		, REQ_NO
+		, MAK_LOC_SEQ
+		, IN_BASIS_NO
+		, MRN_NO
+		, EXP_REGNO
+		, COMM_REGNO
+		, EXP_ROAD_CD
+		, EXP_BLDG_NO
+		, MAK_REGNO
+		, RC_DAY
+		, CUS_NOTICE
+		, ORDER_ID
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)	
+		SELECT RPT_NO
+			 , #{RPT_SEQ}
+			 , SEND
+			 , RECE
+			 , RPT_FIRM
+			 , RPT_MARK
+			 , RPT_BOSS_NM
+			 , COMM_CODE
+			 , COMM_FIRM
+			 , COMM_TGNO
+			 , EXP_DIVI
+			 , EXP_CODE
+			 , EXP_FIRM
+			 , EXP_BOSS_NAME
+			 , EXP_ADDR1
+			 , EXP_ADDR2
+			 , EXP_SDNO
+			 , EXP_SDNO_DIVI
+			 , EXP_TGNO
+			 , EXP_POST
+			 , MAK_CODE
+			 , MAK_FIRM
+			 , MAK_TGNO
+			 , MAK_POST
+			 , INLOCALCD
+			 , BUY_FIRM
+			 , BUY_MARK
+			 , RPT_CUS
+			 , RPT_SEC
+			 , RPT_DAY
+			 , RPT_DIVI
+			 , RPT_DIVINM
+			 , EXC_DIVI
+			 , EXC_DIVINM
+			 , EXP_KI
+			 , EXP_KINM
+			 , CON_MET
+			 , CON_METNM
+			 , TA_ST_ISO
+			 , TA_ST_ISONM
+			 , FOD_CODE
+			 , FOD_CODENM
+			 , ARR_MARK
+			 , TRA_MET
+			 , TRA_METNM
+			 , TRA_CTA
+			 , TRA_CTANM
+			 , CHK_MET_GBN
+			 , MAK_FIN_DAY
+			 , GDS_USG_CODE
+			 , GDS_POST
+			 , GDS_ADDR1
+			 , LCNO
+			 , USED_DIVI
+			 , UP5AC_DIVI
+			 , BAN_DIVI
+			 , BAN_DIVINM
+			 , REF_DIVI
+			 , RET_DIVI
+			 , MRN_DIVI
+			 , CONT_IN_GBN
+			 , TOT_WT
+			 , UT
+			 , TOT_PACK_CNT
+			 , TOT_PACK_UT
+			 , TOT_RPT_KRW
+			 , TOT_RPT_USD
+			 , FRE_KRW
+			 , FRE_UT
+			 , FRE_AMT
+			 , INSU_KRW
+			 , INSU_UT
+			 , INSU_AMT
+			 , AMT_COD
+			 , CUR
+			 , AMT
+			 , EXC_RATE_USD
+			 , EXC_RATE_CUR
+			 , FOB_YN
+			 , BOSE_RPT_CODE
+			 , BOSE_RPT_FIRM
+			 , BOSE_RPT_DAY1
+			 , BOSE_RPT_DAY2
+			 , TRA_MARK
+			 , EXP_LIS_DAY
+			 , JUK_DAY
+			 , SEND_DIVI
+			 , RES_YN
+			 , MODI_RPT
+			 , TOT_RAN
+			 , EXP_REQ_NO
+			 , MD_REFE_NO
+			 , RPT_USG
+			 , FILE_NO
+			 , BLNO
+			 , IDATETIME
+			 , PDATETIME
+			 , SDATETIME
+			 , GS_CHK
+			 , SHIP_DAY
+			 , STNCODE
+			 , SN_DIVI
+			 , HSUSER
+			 , JU_MARK
+			 , JU_NAME
+			 , UCRNO
+			 , PO_NO
+			 , SHIP_CODE
+			 , SHIP_CO
+			 , SHIP_NAME
+			 , CHK_PA_MARK
+			 , PLAN_SHIP_DAY
+			 , CUS_USER_ID
+			 , WARE_MARK
+			 , REQ_NO
+			 , MAK_LOC_SEQ
+			 , IN_BASIS_NO
+			 , MRN_NO
+			 , EXP_REGNO
+			 , COMM_REGNO
+			 , EXP_ROAD_CD
+			 , EXP_BLDG_NO
+			 , MAK_REGNO
+			 , RC_DAY
+			 , CUS_NOTICE
+			 , ORDER_ID
+			 , #{USER_ID}
+			 , SYSDATE
+			 , #{USER_ID}
+			 , SYSDATE
+	      FROM EXP_CUSDEC830
+	     WHERE RPT_NO = #{RPT_NO}
+	       AND RPT_SEQ = '00'
+		]]>
+	</insert>
+	
+	<insert id="insertExpDec830RanCopy" parameterType="map">                    									
+		<![CDATA[                                                		
+		INSERT INTO EXP_CUSDEC830_RAN
+		(
+		  RPT_NO
+		, RPT_SEQ
+		, RAN_NO
+		, HS
+		, STD_GNM
+		, EXC_GNM
+		, MG_CODE
+		, MODEL_GNM
+		, RPT_KRW
+		, RPT_USD
+		, CUR_UT
+		, AMT_COD
+		, CON_AMT
+		, SUN_WT
+		, SUN_UT
+		, WT
+		, UT
+		, IMP_RPT_SEND
+		, IMP_RAN_NO
+		, PACK_CNT
+		, PACK_UT
+		, ORI_ST_MARK1
+		, ORI_ST_NM
+		, ORI_ST_MARK2
+		, ORI_ST_MARK3
+		, ORI_FTA_YN
+		, ATT_YN
+		, MODIRAN
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)	
+	   SELECT RPT_NO
+			, #{RPT_SEQ}
+		    , RAN_NO
+			, HS
+			, STD_GNM
+			, EXC_GNM
+			, MG_CODE
+			, MODEL_GNM
+			, RPT_KRW
+			, RPT_USD
+			, CUR_UT
+			, AMT_COD
+			, CON_AMT
+			, SUN_WT
+			, SUN_UT
+			, WT
+			, UT
+			, IMP_RPT_SEND
+			, IMP_RAN_NO
+			, PACK_CNT
+			, PACK_UT
+			, ORI_ST_MARK1
+			, ORI_ST_NM
+			, ORI_ST_MARK2
+			, ORI_ST_MARK3
+			, ORI_FTA_YN
+			, ATT_YN
+			, MODIRAN
+			, #{USER_ID}
+			, SYSDATE
+			, #{USER_ID}
+			, SYSDATE
+		 FROM EXP_CUSDEC830_RAN
+		WHERE RPT_NO = #{RPT_NO}
+	      AND RPT_SEQ = '00'
+		]]>
+	</insert>
+	
+	<insert id="insertExpDec830RanItemCopy" parameterType="map">                    									
+		<![CDATA[                                                		
+		INSERT INTO EXP_CUSDEC830_RAN_ITEM
+		(
+		  RPT_NO
+		, RPT_SEQ
+		, RAN_NO
+		, SIL
+		, MG_CD
+		, GNM
+		, COMP
+		, QTY
+		, QTY_UT
+		, PRICE
+		, AMT
+		, SUN_WT
+		, SUN_UT
+		, MODIRAN
+		, REG_ID
+		, REG_DTM
+		, MOD_ID
+		, MOD_DTM
+		)	
+	   SELECT RPT_NO
+			, #{RPT_SEQ}
+			, RAN_NO
+			, SIL
+			, MG_CD
+			, GNM
+			, COMP
+			, QTY
+			, QTY_UT
+			, PRICE
+			, AMT
+			, SUN_WT
+			, SUN_UT
+			, MODIRAN
+			, #{USER_ID}
+			, SYSDATE
+			, #{USER_ID}
+			, SYSDATE
+		 FROM EXP_CUSDEC830_RAN_ITEM
+		WHERE RPT_NO = #{RPT_NO}
+	      AND RPT_SEQ = '00'
+		]]>
+	</insert>
+	
+	<insert id="insertExpDmr5as" parameterType="map">                    									
+		<![CDATA[                                                		
+			INSERT INTO EXP_CUSDMR5AS
+			(
+			  RPT_NO
+			, MODI_SEQ
+			, RPT_SEQ
+			, CUS
+			, SEC
+			, SEND_DIVI
+			, MODI_DAY
+			, RPT_DAY
+			, LIS_DAY
+			, RPT_FIRM
+			, RPT_NAME
+			, EXP_CODE
+			, EXP_NAME
+			, EXP_TGNO
+			, EXP_ADDR1
+			, EXP_ADDR2
+			, MODI_DIVI
+			, MODI_DIVI_TXT
+			, MODI_COT
+			, DUTY_CODE
+			, DUTY_CODE_TXT
+			, RPT_MARK
+			, DPT_NO
+			, DPT_DAY
+			, JU_MARK
+			, JU_NAME
+			, SEND
+			, RECE
+			, AMT_FRONT
+			, AMT_AFTER
+			, AMTUSD_FRONT
+			, AMTUSD_AFTER
+			, SEND_CNT
+			, CUS_USER_ID
+			, REQ_NO
+			, REG_ID
+			, REG_DTM
+			, MOD_ID
+			, MOD_DTM
+			)
+			VALUES
+			(
+			  #{RPT_NO}
+			, #{MODI_SEQ}
+			, #{RPT_SEQ}
+			, #{RPT_CUS}
+			, #{RPT_SEC}
+			, #{SEND_DIVI}
+			, TO_CHAR(SYSDATE, 'YYYYMMDD')
+			, #{RPT_DAY}
+			, #{LIS_DAY}
+			, #{RPT_FIRM}
+			, #{RPT_BOSS_NM}
+			, #{EXP_CODE}
+			, #{EXP_FIRM}
+			, #{EXP_TGNO}
+			, #{EXP_ADDR1}
+			, #{EXP_ADDR2}
+			, #{MODI_DIVI}
+			, #{MODI_DIVI_TXT}
+			, #{MODI_COT}
+			, #{DUTY_CODE}
+			, #{DUTY_CODE_TXT}
+			, #{RPT_MARK}
+			, #{DPT_NO}
+			, #{DPT_DAY}
+			, #{JU_MARK}
+			, #{JU_NAME}
+			, #{SEND}
+			, #{RECE}
+			, #{AMT_FRONT}
+			, #{AMT_AFTER}
+			, #{AMTUSD_FRONT}
+			, #{AMTUSD_AFTER}
+			, #{SEND_CNT}
+			, #{CUS_USER_ID}
+			, #{REQ_NO}
+			, #{USER_ID}
+			, SYSDATE
+			, #{USER_ID:VARCHAR}
+			, SYSDATE
+			)	
+		]]>
+	</insert>
+	
+	<update id="updateExpDec830Term" parameterType="map">
+        UPDATE EXP_CUSDEC830
+           SET JUK_DAY = #{JUK_DAY_CHG}
+             , MOD_ID  = #{USER_ID}
+             , MOD_DTM = SYSDATE
+        WHERE RPT_NO = #{RPT_NO}
+          AND RPT_SEQ = '00'
+    </update>
+    
+    <insert id="insertExpDmr5asItem" parameterType="map">                    									
+		<![CDATA[                                                		
+			INSERT INTO EXP_CUSDMR5AS_ITEM
+			(
+			  RPT_NO
+			, MODI_SEQ
+			, SEQ_NO
+			, RAN_NO
+			, SIZE_NO
+			, CNTR_SEQNO
+			, LAW_SEQNO
+			, CAR_SEQNO
+			, ITEM_NO
+			, ITEM_NM
+			, RAN_DIVI
+			, MODIFRONT
+			, MODIAFTER
+			, REG_ID
+			, REG_DTM
+			, MOD_ID
+			, MOD_DTM
+			)
+			VALUES
+			(
+			  #{RPT_NO:VARCHAR}
+			, #{MODI_SEQ:VARCHAR}
+			, (SELECT LPAD(NVL(MAX(SEQ_NO), 0) + 1, 4, '0') 
+			     FROM EXP_CUSDMR5AS_ITEM 
+			    WHERE RPT_NO = #{RPT_NO}
+			      AND MODI_SEQ = #{MODI_SEQ})
+			, #{RAN_NO:VARCHAR}
+			, #{SIZE_NO:VARCHAR}
+			, #{CNTR_SEQNO:VARCHAR}
+			, #{LAW_SEQNO:VARCHAR}
+			, #{CAR_SEQNO:VARCHAR}
+			, #{ITEM_NO:VARCHAR}
+			, (SELECT MOD_ITEM_DESC FROM CMM_EXPMOD_ITEM WHERE MOD_ITEM_NO = #{ITEM_NO:VARCHAR} AND ROWNUM = 1)
+			, #{RAN_DIVI:VARCHAR}
+			, #{MODIFRONT:VARCHAR}
+			, #{MODIAFTER:VARCHAR}
+			, #{USER_ID:VARCHAR}
+			, SYSDATE
+			, #{USER_ID:VARCHAR}
+			, SYSDATE
+			)	
+		]]>
+	</insert>
+	
+	<update id="updateExpDec" parameterType="map">
+	   UPDATE EXP_CUSDEC830
+		  SET COMM_FIRM	=	#{COMM_FIRM:VARCHAR}
+			, COMM_TGNO	=	#{COMM_TGNO:VARCHAR}
+			, EXP_DIVI	=	#{EXP_DIVI:VARCHAR}
+			, EXP_FIRM	=	#{EXP_FIRM:VARCHAR}
+			, EXP_TGNO	=	#{EXP_TGNO:VARCHAR}
+			, EXP_BOSS_NAME	=	#{EXP_BOSS_NAME:VARCHAR}
+			, EXP_SDNO	=	#{EXP_SDNO:VARCHAR}
+			, EXP_POST	=	#{EXP_POST:VARCHAR}
+			, EXP_ADDR1	=	#{EXP_ADDR1:VARCHAR}
+			, EXP_ADDR2	=	#{EXP_ADDR2:VARCHAR}
+			, EXP_ROAD_CD	=	#{EXP_ROAD_CD:VARCHAR}
+			, EXP_BLDG_NO	=	#{EXP_BLDG_NO:VARCHAR}
+			, MAK_FIRM	=	#{MAK_FIRM:VARCHAR}
+			, MAK_TGNO	=	#{MAK_TGNO:VARCHAR}
+			, MAK_POST	=	#{MAK_POST:VARCHAR}
+			, INLOCALCD	=	#{INLOCALCD:VARCHAR}
+			, GDS_POST	=	#{GDS_POST:VARCHAR}
+			, GDS_ADDR1	=	#{GDS_ADDR1:VARCHAR}
+			, BUY_FIRM	=	#{BUY_FIRM:VARCHAR}
+			, BUY_MARK	=	#{BUY_MARK:VARCHAR}
+			, REF_DIVI	=	#{REF_DIVI:VARCHAR}
+			, RET_DIVI	=	#{RET_DIVI:VARCHAR}
+			, RPT_CUS	=	#{RPT_CUS:VARCHAR}
+			, RPT_SEC	=	#{RPT_SEC:VARCHAR}
+			, RPT_DIVI	=	#{RPT_DIVI:VARCHAR}
+			, EXC_DIVI	=	#{EXC_DIVI:VARCHAR}
+			, EXP_KI	=	#{EXP_KI:VARCHAR}
+			, CON_MET	=	#{CON_MET:VARCHAR}
+			, TA_ST_ISO	=	#{TA_ST_ISO:VARCHAR}
+			, FOD_CODE	=	#{FOD_CODE:VARCHAR}
+			, TRA_MET	=	#{TRA_MET:VARCHAR}
+			, TRA_CTA	=	#{TRA_CTA:VARCHAR}
+			, MAK_FIN_DAY	=	#{MAK_FIN_DAY:VARCHAR}
+			, CHK_MET_GBN	=	#{CHK_MET_GBN:VARCHAR}
+			, UP5AC_DIVI	=	#{UP5AC_DIVI:VARCHAR}
+			, USED_DIVI	=	#{USED_DIVI:VARCHAR}
+			, MRN_DIVI	=	#{MRN_DIVI:VARCHAR}
+			, BAN_DIVI	=	#{BAN_DIVI:VARCHAR}
+			, CONT_IN_GBN	=	#{CONT_IN_GBN:VARCHAR}
+			, LCNO	=	#{LCNO:VARCHAR}
+			, TOT_WT	=	#{TOT_WT:VARCHAR}
+			, UT	=	#{UT:VARCHAR}
+			, TOT_PACK_CNT	=	#{TOT_PACK_CNT:VARCHAR}
+			, TOT_PACK_UT	=	#{TOT_PACK_UT:VARCHAR}
+			, AMT_COD	=	#{AMT_COD:VARCHAR}
+			, CUR	=	#{CUR:VARCHAR}
+			, AMT	=	#{AMT:VARCHAR}
+			, FOB_YN	=	#{FOB_YN:VARCHAR}
+			, BOSE_RPT_FIRM	=	#{BOSE_RPT_FIRM:VARCHAR}
+			, BOSE_RPT_DAY1	=	#{BOSE_RPT_DAY1:VARCHAR}
+			, BOSE_RPT_DAY2	=	#{BOSE_RPT_DAY2:VARCHAR}
+			, RPT_USG	=	#{RPT_USG:VARCHAR}
+			, MOD_ID	=	#{USER_ID:VARCHAR}
+			, MOD_DTM	=	SYSDATE
+			, EXC_RATE_CUR	=	( SELECT  CURR_VAL
+							        FROM  CMM_EXCHANGE_RATE
+							       WHERE  1=1
+							         AND  APPLY_DATE  = #{APPLY_DATE}
+							         AND  NATION      = #{NATION:VARCHAR}
+							         AND  IMPORT_EXPORT  = #{IMPORT_EXPORT:VARCHAR})
+			, INSU_KRW	=	#{INSU_KRW}
+			, FRE_KRW	=	#{FRE_KRW}
+			<!-- 
+		    , SEND	=	#{SEND:VARCHAR}
+			, RECE	=	#{RECE:VARCHAR}
+			, RPT_FIRM	=	#{RPT_FIRM:VARCHAR}
+			, RPT_MARK	=	#{RPT_MARK:VARCHAR}
+			, RPT_BOSS_NM	=	#{RPT_BOSS_NM:VARCHAR}
+			, COMM_CODE	=	#{COMM_CODE:VARCHAR}
+			, EXP_CODE	=	#{EXP_CODE:VARCHAR}
+			, EXP_SDNO_DIVI	=	#{EXP_SDNO_DIVI:VARCHAR}
+			, MAK_CODE	=	#{MAK_CODE:VARCHAR}
+			, RPT_DAY	=	#{RPT_DAY:VARCHAR}
+			, RPT_DIVINM	=	#{RPT_DIVINM:VARCHAR}
+			, EXC_DIVINM	=	#{EXC_DIVINM:VARCHAR}
+			, CON_METNM	=	#{CON_METNM:VARCHAR}
+			, FOD_CODENM	=	#{FOD_CODENM:VARCHAR}
+			, EXP_KINM	=	#{EXP_KINM:VARCHAR}
+			, TA_ST_ISONM	=	#{TA_ST_ISONM:VARCHAR}
+			, ARR_MARK	=	#{ARR_MARK:VARCHAR}
+			, TRA_METNM	=	#{TRA_METNM:VARCHAR}
+			, TRA_CTANM	=	#{TRA_CTANM:VARCHAR}
+			, GDS_USG_CODE	=	#{GDS_USG_CODE:VARCHAR}
+			, BAN_DIVINM	=	#{BAN_DIVINM:VARCHAR}
+			, TOT_RPT_KRW	=	#{TOT_RPT_KRW:VARCHAR}
+			, TOT_RPT_USD	=	#{TOT_RPT_USD:VARCHAR}
+			, FRE_UT	=	#{FRE_UT:VARCHAR}
+			, FRE_AMT	=	#{FRE_AMT:VARCHAR}
+			, INSU_UT	=	#{INSU_UT:VARCHAR}
+			, INSU_AMT	=	#{INSU_AMT:VARCHAR}
+			, EXC_RATE_USD	=	#{EXC_RATE_USD:VARCHAR}
+			, BOSE_RPT_CODE	=	#{BOSE_RPT_CODE:VARCHAR}
+			, TRA_MARK	=	#{TRA_MARK:VARCHAR}
+			, EXP_LIS_DAY	=	#{EXP_LIS_DAY:VARCHAR}
+			, JUK_DAY	=	#{JUK_DAY:VARCHAR}
+			, SEND_DIVI	=	#{SEND_DIVI:VARCHAR}
+			, RES_YN	=	#{RES_YN:VARCHAR}
+			, MODI_RPT	=	#{MODI_RPT:VARCHAR}
+			, TOT_RAN	=	#{TOT_RAN:VARCHAR}
+			, EXP_REQ_NO	=	#{EXP_REQ_NO:VARCHAR}
+			, MD_REFE_NO	=	#{MD_REFE_NO:VARCHAR}
+			, FILE_NO	=	#{FILE_NO:VARCHAR}
+			, BLNO	=	#{BLNO:VARCHAR}
+			, IDATETIME	=	#{IDATETIME:VARCHAR}
+			, PDATETIME	=	#{PDATETIME:VARCHAR}
+			, SDATETIME	=	#{SDATETIME:VARCHAR}
+			, GS_CHK	=	#{GS_CHK:VARCHAR}
+			, SHIP_DAY	=	#{SHIP_DAY:VARCHAR}
+			, STNCODE	=	#{STNCODE:VARCHAR}
+			, SN_DIVI	=	#{SN_DIVI:VARCHAR}
+			, HSUSER	=	#{HSUSER:VARCHAR}
+			, JU_MARK	=	#{JU_MARK:VARCHAR}
+			, JU_NAME	=	#{JU_NAME:VARCHAR}
+			, UCRNO	=	#{UCRNO:VARCHAR}
+			, PO_NO	=	#{PO_NO:VARCHAR}
+			, SHIP_CODE	=	#{SHIP_CODE:VARCHAR}
+			, SHIP_CO	=	#{SHIP_CO:VARCHAR}
+			, SHIP_NAME	=	#{SHIP_NAME:VARCHAR}
+			, CHK_PA_MARK	=	#{CHK_PA_MARK:VARCHAR}
+			, PLAN_SHIP_DAY	=	#{PLAN_SHIP_DAY:VARCHAR}
+			, CUS_USER_ID	=	#{CUS_USER_ID:VARCHAR}
+			, WARE_MARK	=	#{WARE_MARK:VARCHAR}
+			, REQ_NO	=	#{REQ_NO:VARCHAR}
+			, MAK_LOC_SEQ	=	#{MAK_LOC_SEQ:VARCHAR}
+			, IN_BASIS_NO	=	#{IN_BASIS_NO:VARCHAR}
+			, MRN_NO	=	#{MRN_NO:VARCHAR}
+			, EXP_REGNO	=	#{EXP_REGNO:VARCHAR}
+			, COMM_REGNO	=	#{COMM_REGNO:VARCHAR}
+			, MAK_REGNO	=	#{MAK_REGNO:VARCHAR}
+			, RC_DAY	=	#{RC_DAY:VARCHAR}
+			, CUS_NOTICE	=	#{CUS_NOTICE:VARCHAR}
+			, ORDER_ID	=	#{ORDER_ID:VARCHAR}
+			 -->
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND RPT_SEQ = #{RPT_SEQ}
+		  
+	</update>
+	
+	<update id="updateExpDecRan" parameterType="map">
+	   UPDATE EXP_CUSDEC830_RAN
+		  SET HS =	#{HS}
+			, STD_GNM =	#{STD_GNM}
+			, EXC_GNM =	#{EXC_GNM}
+			, MG_CODE =	#{MG_CODE}
+			, MODEL_GNM = #{MODEL_GNM}
+			, RPT_KRW =	#{RPT_KRW}
+			, RPT_USD =	#{RPT_USD}
+			, CON_AMT =	(SELECT SUM(M.AMT) FROM EXP_CUSDEC830_RAN_ITEM M WHERE M.RPT_NO=#{RPT_NO} AND M.RPT_SEQ = #{RPT_SEQ} AND M.RAN_NO = #{RAN_NO})
+			, SUN_WT =	#{SUN_WT}
+			, SUN_UT =	#{SUN_UT}
+			, WT =	#{WT}
+			, UT =	#{RAN_UT}
+			, PACK_CNT =	#{PACK_CNT}
+			, PACK_UT =	#{PACK_UT}
+			, ORI_ST_MARK1 =	#{ORI_ST_MARK1}
+			, ORI_ST_MARK2 =	#{ORI_ST_MARK2}
+			, ORI_ST_MARK3 =	#{ORI_ST_MARK3}
+			, ORI_FTA_YN =	#{ORI_FTA_YN}
+			, ATT_YN =	#{ATT_YN}
+			, MOD_ID	=	#{USER_ID}
+			, MOD_DTM	=	SYSDATE
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND RPT_SEQ = #{RPT_SEQ}
+		  AND RAN_NO = #{RAN_NO} 
+	</update>
+	
+	<update id="updateExpDecItem" parameterType="map">
+	   UPDATE EXP_CUSDEC830_RAN_ITEM
+		  SET GNM =	#{GNM}
+			, COMP = #{COMP}
+			, QTY =	#{QTY}
+			, QTY_UT = #{QTY_UT}
+			, PRICE = #{PRICE}
+			, AMT =	#{M_AMT}
+			, MOD_ID = #{USER_ID}
+			, MOD_DTM =	SYSDATE
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND RPT_SEQ = #{RPT_SEQ}
+		  AND RAN_NO = #{RAN_NO}
+		  AND SIL = #{SIL} 
+	</update>
+	
+	<update id="updateCusDmr5As" parameterType="map">
+	   UPDATE EXP_CUSDMR5AS
+		  SET CUS =	#{CUS:VARCHAR}
+			, SEC = #{SEC:VARCHAR}
+			, MODI_DAY = #{MODI_DAY:VARCHAR}
+			, DUTY_CODE = #{DUTY_CODE:VARCHAR}
+			, MODI_COT = #{MODI_COT:VARCHAR}
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND MODI_SEQ = #{MODI_SEQ}
+	</update>
+	
+	<!-- 수출신고번호(RPT_NO)의 차수(RPT_SEQ) -->
+    <select id="selectExpDecRptSeq" parameterType="map" resultType="string">
+      SELECT LPAD(NVL(MAX(RPT_SEQ), 0) + 1, 2, '0') AS RPT_SEQ 
+        FROM EXP_CUSDEC830 
+       WHERE RPT_NO = #{RPT_NO}
+    </select>
+    
+    <select id="selectExpDmrModiSeq" parameterType="map" resultType="string">
+      SELECT LPAD(NVL(MAX(MODI_SEQ), 0) + 1, 2, '0') AS MODI_SEQ 
+        FROM EXP_CUSDMR5AS 
+       WHERE RPT_NO = #{RPT_NO}
+    </select>
+    
+    <!-- 정정항목 조회(공통) -->
+    <select id="selectExpModItemA" parameterType="map" resultType="map">
+      SELECT SEQ_NO
+		   , MOD_ITEM_NO
+		   , MOD_ITEM_DESC
+  	       , TABLE_NM
+		   , FIELD_NM
+		   , MOD_DIV
+		   , PRINT_DIV
+		   , REG_ID
+		   , REG_DTM
+		   , MOD_ID
+		   , MOD_DTM 
+        FROM CMM_EXPMOD_ITEM 
+       WHERE ((MOD_ITEM_NO LIKE 'A%') AND (MOD_ITEM_NO != 'A608')) 
+         AND FIELD_NM IS NOT NULL 
+         AND MOD_DIV = '정정' 
+       ORDER BY MOD_ITEM_NO
+    </select>
+    
+    <!-- 정정항목 조회(란) -->
+    <select id="selectExpModItemB" parameterType="map" resultType="map">
+      SELECT * 
+        FROM CMM_EXPMOD_ITEM 
+       WHERE ((MOD_ITEM_NO LIKE 'B%') OR (MOD_ITEM_NO = 'C101')) 
+         AND FIELD_NM IS NOT NULL 
+         AND MOD_DIV = '정정' 
+       ORDER BY MOD_ITEM_NO
+    </select>
+    
+    <!-- 정정항목 조회(모델) -->
+    <select id="selectExpModItemC" parameterType="map" resultType="map">
+      SELECT * 
+        FROM CMM_EXPMOD_ITEM 
+       WHERE MOD_ITEM_NO LIKE 'C%'  
+         AND FIELD_NM IS NOT NULL 
+         AND MOD_DIV = '정정' 
+       ORDER BY MOD_ITEM_NO
+    </select>
+    
+    <delete id="deleteExpDmr5asItem">
+	      DELETE EXP_CUSDMR5AS_ITEM
+	       WHERE RPT_NO = #{RPT_NO:VARCHAR}
+	         AND MODI_SEQ = #{MODI_SEQ}
+	       <if test="DEL_GBN != null and DEL_GBN != ''">
+	       	 <if test='DEL_GBN == "A"'>
+	       	 	AND RAN_NO = '000'
+	       	 	AND SIZE_NO = '00'
+	       	 	AND RAN_DIVI IS NULL
+		     </if>
+	       	 <if test='DEL_GBN == "B"'>
+	       	 	AND SIZE_NO = '00'
+	       	 	AND RAN_DIVI = '03'
+	       	 	AND RAN_NO = #{RAN_NO}
+		     </if>
+		     <if test='DEL_GBN == "C"'>
+	       	 	AND SIZE_NO != '00'
+	       	 	AND RAN_DIVI = '03'
+	       	 	AND RAN_NO = #{RAN_NO}
+	       	 	AND SIZE_NO = #{SIL}
+		     </if>
+	       </if>
+  	</delete>
+  	
+  	
+    
+    <select	id="selectDiffInfo" parameterType="map" resultType="map">
+
+		SELECT NVL(MAX(FRE_KRW) - SUM(FRE_CALC), 0) AS FRE_DIFF
+		     , NVL(MAX(INSU_KRW) - SUM(INSU_CALC), 0) AS INSU_DIFF
+		FROM 
+		(
+		SELECT B.RAN_NO 
+		     , A.INSU_KRW
+		     , A.FRE_KRW
+		     , TRUNC(A.FRE_KRW * (B.CON_AMT/A.AMT),0) AS FRE_CALC
+		     , TRUNC(A.INSU_KRW * (B.CON_AMT/A.AMT),0) AS INSU_CALC
+		  FROM EXP_CUSDEC830 A
+		     , EXP_CUSDEC830_RAN B
+		   , ( SELECT  CURR_VAL
+		      FROM  CMM_EXCHANGE_RATE
+		     WHERE  1=1
+		       AND  APPLY_DATE  = #{APPLY_DATE}
+		       AND  NATION      = #{NATION}
+		       AND  IMPORT_EXPORT  = #{IMPORT_EXPORT}
+		   ) C
+		WHERE A.RPT_NO = B.RPT_NO
+		  AND A.RPT_SEQ = B.RPT_SEQ
+		  AND A.RPT_NO = #{RPT_NO}
+		  AND A.RPT_SEQ = #{RPT_SEQ}
+		) AA
+		
+	</select>
+	
+	<select	id="selectCUSDEC830_RAN_AMT" parameterType="map" resultType="map">
+
+		SELECT
+		       AA.RAN_NO 
+		     , AA.DECLARATIONAMOUNT
+		     , NVL(AA.INSU_KRW, 0) AS INSU_KRW
+		     , NVL(AA.FRE_KRW, 0) AS FRE_KRW
+		     , AA.PAYMENTAMOUNT
+		     , AA.FIR_AMT
+		     , NVL(CASE WHEN AA.RAN_NO = '001' THEN AA.FRE_CALC + #{FRE_DIFF}
+		       ELSE AA.FRE_CALC END, 0) AS FRE_CALC
+		     , NVL(CASE WHEN AA.RAN_NO = '001' THEN AA.INSU_CALC + #{INSU_DIFF}
+		       ELSE AA.INSU_CALC END, 0) AS INSU_CALC
+		     , AA.CURR_VAL_USD
+		FROM 
+		(
+		SELECT B.RAN_NO 
+        	 , B.CON_AMT AS DECLARATIONAMOUNT
+		     , A.INSU_KRW
+		     , A.FRE_KRW
+		     , A.AMT AS PAYMENTAMOUNT
+		     , D.CURR_VAL_USD
+        	 , TRUNC(B.CON_AMT * C.CURR_VAL, 0) AS FIR_AMT
+		     , TRUNC(A.FRE_KRW * (B.CON_AMT/E.CON_AMT_SUM),0) AS FRE_CALC
+		     , TRUNC(A.INSU_KRW * (B.CON_AMT/E.CON_AMT_SUM),0) AS INSU_CALC
+		  FROM EXP_CUSDEC830 A
+		     , EXP_CUSDEC830_RAN B
+		   , ( SELECT CURR_VAL
+		         FROM CMM_EXCHANGE_RATE
+		        WHERE 1=1
+		          AND APPLY_DATE  = #{APPLY_DATE}
+		          AND NATION      = #{NATION}
+		          AND IMPORT_EXPORT  = #{IMPORT_EXPORT} ) C
+		   , ( SELECT CURR_VAL AS CURR_VAL_USD
+		         FROM CMM_EXCHANGE_RATE
+		        WHERE 1=1
+		          AND APPLY_DATE  = #{APPLY_DATE}
+		          AND NATION      = 'USD'
+		          AND IMPORT_EXPORT  = #{IMPORT_EXPORT} ) D
+		   , ( SELECT RPT_NO
+                    , SUM(CON_AMT) CON_AMT_SUM
+	             FROM EXP_CUSDEC830_RAN
+	            WHERE RPT_NO = #{RPT_NO}
+	              AND RPT_SEQ = #{RPT_SEQ}
+	            GROUP BY RPT_NO ) E
+		WHERE A.RPT_NO = B.RPT_NO
+		AND A.RPT_SEQ = B.RPT_SEQ
+		AND A.RPT_NO = #{RPT_NO}
+		AND A.RPT_SEQ = #{RPT_SEQ}
+		ORDER BY B.RAN_NO
+		) AA
+		
+	</select>
+	
+	<update id="updateExpDecAmtItem" parameterType="map">
+	   UPDATE EXP_CUSDEC830_RAN
+		  SET RPT_KRW =	#{RPT_KRW}
+		    , RPT_USD = ROUND(#{RPT_KRW}/#{CURR_VAL_USD},0)
+		    , CON_AMT = (SELECT SUM(AMT)
+						   FROM EXP_CUSDEC830_RAN_ITEM A
+						  WHERE RPT_NO = #{RPT_NO}
+						    AND RPT_SEQ = #{RPT_SEQ}
+						    AND RAN_NO = #{RAN_NO})
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND RPT_SEQ = #{RPT_SEQ}
+		  AND RAN_NO = #{RAN_NO}
+	</update>
+	
+	<update id="updateExpDecAmt" parameterType="map">
+	   UPDATE EXP_CUSDEC830
+		  SET TOT_RPT_KRW =	#{TOT_AMT}
+		    , TOT_RPT_USD = ROUND(#{TOT_AMT}/#{CURR_VAL_USD},0)
+		    , EXC_RATE_USD = #{CURR_VAL_USD}
+	    WHERE RPT_NO = #{RPT_NO}
+		  AND RPT_SEQ = #{RPT_SEQ}
+	</update>
+  	
+  	<select id="selectCmmIdentifier" parameterType="map" resultType="map">
+        SELECT IDENTIFY_ID, MAX(MOD_DTM)
+          FROM CMM_IDENTIFIER
+         WHERE TYPE = #{TYPE}
+         <if test="USER_ID != null and USER_ID != ''">
+           AND USER_ID = #{USER_ID}
+         </if>
+         <if test="USER_ID == null or USER_ID == ''">
+           AND USER_ID = #{USR_SESSION.userId}
+         </if>
+      GROUP BY IDENTIFY_ID  
+    </select>
+    
+    <select	id="select5aaDetail" parameterType="map" resultType="map">
+          
+         SELECT *
+		  FROM(
+	  		  SELECT  KEY_NO
+					, RPT_NO                                                                         /* 수출신고번호 */
+					, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') LIS_DTM /* 수리일시 */
+					, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 세관수신일시 */
+					, TO_CHAR(TO_DATE(JUK_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') JUK_DTM            /* 적재의무기한 */
+					, RTRIM(TO_CHAR(TOT_RPT_KRW, 'FM999,999,999.99'), '.') TOT_RPT_KRW               /* 총신고가격원화 */
+					, RTRIM(TO_CHAR(TOT_RPT_USD, 'FM999,999,999.99'), '.') TOT_RPT_USD               /* 총신고가격미화 */
+					, CUS_NOTICE1                                                                    /* 세관기재란 */
+					, CUS_NOTICE2                                                                    /* 도로명표기안내 */
+					, CUS_NOTICE3                                                                    /* 특이사항 */
+					, REG_ID
+					, REG_DTM
+					, MOD_ID
+					, MOD_DTM
+				FROM EXP_GOVCBR5AA
+			   WHERE RPT_NO = #{RPT_NO}
+			   ORDER BY REG_DTM DESC
+		    ) A
+		    WHERE ROWNUM = 1
+           
+    </select>
+	
+	<delete id="deleteCUSDEC830FF" parameterType="map">    
+        DELETE 
+            EXP_CUSDEC830  
+        WHERE 
+            RPT_NO = #{RPT_NO}	                									
+	</delete>  	
+	
+	<insert id="insertCUSDEC830FF" parameterType="map">                    									
+		INSERT INTO EXP_CUSDEC830 (
+			REQ_NO, RPT_NO, RPT_SEQ, RPT_MARK, RPT_FIRM, RPT_BOSS_NM, COMM_CODE, COMM_FIRM, COMM_REGNO, COMM_TGNO, EXP_DIVI, 
+			EXP_CODE, EXP_FIRM, EXP_BOSS_NAME, EXP_ADDR1, EXP_ADDR2, EXP_SDNO, EXP_SDNO_DIVI, EXP_TGNO, EXP_POST, MAK_CODE, 
+			MAK_FIRM, MAK_TGNO, MAK_POST, INLOCALCD, BUY_FIRM, BUY_MARK, RPT_CUS, RPT_SEC, RPT_DAY, RPT_DIVI, 
+			RPT_DIVINM, EXC_DIVI, EXC_DIVINM, EXP_KI, EXP_KINM, CON_MET, CON_METNM, TA_ST_ISO, TA_ST_ISONM, FOD_CODE, 
+			FOD_CODENM, ARR_MARK, TRA_MET, TRA_METNM, TRA_CTA, TRA_CTANM, MAK_FIN_DAY, GDS_POST, GDS_ADDR1, LCNO, 
+			USED_DIVI, UP5AC_DIVI, BAN_DIVI, BAN_DIVINM, REF_DIVI, RET_DIVI, MRN_DIVI, CONT_IN_GBN, TOT_WT, UT, 
+			TOT_PACK_CNT, TOT_PACK_UT, TOT_RPT_KRW, TOT_RPT_USD, FRE_KRW, FRE_UT, FRE_AMT, INSU_KRW, INSU_UT, INSU_AMT, 
+			AMT_COD, CUR, AMT, EXC_RATE_USD, EXC_RATE_CUR, BOSE_RPT_CODE, BOSE_RPT_FIRM, BOSE_RPT_DAY1, BOSE_RPT_DAY2, EXP_LIS_DAY, 
+			JUK_DAY, SEND_DIVI, RES_YN, SEND, RECE, TOT_RAN, PO_NO, RPT_USG, CUS_NOTICE, FILE_NO, BLNO, 
+			GS_CHK, SN_DIVI, JU_MARK, JU_NAME, UCRNO, MODI_RPT, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) VALUES (
+			#{REQ_NO}, #{RPT_NO}, '00', #{RPT_MARK}, #{RPT_FIRM}, #{RPT_BOSS_NM}, #{COMM_CODE}, #{COMM_FIRM}, #{COMM_REGNO}, #{COMM_TGNO}, #{EXP_DIVI},
+			#{EXP_CODE}, #{EXP_FIRM}, #{EXP_BOSS_NAME}, #{EXP_ADDR1}, #{EXP_ADDR2}, #{EXP_SDNO}, #{EXP_SDNO_DIVI}, #{EXP_TGNO}, #{EXP_POST}, #{MAK_CODE},
+			#{MAK_FIRM}, #{MAK_TGNO}, #{MAK_POST}, #{INLOCALCD}, #{BUY_FIRM}, #{BUY_MARK}, #{RPT_CUS}, #{RPT_SEC}, #{RPT_DAY}, #{RPT_DIVI},
+			#{RPT_DIVINM}, #{EXC_DIVI}, #{EXC_DIVINM}, #{EXP_KI}, #{EXP_KINM}, #{CON_MET}, #{CON_METNM}, #{TA_ST_ISO}, #{TA_ST_ISONM}, #{FOD_CODE},
+			#{FOD_CODENM}, #{ARR_MARK}, #{TRA_MET}, #{TRA_METNM}, #{TRA_CTA}, #{TRA_CTANM}, #{MAK_FIN_DAY}, #{GDS_POST}, #{GDS_ADDR1}, #{LCNO},
+			#{USED_DIVI}, #{UP5AC_DIVI}, #{BAN_DIVI}, #{BAN_DIVINM}, #{REF_DIVI}, #{RET_DIVI}, #{MRN_DIVI}, #{CONT_IN_GBN}, #{TOT_WT}, #{UT},
+			#{TOT_PACK_CNT}, #{TOT_PACK_UT}, #{TOT_RPT_KRW}, #{TOT_RPT_USD}, #{FRE_KRW}, #{FRE_UT}, #{FRE_AMT}, #{INSU_KRW}, #{INSU_UT}, #{INSU_AMT},
+			#{AMT_COD}, #{CUR}, #{AMT}, #{EXC_RATE_USD}, #{EXC_RATE_CUR}, #{BOSE_RPT_CODE}, #{BOSE_RPT_FIRM}, #{BOSE_RPT_DAY1}, #{BOSE_RPT_DAY2}, #{EXP_LIS_DAY},
+			#{JUK_DAY}, #{SEND_DIVI}, #{RES_YN}, '03', '03', #{TOT_RAN}, #{PO_NO}, #{RPT_USG}, #{CUS_NOTICE}, #{FILE_NO}, #{BLNO},
+			#{GS_CHK}, #{SN_DIVI}, #{JU_MARK}, #{JU_NAME}, #{UCRNO}, #{MODI_RPT}, #{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE 
+		)
+	</insert>
+	
+	<delete id="deleteCUSDEC830_RANFF" parameterType="map">    
+        DELETE 
+            EXP_CUSDEC830_RAN  
+        WHERE 
+            RPT_NO = #{RPT_NO}	                									
+	</delete>	
+	 	  
+	<insert id="insertCUSDEC830_RANFF" parameterType="map">                    									
+		INSERT INTO EXP_CUSDEC830_RAN (
+			RPT_NO, RPT_SEQ, RAN_NO, HS, STD_GNM, EXC_GNM, MG_CODE, MODEL_GNM, RPT_KRW, RPT_USD, 
+			CUR_UT, AMT_COD, CON_AMT, SUN_WT, SUN_UT, WT, UT, IMP_RPT_SEND, IMP_RAN_NO, PACK_CNT, 
+			PACK_UT, ORI_ST_MARK1, ORI_ST_NM, ORI_ST_MARK2, ORI_ST_MARK3, ORI_FTA_YN, ATT_YN, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) VALUES (
+			#{RPT_NO}, '00', #{RAN_NO}, #{HS}, #{STD_GNM}, #{EXC_GNM}, #{MG_CODE}, #{MODEL_GNM}, #{RPT_KRW}, #{RPT_USD},
+			#{CUR_UT}, #{AMT_COD}, #{CON_AMT}, #{SUN_WT}, #{SUN_UT}, #{WT}, #{UT}, #{IMP_RPT_SEND}, #{IMP_RAN_NO}, #{PACK_CNT},
+			#{PACK_UT}, #{ORI_ST_MARK1}, #{ORI_ST_NM}, #{ORI_ST_MARK2}, #{ORI_ST_MARK3}, #{ORI_FTA_YN}, #{ATT_YN}, #{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE 
+		)
+	</insert>
+	
+	<delete id="deleteCUSDEC830_RAN_ITEMFF" parameterType="map">    
+        DELETE 
+            EXP_CUSDEC830_RAN_ITEM  
+        WHERE 
+            RPT_NO = #{RPT_NO}	                									
+	</delete>	
+	 	  
+	<insert id="insertCUSDEC830_RAN_ITEMFF" parameterType="map">                    									
+		INSERT INTO EXP_CUSDEC830_RAN_ITEM (
+			RPT_NO, RPT_SEQ, RAN_NO, SIL, MG_CD, GNM, COMP, QTY, QTY_UT, PRICE, AMT, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) VALUES (
+			#{RPT_NO}, '00', #{RAN_NO}, #{SIL}, #{MG_CD}, #{GNM1} || #{GNM2} || #{GNM3} || #{GNM4} || #{GNM5}|| #{GNM6}, #{COMP1} || #{COMP2}, #{QTY}, #{QTY_UT}, #{PRICE}, #{AMT}, #{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE 
+		)
+	</insert>	
+    
+    <select	id="selectExpReqFF" parameterType="map" resultType="map">
+    	SELECT
+			REQ_NO, EOCPARTYORGNAME2, RPT_MARK, EOCPARTYORGCEONAME, EOCPARTYORGNAME2, EOCPARTYPARTYIDID2, EXPORTERCLASSCODE, EOCPARTYORGNAME2, EOCPARTYORGCEONAME, EOCPARTYADDRLINE, EOCPARTYPARTYIDID1, EOCPARTYPARTYIDID2, EOCPARTYLOCID, MANUPARTYORGNAME, MANUPARTYORGID, MANUPARTYLOCID, GOODSLOCATIONID2, BUYERPARTYORGNAME, CUSTOMORGANIZATIONID, CUSTOMDEPARTMENTID, TO_CHAR(SYSDATE, 'YYYYMMDD') RPT_DAY, PAYMENTTERMSTYPECODE, DESTINATIONCOUNTRYCODE, LODINGLOCATIONID, TRANSPORTMEANSCODE, GOODSLOCATIONID1, GOODSLOCATIONNAME, SIMPLEDRAWAPPINDICATOR, SUMMARY_TOTALWEIGHT, SUMMARY_TOTALWEIGHT_UC, SUMMARY_TOTALQUANTITY, FRE_KRW, 'KRW' FRE_KRW_UC, FRE_KRW FRE_AMT, INSU_KRW, 'KRW' INSU_KRW_UC, INSU_KRW INSU_AMT, DELIVERYTERMSCODE, PAYMENTAMOUNT_CUR, PAYMENTAMOUNT, ORDER_ID 
+    	FROM 
+    		EXP_EXPDEC_REQ
+    	WHERE 
+    		REQ_NO = #{REQ_NO}
+    </select>	
+    
+    <select	id="selectExpReqRanFF" parameterType="map" resultType="map">
+    	SELECT 
+    		REQ_NO, CLASSIDHSID, ITEMNAME_EN, BRANDNAME_EN, SUM_NETWEIGHTMEASURE, SUN_UT, SUM_LINEITEMQUANTITY, LINEITEMQUANTITY_UC, SUM_PACKAGINGQUANTITY, PACKAGINGQUANTITY_UC, ORIGINLOCID, ATT_YN, 
+    		LPAD(ROWNUM, 3, '0') RAN_NO
+    	FROM (
+			SELECT 
+				REQ_NO, CLASSIDHSID, MAX(ITEMNAME_EN) ITEMNAME_EN, MAX(BRANDNAME_EN) BRANDNAME_EN, 
+				SUM(NETWEIGHTMEASURE) SUM_NETWEIGHTMEASURE, 'KG' SUN_UT, SUM(LINEITEMQUANTITY) SUM_LINEITEMQUANTITY, MAX(LINEITEMQUANTITY_UC) LINEITEMQUANTITY_UC, 
+				SUM(PACKAGINGQUANTITY) SUM_PACKAGINGQUANTITY, MAX(PACKAGINGQUANTITY_UC) PACKAGINGQUANTITY_UC, MAX(ORIGINLOCID) ORIGINLOCID, 'N' ATT_YN 
+			FROM 
+				EXP_EXPDEC_REQ_ITEM
+			WHERE 
+				REQ_NO = #{REQ_NO} 
+	 		GROUP BY REQ_NO, CLASSIDHSID
+ 		)
+    </select>	  
+          
+    <select	id="selectExpReqRanItemFF" parameterType="map" resultType="map">
+		SELECT 
+			ITEM.REQ_NO, RAN.RAN_NO, LPAD(ROWNUM, 2, '0') SIL, 
+			ITEMNAME_EN, SUBSTR(ITEM.COMP, 1, 35) COMP1, SUBSTR(ITEM.COMP,36,35) COMP2, 
+			ITEM.LINEITEMQUANTITY, ITEM.LINEITEMQUANTITY_UC, ITEM.BASEPRICEAMT, ITEM.DECLARATIONAMOUNT 
+		FROM 
+			EXP_EXPDEC_REQ_ITEM ITEM, 
+			(SELECT #{REQ_NO} REQ_NO, #{CLASSIDHSID} CLASSIDHSID, #{RAN_NO} RAN_NO FROM DUAL) RAN 
+		WHERE 
+			ITEM.REQ_NO = RAN.REQ_NO
+			AND ITEM.CLASSIDHSID  = RAN.CLASSIDHSID
+    </select>
+           
+</mapper>

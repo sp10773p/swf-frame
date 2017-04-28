@@ -1,0 +1,28 @@
+@charset "UTF-8";
+/*layout*/
+body.layer {overflow-y:scroll;}
+body.layer #wrap {position:fixed;overflow-y:hidden;width:100%;}
+#layer {position:fixed;top:0;left:0;z-index:1000;display:none;box-sizing:border-box;width:100%;height:100%;background:rgba(0,0,0,0.5);}
+.layer_wrap{position:absolute;top:50%;left:50%;box-sizing:border-box;margin:-222px 0 0 -148px;padding:20px 12px;width:296px; height:444px;border-radius:3px;background:#fff;}
+.search_frame li{margin-bottom:20px;}
+
+/*title 영역*/
+.layer_title{ position:relative; margin-bottom:20px;border-bottom:1px solid #eee;}
+.layer_title h1{ margin-bottom:15px; color:#15a4fa;font-size:18px;}
+.layer_title .close_layer{position:absolute; top:0; right:0; overflow:hidden; width:16px; height:16px; background:url(/images/btn/btn_close_layer.png)no-repeat center; background-size:16px auto; text-indent:-9999px;}
+
+/*날짜검색*/
+.layer_wrap .date_search:after{ display:block; clear:both;content:"";}
+.layer_wrap .date_search span{display:inline-block; width:24px; text-align:center;line-height:37px;}
+.layer_wrap input[type=date]{width:120px; background:#fff url(/images/icon/icon_calendar.png)no-repeat; background-position:94px center; background-size:15px auto;}
+.layer_wrap input[type=date]:last-child{float:right;}
+.layer_wrap h2{ margin-bottom:7px;color:#333;}
+
+/*select + textinput 한줄로 보이는 경우*/
+.search_option:after{ display:block; clear:both;content:"";}
+.search_option select{width:107px;}
+.search_option input{ float:right;width:163px;}
+
+/*팝업 button style*/
+.layer_wrap .inquiry_btn{width:50%; background:#15a4fa; text-align:center;}
+.layer_wrap .lightgray_btn{ margin:0;width:49%;}

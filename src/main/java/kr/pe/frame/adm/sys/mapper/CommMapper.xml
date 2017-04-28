@@ -1,0 +1,282 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="comm">
+    <select	id="selectCommcodeMasterList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY CLASS_ID) RNUM
+                , CLASS_ID
+                , CLASS_NM
+                , USE_CHK
+                , USER_REF1
+                , USER_REF2
+                , USER_REF3
+                , USER_REF4
+                , USER_REF5
+                , UPDATE_YN
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+          FROM CMM_STD_CLASS M
+        <where>
+            1 = 1
+            <if test="CLASS_ID != null and CLASS_ID != ''">
+                AND CLASS_ID LIKE '%'||#{CLASS_ID}||'%'
+            </if>
+            <if test="CLASS_NM != null and CLASS_NM != ''">
+                AND CLASS_NM LIKE '%'||#{CLASS_NM}||'%'
+            </if>
+            <if test="USE_CHK != null and USE_CHK != ''">
+                AND USE_CHK = #{USE_CHK}
+            </if>
+            <if test="CODE != null and CODE != ''">
+                AND EXISTS (SELECT CLASS_ID FROM CMM_STD_CODE WHERE CLASS_ID = M.CLASS_ID AND CODE = #{CODE})
+            </if>
+        </where>
+        ORDER BY CLASS_ID
+    </select>
+
+    <select	id="selectCommcodeMasterListAll" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY CLASS_ID) RNUM
+                , CLASS_ID
+                , CLASS_NM
+                , USE_CHK
+                , USER_REF1
+                , USER_REF2
+                , USER_REF3
+                , USER_REF4
+                , USER_REF5
+                , UPDATE_YN
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+        FROM CMM_STD_CLASS
+        <where>
+            1 = 1
+            <if test="CLASS_ID != null and CLASS_ID != ''">
+                AND CLASS_ID = #{CLASS_ID}
+            </if>
+            <if test="CLASS_NM != null and CLASS_NM != ''">
+                AND CLASS_NM LIKE '%'||#{CLASS_NM}||'%'
+            </if>
+            <if test="USE_CHK != null and USE_CHK != ''">
+                AND USE_CHK = #{USE_CHK}
+            </if>
+        </where>
+        ORDER BY CLASS_ID
+    </select>
+
+    <select	id="selectCommcodeDetailList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY USE_CHK DESC, SEQ ASC, CODE ASC) RNUM
+                , CLASS_ID                    /*클래스*/
+                , CODE                        /*코드*/
+                , CODE AS TCODE               /*임시코드*/
+                , SEQ                         /*순서*/
+                , CODE_NM                     /*설명*/
+                , CODE_SHT                    /*약어*/
+                , USER_REF1                   /*참조1*/
+                , USER_REF2                   /*참조2*/
+                , USER_REF3                   /*참조3*/
+                , USER_REF4                   /*참조4*/
+                , USER_REF5                   /*참조5*/
+                , USE_CHK                     /*사용여부*/
+                , REG_ID                      /*등록자ID*/
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+        FROM 	CMM_STD_CODE
+        WHERE 	1 = 1
+        AND 	CLASS_ID = #{CLASS_ID}
+
+        ORDER 	BY USE_CHK DESC, SEQ ASC, CODE ASC
+    </select>
+
+    <select	id="selectCommcodeDetailListAll" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY USE_CHK DESC, SEQ ASC, CODE ASC) RNUM
+                , CLASS_ID                    /*클래스*/
+                , CODE                        /*코드*/
+                , CODE AS TCODE               /*임시코드*/
+                , SEQ                         /*순서*/
+                , CODE_NM                     /*설명*/
+                , CODE_SHT                    /*약어*/
+                , USER_REF1                   /*참조1*/
+                , USER_REF2                   /*참조2*/
+                , USER_REF3                   /*참조3*/
+                , USER_REF4                   /*참조4*/
+                , USER_REF5                   /*참조5*/
+                , USE_CHK                     /*사용여부*/
+                , REG_ID                      /*등록자ID*/
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+        FROM 	CMM_STD_CODE
+        WHERE 	1 = 1
+        AND 	CLASS_ID = #{CLASS_ID}
+        ORDER 	BY USE_CHK DESC, SEQ ASC, CODE ASC
+    </select>
+
+    <select	id="getCommcodeMaster" parameterType="map" resultType="map">
+        SELECT
+                  CLASS_ID
+                , CLASS_NM
+                , USE_CHK
+                , USER_REF1
+                , USER_REF2
+                , USER_REF3
+                , USER_REF4
+                , USER_REF5
+                , UPDATE_YN
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+          FROM CMM_STD_CLASS
+         WHERE CLASS_ID = #{CLASS_ID}
+    </select>
+
+    <select	id="getCommcodeDetail" parameterType="map" resultType="map">
+        SELECT   CLASS_ID                    /*클래스*/
+                , CODE                        /*코드*/
+                , CODE AS TCODE               /*임시코드*/
+                , SEQ                         /*순서*/
+                , CODE_NM                     /*설명*/
+                , CODE_SHT                    /*약어*/
+                , USER_REF1                   /*참조1*/
+                , USER_REF2                   /*참조2*/
+                , USER_REF3                   /*참조3*/
+                , USER_REF4                   /*참조4*/
+                , USER_REF5                   /*참조5*/
+                , USE_CHK                     /*사용여부*/
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM
+        FROM 	CMM_STD_CODE
+        WHERE 	CLASS_ID = #{CLASS_ID}
+          AND   CODE = #{CODE}
+    </select>
+
+    <select id="selectBtStdClassCount" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM CMM_STD_CLASS WHERE CLASS_ID = #{CLASS_ID}
+    </select>
+    
+    <insert id="insertBtStdClass" parameterType="map">
+        INSERT INTO CMM_STD_CLASS(
+             CLASS_ID
+            ,CLASS_NM
+            ,USE_CHK
+            ,USER_REF1
+            ,USER_REF2
+            ,USER_REF3
+            ,USER_REF4
+            ,USER_REF5
+            ,UPDATE_YN
+            ,REG_ID
+            ,REG_DTM
+            ,MOD_ID
+            ,MOD_DTM
+        )VALUES(
+             #{CLASS_ID}
+            ,#{CLASS_NM}
+            ,#{USE_CHK}
+            ,#{USER_REF1}
+            ,#{USER_REF2}
+            ,#{USER_REF3}
+            ,#{USER_REF4}
+            ,#{USER_REF5}
+            ,#{UPDATE_YN}
+            ,#{USER_ID}
+            ,SYSDATE
+            ,#{USER_ID}
+            ,SYSDATE
+        )
+    </insert>
+
+    <update id="updateBtStdClass" parameterType="map">
+        UPDATE CMM_STD_CLASS
+            SET CLASS_NM    = #{CLASS_NM}
+                ,USE_CHK    = #{USE_CHK}
+                ,USER_REF1  = #{USER_REF1}
+                ,USER_REF2  = #{USER_REF2}
+                ,USER_REF3  = #{USER_REF3}
+                ,USER_REF4  = #{USER_REF4}
+                ,USER_REF5  = #{USER_REF5}
+                ,UPDATE_YN  = #{UPDATE_YN}
+                ,MOD_ID		= #{USER_ID}
+                ,MOD_DTM	= SYSDATE
+          WHERE CLASS_ID = #{CLASS_ID}
+    </update>
+
+    <delete id="deleteBtStdClass" parameterType="map">
+        DELETE FROM CMM_STD_CLASS
+        WHERE CLASS_ID = #{CLASS_ID}
+    </delete>
+
+    <select id="selectBtStdCodeCount" parameterType="map" resultType="int">
+        SELECT COUNT(*) FROM CMM_STD_CODE
+         WHERE CLASS_ID = #{CLASS_ID}
+           AND  CODE = #{CODE}
+    </select>
+
+    <insert id="insertBtStdCode" parameterType="map">
+        INSERT INTO CMM_STD_CODE(
+              CLASS_ID
+            , CODE
+            , SEQ
+            , CODE_NM
+            , CODE_SHT
+            , USE_CHK
+            , USER_REF1
+            , USER_REF2
+            , USER_REF3
+            , USER_REF4
+            , USER_REF5
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES(
+              #{CLASS_ID}
+            , #{CODE}
+            , #{SEQ}
+            , #{CODE_NM}
+            , #{CODE_SHT}
+            , #{USE_CHK}
+            , #{USER_REF1}
+            , #{USER_REF2}
+            , #{USER_REF3}
+            , #{USER_REF4}
+            , #{USER_REF5}
+            , #{USER_ID}
+            , SYSDATE
+            , #{USER_ID}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateBtStdCode" parameterType="map">
+        UPDATE CMM_STD_CODE
+           SET  SEQ        = #{SEQ}
+                ,CODE_NM    = #{CODE_NM}
+                ,CODE_SHT   = #{CODE_SHT}
+                ,USE_CHK    = #{USE_CHK}
+                ,USER_REF1  = #{USER_REF1}
+                ,USER_REF2  = #{USER_REF2}
+                ,USER_REF3  = #{USER_REF3}
+                ,USER_REF4  = #{USER_REF4}
+                ,USER_REF5  = #{USER_REF5}
+                ,MOD_ID     = #{USER_ID}
+                ,MOD_DTM    = SYSDATE
+        WHERE CLASS_ID = #{CLASS_ID}
+          AND CODE = #{CODE}
+    </update>
+
+    <delete id="deleteBtStdCode" parameterType="map">
+        DELETE FROM CMM_STD_CODE
+        WHERE CLASS_ID = #{CLASS_ID}
+        <if test="CODE != null and CODE != ''">
+          AND CODE = #{CODE}
+        </if>
+    </delete>
+</mapper>

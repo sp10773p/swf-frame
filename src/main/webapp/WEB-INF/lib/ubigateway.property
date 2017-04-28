@@ -1,0 +1,40 @@
+### UbiGateway Configuration ###
+# Basic info.
+osCharset=KSC5601
+baseCharset=US7ASCII
+requestCharset=
+isDeflater=true
+isUnicode=false
+isBase64=true
+utfData=true
+colDim=^t
+rowDim=^n
+info=true
+admin=YWRtaW4=
+adminImgUri=
+# Db info.
+connType=lookup
+dbVendor=
+dbDriver=
+dbUrl=
+dbId=
+dbPw=
+# Path info.
+licensePath=
+logPath=
+xslPath=
+cachePath=
+# Log info.
+timeZone=GMT+9
+rowSize=0
+backupStyle=date
+backupSize=0
+backupPattern=yyyy-MM-dd
+debug=false
+# UbiDrm info.
+drmLoadType=nonCache
+drmConfigFilePath=
+# UbiDaemon info.
+ubidaemonIp=localhost
+ubidaemonPort=6996
+ubidaemonUrfType=normal

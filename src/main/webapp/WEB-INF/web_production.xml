@@ -1,0 +1,168 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://java.sun.com/xml/ns/javaee"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         id="goGLOBAL" version="3.0">
+
+    <display-name>goGLOBAL</display-name>
+    <context-param>
+        <param-name>webAppRootKey</param-name>
+        <param-value>goglobal.root</param-value>
+    </context-param>
+
+    <listener>
+        <listener-class>org.springframework.web.context.ContextLoaderListener</listener-class>
+    </listener>
+
+    <listener>
+        <listener-class>org.springframework.web.context.request.RequestContextListener</listener-class>
+    </listener>
+
+    <listener>
+        <listener-class>kr.pe.frame.cmm.core.service.HttpSessionListenerImpl</listener-class>
+    </listener>
+
+    <context-param>
+        <param-name>contextConfigLocation</param-name>
+        <param-value>classpath*:spring/context-*.xml</param-value>
+    </context-param>
+
+    <context-param>
+        <param-name>spring.profiles.active</param-name>
+        <param-value>production</param-value>
+    </context-param>
+
+    <servlet>
+        <servlet-name>action</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>WEB-INF/dispatcher-servlet.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+        <multipart-config>
+            <!-- https://gs.saro.me/#!m=elec&jn=242 -->
+            <max-file-size>12582912</max-file-size>             <!-- 10M -->
+            <max-request-size>31457280</max-request-size>       <!-- 30M -->
+            <file-size-threshold>52428800</file-size-threshold> <!-- 50M -->
+        </multipart-config>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>action</servlet-name>
+        <url-pattern>*.do</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>admin</servlet-name>
+        <servlet-class>kr.pe.frame.cmm.servlet.AdminServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>admin</servlet-name>
+        <url-pattern>/admin</url-pattern>
+    </servlet-mapping>
+
+    <servlet>
+        <servlet-name>mobile</servlet-name>
+        <servlet-class>kr.pe.frame.cmm.servlet.MobileServlet</servlet-class>
+        <load-on-startup>2</load-on-startup>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>mobile</servlet-name>
+        <url-pattern>/mobile</url-pattern>
+    </servlet-mapping>
+<filter>
+        <filter-name>encodingFilter</filter-name>
+        <filter-class>org.springframework.web.filter.CharacterEncodingFilter</filter-class>
+        <init-param>
+            <param-name>encoding</param-name>
+            <param-value>UTF-8</param-value>
+        </init-param>
+    </filter>
+    <filter-mapping>
+        <filter-name>encodingFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <filter-name>XSS</filter-name>
+        <filter-class>kr.pe.frame.cmm.core.filter.CrossScriptingFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>XSS</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <filter>
+        <display-name>springMultipartFilter</display-name>
+        <filter-name>springMultipartFilter</filter-name>
+        <filter-class>org.springframework.web.multipart.support.MultipartFilter</filter-class>
+    </filter>
+
+    <filter-mapping>
+        <filter-name>springMultipartFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
+
+    <session-config>
+        <session-timeout>30</session-timeout>
+		<tracking-mode>COOKIE</tracking-mode>
+    </session-config>
+    
+    <display-name>UbiGateway</display-name>
+	<servlet>
+		<servlet-name>UbiForm</servlet-name>
+		<servlet-class>com.ubidcs.report.gateway.UbiForm</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>UbiData</servlet-name>
+		<servlet-class>com.ubidcs.report.gateway.UbiData</servlet-class>
+	</servlet>
+	<servlet>
+		<servlet-name>UbiAdmin</servlet-name>
+		<servlet-class>com.ubidcs.report.gateway.UbiAdmin</servlet-class>
+	</servlet>
+	<!-- Servlet for UbiDaemon -->
+	<servlet>
+		<servlet-name>UbiGateway</servlet-name>
+		<servlet-class>com.ubidcs.report.gateway.UbiGateway</servlet-class>
+	</servlet>
+	<!-- Servlet for DRM -->
+	<servlet>
+		<servlet-name>UbiServer</servlet-name>
+		<servlet-class>com.ubidcs.report.gateway.UbiServer</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>UbiForm</servlet-name>
+		<url-pattern>/UbiForm.jsp</url-pattern>
+	</servlet-mapping>	
+	<servlet-mapping>
+		<servlet-name>UbiData</servlet-name>
+		<url-pattern>/UbiData.jsp</url-pattern>
+	</servlet-mapping>	
+	<servlet-mapping>
+		<servlet-name>UbiAdmin</servlet-name>
+		<url-pattern>/UbiAdmin.jsp</url-pattern>
+	</servlet-mapping>	
+	<servlet-mapping>
+		<servlet-name>UbiGateway</servlet-name>
+		<url-pattern>/UbiGateway.jsp</url-pattern>
+	</servlet-mapping>
+	<servlet-mapping>
+		<servlet-name>UbiServer</servlet-name>
+		<url-pattern>/UbiServer.jsp</url-pattern>
+	</servlet-mapping>	
+    
+    <error-page>
+        <error-code>404</error-code>
+        <location>/WEB-INF/jsp/error/error404.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>403</error-code>
+        <location>/WEB-INF/jsp/error/error403.jsp</location>
+    </error-page>
+    <error-page>
+        <error-code>500</error-code>
+        <location>/WEB-INF/jsp/error/error500.jsp</location>
+    </error-page>
+</web-app>

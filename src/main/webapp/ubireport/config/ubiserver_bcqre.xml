@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="euc-kr" ?>
+<UbiServer version="2.5.0601.0000">
+	<Environment OsCharset="KSC5601" 
+				 BaseCharset="US7ASCII" 
+				 LoadType="nonCache"
+				 PropertyFile="./WEB-INF/lib/ubigateway.property"
+				 LicenseFile="C:/Program Files/Apache Software Foundation/Tomcat 5.5/webapps/drm_bcqre/ubireport/license/License.xml" />
+	
+	<!-- 
+	ServerType
+	  - TYPE1 : 32bit(EzIssuerJava.jar)
+      - TYPE2 : 64bit(EPSJava4.jar)
+	  - TYPE3 : 64bit(EPSJava5.jar)
+	PrinterOption(공유 프린터 지원여부)
+	  - 0 인 경우 공유 프린터 지원 가능
+	  - 0 이외의 값은 공유 프린터 지원 불가(권장 : 1) 
+	ExecuteSP(스풀보호 실행여부)
+	  - 0 : 실행안함
+	  - 1 : 실행
+	XmlFilePath : 2D 바코드를 만들기 위한 기준 정보가 있는 파일 경로
+	VersionFileURL : Bcqre 프린터 목록을 관리하는 폴더
+	CopyProtectType
+	  - 1 : rlarnjsduq.bmp
+	  - 2 : rlarnjsduq2.bmp
+	  - 3 : rlarnjsduq4.bmp
+	  - 4 : rlarnjsduq5.bmp
+	-->
+
+	<Bcqre   ServerType="TYPE1"
+			 PrinterOption="0"
+			 ExecuteSP="0"
+			 UploadDirectory="C:/Program Files/Apache Software Foundation/Tomcat 5.5/webapps/drm_bcqre/ubireport/upload/"
+			 ResultPath="C:/Program Files/Apache Software Foundation/Tomcat 5.5/webapps/drm_bcqre/ubireport/result/"
+			 XmlFilePath="C:/bcqre/ini/config.xml"
+			 VersionFileURL="http://localhost:8080/drm_bcqre/Printerinfo/"
+			 CopyProtectType="1"
+			 /> 
+
+	<DirectConnection ID="DEMO"
+					DBVendor=""
+					Driver=""
+					DBUrl=""
+					Charset=""
+					UserID=""
+					Passsword="" ></DirectConnection> 
+
+	<Resource ID="DEMO"
+			  FileURL="http://localhost:8080/drm_bcqre/ubireport/"
+			  ServletRootURL="http://localhost:8080/drm_bcqre/"
+			  ReportFormServlet=""
+			  ResultServlet=""
+			  JrfFileDir="http://localhost:8080/drm_bcqre/ubireport/work/"
+			  IsUnicode="false"
+			  IsDeflater="true"
+			  CommLang=""
+			  RowDim="^n"
+			  ColDim="^t" > 
+		<DataSource ReportDBID="DEMO" DatasourceName="REAL" ConnectionType="direct" />
+		<DataSource ReportDBID="DEMO2" DatasourceName="REAL2" ConnectionType="direct" />
+	</Resource>
+
+	<ViewerOption ID="DEFALT"
+			ExecType="TYPE4" Scale="100" ProgressBar="true" Toolbar="true"
+			Margin="true" PopupMenu="false" Params="true" ImageCache="true"
+			FontElement="" InvisibleToolbar="" CopyFonts="" Background=""
+			BackgroundToolbar="" ExportDS="" ExportFilename="" InvisibleExporttypes=""
+			InitPage="" /> 
+
+</UbiServer>

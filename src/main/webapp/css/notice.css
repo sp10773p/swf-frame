@@ -1,0 +1,12 @@
+@charset "UTF-8";
+body{font-size:12px; line-height:18px;}
+#header{height:50px; background:#15a4fa; padding:0 15px; font-family:'NanumSquare';}
+#header h1{font-size:16px; font-weight:bold; color:#fff; line-height:50px;}
+#container{padding:25px 15px;}
+#footer{position:fixed; bottom:0; padding:0 15px; height:30px; background:#6a7380; font-size:11px; width:100%; color:#fff; box-sizing:border-box;}
+#footer label{vertical-align:middle;}
+#footer input{vertical-align:sub;}
+.inner{overflow:hidden; position:relative;}
+.close_popup{display:block; width:55px; height:22px; border-radius:2px; background:#fff; text-align:center; line-height:22px;}
+.inner > :first-child{float:left; margin-top:8px;}
+.inner > :last-child{float:right; margin-top:4px;}

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="msg">
+    <select	id="selectMsgList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY TYPE, CODE) RNUM
+                , TYPE
+                , DECODE(TYPE, 'I', '안내', 'W', '경고' , 'E', '에러' , 'C', '확인') AS TYPE_NM
+                , CODE
+                , MESSAGE
+                , USE_YN
+          FROM CMM_MESSAGE
+         WHERE 1=1
+        <if test="P_TYPE != null and P_TYPE != ''">
+            AND TYPE = #{P_TYPE}
+        </if>
+        <if test="P_CODE != null and P_CODE != ''">
+            AND CODE LIKE '%'||#{P_CODE}||'%'
+        </if>
+        <if test="P_USE_YN != null and P_USE_YN != ''">
+            AND USE_YN = #{P_USE_YN}
+        </if>
+        <if test="P_MESSAGE != null and P_MESSAGE != ''">
+            AND MESSAGE LIKE '%'||#{P_MESSAGE}||'%'
+        </if>
+        ORDER BY TYPE, CODE
+    </select>
+
+    <select	id="selectCmmMessageCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM CMM_MESSAGE
+         WHERE TYPE = #{TYPE}
+           AND CODE = #{CODE}
+    </select>
+
+    <insert id="insertCmmMessage" parameterType="map">
+        INSERT INTO CMM_MESSAGE(
+            TYPE
+            , CODE
+            , MESSAGE
+            , USE_YN
+        )VALUES(
+            #{TYPE:VARCHAR }
+            , (SELECT LPAD(NVL(MAX(TO_NUMBER(CODE)), 0) + 1, 8, '0') FROM CMM_MESSAGE WHERE TYPE = #{TYPE})
+            , #{MESSAGE:VARCHAR }
+            , #{USE_YN:VARCHAR }
+        )
+    </insert>
+
+    <update id="updateCmmMessage" parameterType="map">
+          UPDATE CMM_MESSAGE
+             SET TYPE    = #{TYPE}
+                , CODE    = #{CODE}
+                , MESSAGE = #{MESSAGE}
+                , USE_YN  = #{USE_YN}
+           WHERE TYPE = #{ORG_TYPE}
+           AND CODE = #{ORG_CODE}
+    </update>
+</mapper>

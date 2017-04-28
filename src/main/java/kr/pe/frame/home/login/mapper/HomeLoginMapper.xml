@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="homeLogin">
+    <select	id="selectUser" parameterType="map" resultType="map">
+        SELECT A.*
+          FROM (
+	        SELECT USER_ID, EMAIL, USER_STATUS
+	          FROM CMM_USER
+	         WHERE USER_DIV IN ('S', 'M', 'G', 'E')
+	        <if test="USER_ID != null and USER_ID != ''">
+	          AND USER_ID = #{USER_ID}
+	        </if>
+	        <if test="EMAIL != null and EMAIL != ''">
+	          AND EMAIL = #{EMAIL}
+	        </if>
+	        <if test="BIZ_NO != null and BIZ_NO != ''">
+	          AND BIZ_NO = #{BIZ_NO}
+	        </if>
+	        <if test="USER_DIV != null and USER_DIV != ''">
+	          AND USER_DIV = #{USER_DIV}
+	        </if>
+	        ORDER BY USER_ID DESC
+        )A
+        WHERE ROWNUM = 1
+        
+    </select>
+
+</mapper>

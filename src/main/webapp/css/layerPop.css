@@ -1,0 +1,111 @@
+@charset "UTF-8";
+#layer { display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);box-sizing:border-box;z-index:100; }
+
+/* 레이어 프레임 */
+.layerContainer {position:absolute;left:50%;top:50%;width:800px;height:746px; overflow-y:hidden; box-sizing:border-box; padding:30px; margin:-400px 0 0 -350px; background:#fff; border-radius:5px; font-size:12px; color:#5b5b5b;}
+.layer_content {width:100%; height:601px; overflow-x:hidden; box-sizing:border-box;}
+
+.layer_btn_frame{width:100%; height:37px; padding-top:5px; box-sizing:border-box;}
+/*레이어 팝업 제목요소*/
+.layerTitle{width:100%; height:32px; border-bottom:2px solid #eaebec;}
+.layerTitle h1{font-family:nanumgothic; font-size:20px; color:#343844;}
+.layerTitle a{display:block; position:absolute; right:30px; top:30px; width:22px; height:22px; background:url(/images/btn/btn_popup_close.png) no-repeat;}
+/* layer_search부분 */
+.search_frame.layer{width:100%; height:73px; box-sizing:border-box; margin-bottom:25px; border-radius:3px; background:#e2eef1;}
+.search_frame.layer > ul > li {width:100%;}
+.util_frame.layer{height:42px;}
+/* layer_bottom부분 */
+.layer_bottom{text-align:center; _margin-bottom:20px;}
+.layer_bottom > .layer_btn {display:inline-block; background:#008ee1; margin-left:5px; color:#fff; padding:9px 15px 0 15px; box-sizing:border-box;}
+.layer_bottom > .layer_btn:first-child{margin-left:0;}
+
+/* dialog */
+.layerContainer.dialog {position:absolute;left:50%;top:50%;width:400px;height:220px; overflow-y:hidden; box-sizing:border-box; padding:30px; margin:-100px 0 0 -200px; background:#fff; border-radius:5px; font-size:12px; color:#5b5b5b;}
+.layerContainer.dialog > .layer_content {width:100%; height:auto; overflow-x:hidden; padding-top:35px; box-sizing:border-box; text-align:center; vertical-align:middle;}
+.layerContainer.dialog > .layer_content p {font-family:nanumgothic; font-size:14px; margin-bottom:3px;}
+.layerContainer.dialog > .layer_bottom{text-align:center; margin:10px 0 10px 0;}
+
+/*튜토리얼 스타일*/
+.tutorial .layer_content{margin:30px 0; height:561px; color:#fff; position:relative;}
+/*시작화면*/
+.layer_content.start {background:url(/images/bg/bg_tutorial_start.jpg); font-family:nanumgothic; font-weight:bold;}
+.layer_content.start div p{position:absolute; font-size:34px; top:165px; width:100%; text-align:center;}
+.layer_content.start div a{display:block; position:absolute; width:126px; height:126px; border-radius: 50%; color:#fff; background:#008ee1 url(/images/btn/btn_tutorial_start.png) no-repeat right center; padding-left:30px; padding-top:50px; box-sizing: border-box; font-size:24px; top:295px; left:50%; margin-left:-63px;}
+
+/*질문화면*/
+.layer_content.step {background:url(/images/bg/bg_tutorial.jpg); overflow-y:scroll;}
+
+/*좌측 질문 네비*/
+.tut_nav{width:87px; height:561px; position:fixed; background:#1d517f url(/images/bg/bg_tut_nav.png) no-repeat center 92px; z-index:300;}
+
+.tut_nav li a{display:block; width:47px; height:47px; color:#fff; margin:0 auto 15px; text-indent:-9999px; font-size:0; overflow:hidden; background-size:contain; cursor:default;}
+.tut_nav li.on a{width:55px; height:55px; cursor:pointer;}
+.tut_nav li.last a{cursor:pointer;}
+.tut_nav li:nth-child(1) a{margin-top:45px; background:url(/images/btn/btn_tunav01_on.png)no-repeat; }
+.tut_nav li.last:nth-child(1) a{background:url(/images/btn/btn_tunav01_last.png)no-repeat;}
+.tut_nav li:nth-child(2) a{ background:url(/images/btn/btn_tunav02_off.png)no-repeat;}
+.tut_nav li.on:nth-child(2) a{ background:url(/images/btn/btn_tunav02_on.png)no-repeat;}
+.tut_nav li.last:nth-child(2) a{background:url(/images/btn/btn_tunav02_last.png)no-repeat;}
+.tut_nav li:nth-child(3) a{ background:url(/images/btn/btn_tunav03_off.png)no-repeat;}
+.tut_nav li.on:nth-child(3) a{ background:url(/images/btn/btn_tunav03_on.png)no-repeat;}
+.tut_nav li.last:nth-child(3) a{background:url(/images/btn/btn_tunav03_last.png)no-repeat;}
+.tut_nav li:nth-child(4) a{ background:url(/images/btn/btn_tunav04_off.png)no-repeat;}
+.tut_nav li.on:nth-child(4) a{ background:url(/images/btn/btn_tunav04_on.png)no-repeat;}
+.tut_nav li.last:nth-child(4) a{background:url(/images/btn/btn_tunav04_last.png)no-repeat;}
+.tut_nav li:nth-child(5) a{ background:url(/images/btn/btn_tunav05_off.png)no-repeat;}
+.tut_nav li.on:nth-child(5) a{ background:url(/images/btn/btn_tunav05_on.png)no-repeat;}
+.tut_nav li.last:nth-child(5) a{background:url(/images/btn/btn_tunav05_last.png)no-repeat;}
+.tut_nav li:nth-child(6) a{ background:url(/images/btn/btn_tunav06_off.png)no-repeat;}
+.tut_nav li.on:nth-child(6) a{ background:url(/images/btn/btn_tunav06_on.png)no-repeat;}
+.tut_nav li.last:nth-child(6) a{background:url(/images/btn/btn_tunav06_last.png)no-repeat;}
+.tut_nav li:nth-child(7) a{ background:url(/images/btn/btn_tunav07_off.png)no-repeat;}
+.tut_nav li.on:nth-child(7) a{ background:url(/images/btn/btn_tunav07_on.png)no-repeat;}
+.tut_nav li.last:nth-child(7) a{background:url(/images/btn/btn_tunav07_last.png)no-repeat;}
+/*마우스 오버 시 질문 미리보기*/
+.tut_nav li p{display:none; position:absolute; left:77px; background:#fff; color:#000; white-space:nowrap; z-index:300;}
+.tut_nav li:nth-child(1) p{top:50px;}
+.tut_nav li:nth-child(2) p{top:113px;}
+.tut_nav li:nth-child(3) p{top:176px;}
+.tut_nav li:nth-child(4) p{top:239px;}
+.tut_nav li:nth-child(5) p{top:302px;}
+.tut_nav li:nth-child(6) p{top:365px;}
+.tut_nav li:nth-child(7) p{top:428px;}
+.tut_nav li.last a:hover + p, .tut_nav li.on a:hover + p{display:block; padding:12px 12px 10px; border-radius:2px;}
+.tut_nav li a:hover + p:after{content:''; display:block; position:absolute; left:-14px; top:11px; border:7px solid transparent; border-right-color:#fff;}
+
+/*질문 답변 화면*/
+.tut_con{padding-left:87px; width:100%; box-sizing:border-box; position:relative;}
+.tut_con ul{position:relative; width:100%; height:100%;}
+.tut_con ul:before{content:''; display:block; width:100%; height:341px; background:url(/images/bg/bg_tut_question.png)no-repeat center top; position:absolute; right:0;}
+.tut_con li{width:100%;}
+.tut_con li:nth-child(1) .question p{background:url(/images/img/question01.png)no-repeat center top;}
+.tut_con li:nth-child(2) .question p{background:url(/images/img/question02.png)no-repeat center top;}
+.tut_con li:nth-child(3) .question p{background:url(/images/img/question03.png)no-repeat center top;}
+.tut_con li:nth-child(4) .question p{background:url(/images/img/question04.png)no-repeat center top; font-size:32px;}
+.tut_con li:nth-child(5) .question p{background:url(/images/img/question05.png)no-repeat center top; font-size:30px;}
+.tut_con li:nth-child(6) .question p{background:url(/images/img/question06.png)no-repeat center top; font-size:30px; line-height:36px; padding-top:116px;}
+.tut_con li:nth-child(7) .question p{background:url(/images/img/question07.png)no-repeat center top; font-size:30px;}
+.tut_con li {display:none;}
+.tut_con li.on{display:block;}
+/*상단*/
+.question{width:100%; height:296px; position:relative; padding-top:45px; text-align:center;}
+.question p{font-size:34px; font-family:nanumgothic; font-weight:bold; padding-top:136px; line-height:27px;}
+.question p span{font-size:14px;}
+.q_yn{display:none; overflow:hidden; position:absolute; top:261px; left:50%; margin-left:-142px;}
+.tut_btn a{display:block; width:137px; height:35px; border-radius:3px; text-align:center; line-height:36px; font-weight:bold; float:left; cursor:pointer; background:#fff; color:#ffa800;}
+.tut_btn.q_yn a{color:#fff;}
+.q_yn .yes{background:#a7b9c6; margin-right:10px;}
+.q_yn .no{background:#ffa800;}
+/*하단*/
+.answer{height:auto;}
+.an_yn {width:252px; margin:0 auto; padding-top:40px;}
+.an_yn a{display:block; width:100px; height:100px; font-family:nanumgothic; font-size:20px; line-height:100px; text-align:center; background:#a7b9c6; color:#fff; border-radius:50%; font-weight:bold; float:left; margin-right:32px; cursor:pointer;}
+.an_yn a:last-child{margin:0;}
+.no_answer{display:none;}
+.no_answer {font-weight:bold; text-align:center; text-align:center; margin-top:20px; padding-bottom:20px;}
+.no_answer img{border:1px solid rgba(196,196,196,0.580); margin-top:10px; margin-bottom:20px;}
+.no_answer.txt p {font-size:20px; font-family:nanumgothic; font-weight:bold; line-height:34px; text-align:center; margin-top:58px;}
+.no_answer.txt strong{color:#ffb65f;}
+.no_answer .tut_btn a{position:absolute; left:50%; transform:translateX(-50%); -webkit-transform:translateX(-50%); margin-top:15px;}
+
+#main_win_dim{ display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);box-sizing:border-box;z-index:1000; }

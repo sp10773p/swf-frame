@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="info">
+    <select	id="selectCmmUser" parameterType="map" resultType="map">
+        SELECT A.USER_ID                    /* 사용자ID */
+                , A.USER_NM                    /* 사용자명 */
+                , '' AS USER_PW               /* 패스워드 A.USER_PW */
+                , A.AUTH_CD                    /* 권한코드 */
+                , (SELECT AUTH_NM FROM CMM_AUTH WHERE AUTH_CD=A.AUTH_CD) AS AUTH_NM    /* 권한코드명 */
+                , A.TEL_NO                     /* 전화번호 */
+                , A.HP_NO                      /* 핸드폰번호 */
+                , A.EMAIL                      /* 이메일 */
+                , TO_CHAR(A.LOGIN_START, 'YYYY-MM-DD HH24:MI:SS')  AS LOGIN_START        /* 최초로그인 */
+                , TO_CHAR(A.LOGIN_LAST, 'YYYY-MM-DD HH24:MI:SS')   AS LOGIN_LAST        /* 최종로그인 */
+                , A.LOGIN_ERROR                /* 로그인에러 */
+                , '' AS PW_PRIOR               /* 이전비밀번호 A.PW_PRIOR */
+                , A.PW_CHANGE                  /* 비밀번호변경일 */
+                , A.PW_UPDATE                  /* 비밀번호변경주기 */
+                , A.PW_PERIOD                  /* 비밀번호변경기간 */
+                , A.USE_CHK                    /* 사용여부 */
+                , A.REG_ID                     /* 입력자ID */
+                , A.REP_NM						/* 대표자명 */
+                , A.APPLICANT_ID				/* 사용자부호 */
+                , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 입력일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+                , A.USER_STATUS				/* 가입상태 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'USER_STATUS' AND CODE = A.USER_STATUS) AS USER_STATUS_NM
+                , A.WITHDRAW_REASON			/* 탈퇴사유 */
+        FROM CMM_USER A
+        WHERE A.USER_ID = #{SSuserId}
+    </select>
+
+    <update id="updateCmmUser" parameterType="map">
+        UPDATE CMM_USER
+           SET DEPT            = #{DEPT},
+                REP_NM          = #{REP_NM},
+                APPLICANT_ID    = #{APPLICANT_ID},
+                POS             = #{POS},
+                FAX_NO          = #{FAX_NO},
+                EMAIL           = #{EMAIL},
+                TEL_NO          = #{TEL_NO},
+                HP_NO           = #{HP_NO},
+                MOD_ID          = #{SSuserId},
+                MOD_DTM         = SYSDATE
+         WHERE USER_ID = #{SSuserId}
+    </update>
+
+    <update id="updateWithDrawReason" parameterType="map">
+        UPDATE CMM_USER
+     	    SET USER_STATUS = '8',
+     		   	WITHDRAW_REASON = #{WITHDRAW_REASON},
+     		   	MOD_ID          = #{SSuserId},
+                MOD_DTM         = SYSDATE
+		 WHERE USER_ID = #{SSuserId}
+    </update>
+
+    <update id="updateUserPw" parameterType="map">
+        UPDATE CMM_USER
+        SET
+                <if test="USER_PW != null and USER_PW != ''">
+                    USER_PW = #{USER_PW},
+                    PW_CHANGE = SYSDATE,
+                </if>
+                <if test="LOGIN_ERROR != null and LOGIN_ERROR != ''">
+                    LOGIN_ERROR = #{LOGIN_ERROR},
+                </if>
+                <if test="PW_PRIOR != null and PW_PRIOR != ''">
+                    PW_PRIOR = #{PW_PRIOR},
+                </if>
+                <if test="PW_UPDATE != null and PW_UPDATE != ''">
+                    PW_UPDATE = #{PW_UPDATE},
+                </if>
+                <if test="BEF_PW_PERIOD != null and BEF_PW_PERIOD != '' and AFT_PW_PERIOD != null and AFT_PW_PERIOD != ''">
+                    PW_PERIOD =  TO_CHAR(SYSDATE - ${BEF_PW_PERIOD}, 'YYYYMMDD') || '::' || TO_CHAR(SYSDATE - ${AFT_PW_PERIOD}, 'YYYYMMDD'),
+                </if>
+                <if test="USE_CHK != null and USE_CHK != ''">
+                    USE_CHK = #{USE_CHK},
+                </if>
+                MOD_ID = #{SSuserId},
+                MOD_DTM = SYSDATE
+        WHERE USER_ID = #{SSuserId}
+    </update>
+
+</mapper>

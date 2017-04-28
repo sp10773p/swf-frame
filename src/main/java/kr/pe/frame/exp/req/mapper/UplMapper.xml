@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="upl">
+
+    <select	id="selectDecExcelList" parameterType="map" resultType="map">
+ 		  
+ 		  SELECT A.RNUM
+ 		       , A.SN                    	                                                     /* SN */
+ 		       , A.USER_ID                    	                                                 /* 사용자ID */
+ 		       , A.REG_DTM                    	                                                 /* 등록일시 */
+ 		       , A.TOT_CNT                    	                                                 /* 엑셀건수 */
+ 		       , A.REG_CNT                    	                                                 /* 등록건수 */
+ 		       , A.ERR_CNT                    	                                                 /* 에러건수 */
+ 		    FROM (
+				  SELECT  ROW_NUMBER() OVER (ORDER BY A.REG_DTM DESC) RNUM
+				        , A.SN
+				        , A.USER_ID
+				        , TO_CHAR(A.REG_DTM , 'YYYY-MM-DD HH24:MI:SS') REG_DTM
+					    , (SELECT COUNT(*) FROM EXP_EXPREG_EXCEL_DETAIL B WHERE B.SN = A.SN) AS TOT_CNT
+					    , (SELECT COUNT(*) FROM EXP_EXPREG_EXCEL_DETAIL B, EXP_EXPDEC_REQ C WHERE B.REQ_NO = C.REQ_NO AND B.SN = A.SN AND B.STATUS IS NULL ) AS REG_CNT
+					    , (SELECT COUNT(*) FROM EXP_EXPREG_EXCEL_DETAIL B WHERE B.SN = A.SN AND B.STATUS = 'E') AS ERR_CNT
+				   FROM EXP_EXPREG_EXCEL A
+				  WHERE 1 = 1
+				    AND A.USER_ID = #{USR_SESSION.userId}
+		           
+		         <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+		             AND A.REG_DTM BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+		         </if>
+ 		    ) A
+         
+         ORDER BY A.REG_DTM DESC
+    </select>
+    
+    
+    <select	id="selectDecExcelErrList" parameterType="map" resultType="map">
+ 
+		  SELECT  ROW_NUMBER() OVER (ORDER BY SN, SEQ) RNUM
+		        , SN                    	                                                     /* SN */
+				, SEQ                    	                                                     /* SEQ */
+				, MALL_ID                    	                                                 /* 몰이름 */
+				, ORDER_ID                    	                                                 /* 주문번호 */
+				, MALL_ITEM_NO                    	                                             /* 상품ID */
+				, ITEMNAME_EN                    	                                             /* 상품명 */
+				, LINEITEMQUANTITY                    	                                         /* 주문수량 */
+				, PAYMENTAMOUNT                    	                                             /* 결제금액 */
+				, PAYMENTAMOUNT_CUR                    	                                         /* 결제통화코드 */
+				, BUYERPARTYORGNAME                    	                                         /* 구매자상호명 */
+				, DESTINATIONCOUNTRYCODE                    	                                 /* 목적국 국가코드 */
+				, CLASSIDHSID                    	                                             /* HS코드 */
+				, NETWEIGHTMEASURE                    	                                         /* 중량 */
+				, DECLARATIONAMOUNT                    	                                         /* 단가 */
+				, SELL_MALL_DOMAIN                    	                                         /* 도메인명 */
+				, REG_DTM                    	                                                 /* 등록일시 */
+				, REQ_NO                    	                                                 /* 요청번호 */
+				, STATUS                    	                                                 /* 상태 */
+				, EOCPARTYPARTYIDID1                    	                                     /* 판매자사업자등록번호 */
+				, EOCPARTYORGNAME2                    	                                         /* 판매자상호 */
+				, EOCPARTYORGCEONAME                    	                                     /* 판매자대표자명 */
+				, APPLICANTPARTYORGID                    	                                     /* 판매자신고인부호 */
+				, EOCPARTYPARTYIDID2                    	                                     /* 판매자통관고유부호 */
+				, EOCPARTYLOCID                    	                                             /* 판매자우편번호 */
+				, EOCPARTYADDRLINE                    	                                         /* 판매자주소 */
+				, STATUS_DESC                    	                                             /* 상태(설명) */
+				, MAKER_NM                    	                                                 /* 제조자 명 */
+				, MAKER_REG_ID                    	                                             /* 제조자 사업자번호 */
+				, MAKER_LOC_SEQ                    	                                             /* 제조자 사업장 일련번호 */
+				, MAKER_ORG_ID                    	                                             /* 제조자 통관고유부호 */
+				, MAKER_POST_CD                    	                                             /* 제조자 우편번호 */
+				, MAKER_LOC_CD                    	                                             /* 제조자 산업단지 부호 */
+		        , AMT_COD																		 /* 인도조건 */
+		   	    , FRE_KRW																		 /* 운임원화 */
+		   	    , INSU_KRW																		 /* 보험료원화 */
+		   	    , COMP																		 	 /* 상품성분명 */
+		   	    , LINEITEMQUANTITY_UC															 /* 주문수량단위 */
+		   FROM EXP_EXPREG_EXCEL_DETAIL
+		  WHERE SN = #{SN}
+		    AND STATUS = 'E'
+		  ORDER BY SN, SEQ
+    </select>
+    
+    <select	id="selectDecExcelDetailList" parameterType="map" resultType="map">
+ 
+		  SELECT  ROW_NUMBER() OVER (ORDER BY SN, SEQ) RNUM
+		        , SN                    	                                                     /* SN */
+				, SEQ                    	                                                     /* SEQ */
+				, MALL_ID                    	                                                 /* 몰이름 */
+				, ORDER_ID                    	                                                 /* 주문번호 */
+				, MALL_ITEM_NO                    	                                             /* 상품ID */
+				, ITEMNAME_EN                    	                                             /* 상품명 */
+				, LINEITEMQUANTITY                    	                                         /* 주문수량 */
+				, PAYMENTAMOUNT                    	                                             /* 결제금액 */
+				, PAYMENTAMOUNT_CUR                    	                                         /* 결제통화코드 */
+				, BUYERPARTYORGNAME                    	                                         /* 구매자상호명 */
+				, DESTINATIONCOUNTRYCODE                    	                                 /* 목적국 국가코드 */
+				, CLASSIDHSID                    	                                             /* HS코드 */
+				, NETWEIGHTMEASURE                    	                                         /* 중량 */
+				, DECLARATIONAMOUNT                    	                                         /* 단가 */
+				, SELL_MALL_DOMAIN                    	                                         /* 도메인명 */
+				, REG_DTM                    	                                                 /* 등록일시 */
+				, REQ_NO                    	                                                 /* 요청번호 */
+				, STATUS                    	                                                 /* 상태 */
+				, EOCPARTYPARTYIDID1                    	                                     /* 판매자사업자등록번호 */
+				, EOCPARTYORGNAME2                    	                                         /* 판매자상호 */
+				, EOCPARTYORGCEONAME                    	                                     /* 판매자대표자명 */
+				, APPLICANTPARTYORGID                    	                                     /* 판매자신고인부호 */
+				, EOCPARTYPARTYIDID2                    	                                     /* 판매자통관고유부호 */
+				, EOCPARTYLOCID                    	                                             /* 판매자우편번호 */
+				, EOCPARTYADDRLINE                    	                                         /* 판매자주소 */
+				, STATUS_DESC                    	                                             /* 상태(설명) */
+				, MAKER_NM                    	                                                 /* 제조자 명 */
+				, MAKER_REG_ID                    	                                             /* 제조자 사업자번호 */
+				, MAKER_LOC_SEQ                    	                                             /* 제조자 사업장 일련번호 */
+				, MAKER_ORG_ID                    	                                             /* 제조자 통관고유부호 */
+				, MAKER_POST_CD                    	                                             /* 제조자 우편번호 */
+				, MAKER_LOC_CD                    	                                             /* 제조자 산업단지 부호 */
+		   	    , AMT_COD																		 /* 인도조건 */
+		   	    , FRE_KRW																		 /* 운임원화 */
+		   	    , INSU_KRW																		 /* 보험료원화 */
+		   	    , COMP																		 	 /* 상품성분명 */
+		   	    , LINEITEMQUANTITY_UC															 /* 주문수량단위 */
+		   FROM EXP_EXPREG_EXCEL_DETAIL
+		  WHERE SN = #{SN}
+	      ORDER BY SN, SEQ
+    </select>
+    
+    <select id="selectDecExcelDetailErrList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY SN, SEQ) RNUM
+             , ERROR_COLUMN_NAME                    	                                         /* 에러컬럼명 */
+             , ERROR_MESSAGE                    	                                             /* 에러메시지 */
+             , ERROR_COLUMN_DATA                    	                                         /* 내용 */
+          FROM EXP_EXPREG_EXCEL_ERRMSG
+         WHERE SN  = #{SN}
+           AND SEQ = #{SEQ}
+    </select>
+    
+    <insert id="insertExcelMain" parameterType="map">
+        <selectKey resultType="string" keyProperty="SN" order="BEFORE">
+    		SELECT NVL(MAX(SN), 0) + 1 FROM EXP_EXPREG_EXCEL 
+    	</selectKey>
+        <![CDATA[
+		    INSERT INTO EXP_EXPREG_EXCEL 
+		    (
+               SN
+             , USER_ID
+             , REG_DTM
+		    )
+			VALUES
+		    (
+			   #{SN}
+             , #{USER_ID:VARCHAR}
+             , SYSDATE
+			)
+		]]>
+    </insert>
+    
+    <insert id="insertExcelDetail" parameterType="map">                    									
+		<![CDATA[                                                													
+			INSERT INTO EXP_EXPREG_EXCEL_DETAIL
+	        ( 
+	           SN 
+             , SEQ 
+             , MALL_ID 
+             , ORDER_ID 
+             , MALL_ITEM_NO 
+             , ITEMNAME_EN 
+             , LINEITEMQUANTITY 
+             , PAYMENTAMOUNT 
+             , PAYMENTAMOUNT_CUR 
+             , BUYERPARTYORGNAME 
+             , DESTINATIONCOUNTRYCODE 
+             , CLASSIDHSID 
+             , NETWEIGHTMEASURE 
+             , DECLARATIONAMOUNT 
+             , SELL_MALL_DOMAIN 
+             , REQ_NO 
+             , REG_DTM 
+             , EOCPARTYPARTYIDID1 
+             , EOCPARTYORGNAME2 
+             , EOCPARTYORGCEONAME 
+             , APPLICANTPARTYORGID 
+             , EOCPARTYPARTYIDID2 
+             , EOCPARTYLOCID 
+             , EOCPARTYADDRLINE 
+             , MAKER_NM
+             , MAKER_REG_ID
+             , MAKER_LOC_SEQ
+             , MAKER_ORG_ID
+             , MAKER_POST_CD
+             , MAKER_LOC_CD
+             , STATUS 
+             , STATUS_DESC
+             , AMT_COD
+             , FRE_KRW
+             , INSU_KRW
+             , COMP
+             , LINEITEMQUANTITY_UC
+	       ) 
+	       VALUES 
+	       (
+	   		   #{SN:VARCHAR}
+             , ( SELECT NVL(MAX(SEQ)+1 , 0) FROM EXP_EXPREG_EXCEL_DETAIL WHERE SN = #{SN:VARCHAR} )
+             , #{MALL_ID:VARCHAR} 
+             , #{ORDER_ID} 
+             , #{MALL_ITEM_NO} 
+             , #{ITEMNAME_EN} 
+             , #{LINEITEMQUANTITY} 
+             , #{PAYMENTAMOUNT} 
+             , #{PAYMENTAMOUNT_CUR} 
+             , #{BUYERPARTYORGNAME} 
+             , #{DESTINATIONCOUNTRYCODE} 
+             , #{CLASSIDHSID} 
+             , #{NETWEIGHTMEASURE} 
+             , #{DECLARATIONAMOUNT} 
+             , #{SELL_MALL_DOMAIN} 
+             , #{TIMESTAMP} || '_' || #{ORDER_ID}
+             , SYSDATE  
+             , #{EOCPARTYPARTYIDID1:VARCHAR} 
+             , #{EOCPARTYORGNAME2:VARCHAR} 
+             , #{EOCPARTYORGCEONAME:VARCHAR} 
+             , #{APPLICANTPARTYORGID:VARCHAR} 
+             , #{EOCPARTYPARTYIDID2:VARCHAR} 
+             , #{EOCPARTYLOCID:VARCHAR} 
+             , #{EOCPARTYADDRLINE:VARCHAR} 
+             , #{MAKER_NM:VARCHAR}
+             , #{MAKER_REG_ID:VARCHAR}
+             , #{MAKER_LOC_SEQ:VARCHAR}
+             , #{MAKER_ORG_ID:VARCHAR}
+             , #{MAKER_POST_CD:VARCHAR}
+             , #{MAKER_LOC_CD:VARCHAR}
+             , #{STATUS:VARCHAR} 
+             , #{STATUS_DESC:VARCHAR}
+             , #{AMT_COD:VARCHAR}
+             , #{FRE_KRW}
+             , #{INSU_KRW}
+             , #{COMP:VARCHAR}
+             , #{LINEITEMQUANTITY_UC:VARCHAR}
+	       ) 
+		]]>
+	</insert>
+	
+	<delete id="deleteExcelDetailEmpty" parameterType="map">                    									
+		<![CDATA[                                                													
+			DELETE FROM EXP_EXPREG_EXCEL_DETAIL
+			 WHERE ORDER_ID IS NULL
+			   AND MALL_ITEM_NO 		  IS NULL
+			   AND ITEMNAME_EN 			  IS NULL
+			   AND LINEITEMQUANTITY 	  IS NULL
+			   AND PAYMENTAMOUNT 		  IS NULL
+			   AND PAYMENTAMOUNT_CUR 	  IS NULL
+			   AND BUYERPARTYORGNAME 	  IS NULL 
+			   AND DESTINATIONCOUNTRYCODE IS NULL
+			   AND CLASSIDHSID 			  IS NULL
+			   AND NETWEIGHTMEASURE 	  IS NULL
+			   AND DECLARATIONAMOUNT 	  IS NULL
+			   AND SELL_MALL_DOMAIN 	  IS NULL
+		]]>
+	</delete>
+	
+	<select id="selectExpDecOrderId" parameterType="map" resultType="map">
+        SELECT TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+             , B.RPT_NO  
+    	  FROM EXP_EXPDEC_REQ A
+    	     , EXP_CUSDEC830 B 
+         WHERE A.ORDER_ID = #{ORDER_ID}
+    	   AND A.MALL_ID = #{MALL_ID} 
+    	   AND A.REQ_NO = B.REQ_NO(+)
+    	   AND ROWNUM = 1
+    </select>
+    
+    <insert id="insertExpregExcelErrmsgSelect" parameterType="map">
+		INSERT INTO EXP_EXPREG_EXCEL_ERRMSG 
+		(
+		    SN
+		  , SEQ
+		  , ERROR_COLUMN_NAME
+		  , ERROR_COLUMN_DATA
+		  , ERROR_MESSAGE
+		)
+		SELECT #{SN}
+		     , #{SEQ}
+		     , #{ERROR_COLUMN_NAME}
+		     , ${ERROR_COLUMN_NAME}
+		     , #{ERROR_MESSAGE}
+		  FROM EXP_EXPREG_EXCEL_DETAIL
+		 WHERE SN = #{SN}
+		   AND SEQ = #{SEQ}
+	</insert>
+	
+	<select id="selectCmmUserId" parameterType="map" resultType="string">
+		SELECT USER_ID
+		  FROM CMM_USER
+		 WHERE BIZ_NO = #{BIZ_NO}
+		   AND USER_DIV = 'S' 		/* 셀러 */ 
+		   AND USE_CHK = 'Y'
+		   AND ROWNUM = 1
+	</select>
+	
+	<update id="insertOrUpdateCmmUser" parameterType="map">
+		MERGE INTO CMM_USER
+		    	USING DUAL 
+		    	ON (BIZ_NO = #{BIZ_NO})
+				WHEN MATCHED THEN
+		    		 UPDATE SET 
+		    		     USER_NM      = #{USER_NM}
+			           , TG_NO        = #{TG_NO}
+			           , APPLICANT_ID = #{APPLICANT_ID}
+			           , ADDRESS      = #{ADDRESS}
+			           , ZIP_CD       = #{ZIP_CD}
+			           , REG_MALL_ID  = #{USER_ID}
+			           , MOD_ID       = #{USER_ID}
+			           , MOD_DTM      = SYSDATE
+			           , REP_NM       = #{REP_NM}
+		              WHERE BIZ_NO = #{BIZ_NO}
+				WHEN NOT MATCHED THEN
+				    INSERT 
+				    (
+				        USER_ID
+				      , BIZ_NO
+				      , USER_NM
+				      , TG_NO
+				      , APPLICANT_ID
+				      , ADDRESS
+				      , ZIP_CD
+				      , REG_MALL_ID
+				      , REG_ID
+				      , REG_DTM
+				      , REP_NM
+				    ) 
+				    VALUES 
+				    (
+				        #{USER_ID}
+				      , #{BIZ_NO}
+				      , #{USER_NM}
+				      , #{TG_NO}
+				      , #{APPLICANT_ID}
+				      , #{ADDRESS}
+				      , #{ZIP_CD}
+				      , #{USER_ID}
+				      , #{USER_ID}
+				      , SYSDATE
+				      , #{REP_NM}
+				    )
+	</update>
+	
+	<!-- 삭제 -->
+	<!-- 
+	<update id="insertOrUpdateTbSeller" parameterType="map">
+		MERGE INTO TB_SELLER
+		    	USING DUAL 
+		    	ON (BIZ_NO = #{BIZ_NO})
+				WHEN MATCHED THEN
+		    		 UPDATE SET 
+		    		     SELLER_NM    = #{SELLER_NM}
+			           , TG_NO        = #{TG_NO}
+			           , APPLICANT_ID = #{APPLICANT_ID}
+			           , ADDRESS      = #{ADDRESS}
+			           , POST_NO      = #{POST_NO}
+			           , REG_MALL_ID  = #{USER_ID}
+			           , MOD_ID       = #{USER_ID}
+			           , MOD_DTM      = SYSDATE
+			           , BOSS_NM      = #{BOSS_NM}
+		              WHERE BIZ_NO = #{BIZ_NO}
+				WHEN NOT MATCHED THEN
+				    INSERT 
+				    (
+				        BIZ_NO
+				      , SELLER_NM
+				      , TG_NO
+				      , APPLICANT_ID
+				      , ADDRESS
+				      , POST_NO
+				      , REG_MALL_ID
+				      , REG_ID
+				      , REG_DTM
+				      , BOSS_NM
+				    ) 
+				    VALUES 
+				    (
+				        #{BIZ_NO}
+				      , #{SELLER_NM}
+				      , #{TG_NO}
+				      , #{APPLICANT_ID}
+				      , #{ADDRESS}
+				      , #{POST_NO}
+				      , #{USER_ID}
+				      , #{USER_ID}
+				      , SYSDATE
+				      , #{BOSS_NM}
+				    )
+	</update> 
+	-->
+	
+	<update id="updateExpregExcelErrCheck" parameterType="map">
+		UPDATE EXP_EXPREG_EXCEL_DETAIL
+		   SET STATUS = #{STATUS},
+		       STATUS_DESC = DECODE(STATUS_DESC, '', #{STATUS_DESC}, STATUS_DESC || '/' || #{STATUS_DESC})
+		 WHERE SN = #{SN}
+		   AND SEQ = #{SEQ}
+	</update>
+	
+	<insert id="insertExpregExcelErrmsg" parameterType="map">
+		MERGE INTO EXP_EXPREG_EXCEL_ERRMSG
+		    USING DUAL ON ( SN = #{SN}
+		                AND SEQ = #{SEQ}
+		                AND ERROR_COLUMN_NAME = #{ERROR_COLUMN_NAME} )
+		WHEN MATCHED THEN
+		    UPDATE
+		       SET ERROR_COLUMN_DATA = #{ERROR_COLUMN_DATA}
+		         , ERROR_MESSAGE = ERROR_MESSAGE || '\n' || #{ERROR_MESSAGE}
+		WHEN NOT MATCHED THEN
+		    INSERT (
+		        SN
+		      , SEQ
+		      , ERROR_COLUMN_NAME
+		      , ERROR_COLUMN_DATA
+		      , ERROR_MESSAGE
+		    ) VALUES (
+		        #{SN}
+		      , #{SEQ}
+		      , #{ERROR_COLUMN_NAME}
+		      , #{ERROR_COLUMN_DATA}
+		      , #{ERROR_MESSAGE}
+		    )
+	</insert>
+	
+	<select id="selectExpdecReqExcelChk" parameterType="map" resultType="map">
+		SELECT COUNT(*) AS CNT
+		  FROM EXP_EXPREG_EXCEL_DETAIL A
+		     , EXP_EXPDEC_REQ B
+		 WHERE 1 = 1
+		   AND A.SN = #{SN}
+		   AND A.STATUS IS NULL
+           AND A.ORDER_ID = B.ORDER_ID
+           AND A.MALL_ID = B.MALL_ID
+	</select>
+	
+
+</mapper>

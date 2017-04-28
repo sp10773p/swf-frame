@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="openapi.codecheck">
+	<sql id="checkCode">
+		SELECT COUNT(1) FROM CMM_STD_CODE WHERE CLASS_ID = ${CLASS_ID} AND CODE = #{value}
+	</sql>
+    
+    <select id="PaymentTypeCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0003'"></property></include>
+    </select>         
+    
+	<select id="CustomsDeptCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0004'"></property></include>
+    </select> 
+    
+    <select id="CountryCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0005'"></property></include>
+    </select> 
+        
+    <select id="CustomsCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0015'"></property></include>
+    </select>
+    
+    <select id="TransportMeansCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0034'"></property></include>
+    </select>          
+    
+    <select id="TransportCaseCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0035'"></property></include>
+    </select>          
+    
+    <select id="DeliveryTermsCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0038'"></property></include>
+    </select>    
+    
+    <select id="CurrencyCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0042'"></property></include>
+    </select>        
+    
+    <select id="PackageUnitCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0043'"></property></include>
+    </select>          
+    
+    <select id="PortCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0046'"></property></include>
+    </select>          
+    
+    <select id="TransactionType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS1056'"></property></include>
+    </select>     
+    
+    <select id="DeclarationType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS1067'"></property></include>
+    </select>     
+    
+    <select id="ImportPartyTypeCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS1072'"></property></include>
+    </select> 
+    
+    <select id="ImportType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS1078'"></property></include>
+    </select>     
+    
+    <select id="CertificateOfOriginCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS1100'"></property></include>
+    </select>    
+    
+    <select id="CollectTypeCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS1120'"></property></include>
+    </select>  
+    
+    <select id="CustomsUseApplicantID" parameterType="string" resultType="int">
+		SELECT COUNT(1) FROM CMM_USER WHERE AUTH_CD = 'CUSTOMS' AND APPLICANT_ID = #{value}    
+	</select>
+	
+	<select id="Yn" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'YN'"></property></include>
+    </select>
+    
+    <select id="CustomsUseBizNo" parameterType="string" resultType="int">
+		SELECT COUNT(1) FROM CMM_USER WHERE AUTH_CD = 'CUSTOMS' AND BIZ_NO = #{value}    
+	</select>
+	
+	<select id="ExportPartyTypeCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0027'"></property></include>
+    </select>
+    
+    <select id="QuantityUnitCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0040'"></property></include>
+    </select>
+    
+    <select id="PackageUnitCode2" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0006'"></property></include>
+    </select>
+    
+    <select id="HsCode" parameterType="string" resultType="int">
+		SELECT COUNT(1) FROM CMM_HS_CD WHERE HS_CD = #{value}    
+	</select>     
+	
+	<select id="ApplicationType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0030'"></property></include>
+    </select>
+    
+    <select id="AmendReasonCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0032'"></property></include>
+    </select>
+    
+    <select id="AmendReasonCode29" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0029'"></property></include>
+    </select>
+	
+	<select id="ReasonsAttributableCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0028'"></property></include>
+    </select>
+    
+    <select id="ExpDeclarationType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0021'"></property></include>
+    </select>     
+    
+    <select id="ExpTransactionType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0017'"></property></include>
+    </select>   
+    
+    <select id="ExportType" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0031'"></property></include>
+    </select>
+    
+    <select id="GoodsUsedCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0008'"></property></include>
+    </select>
+    
+    <select id="ReturnReasonCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS2015'"></property></include>
+    </select>
+    
+    <select id="RefundCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0048'"></property></include>
+    </select>
+    
+    <select id="CustomsTaxRefundRequest" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0001'"></property></include>
+    </select>
+    
+    <select id="FunctionCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0016'"></property></include>
+    </select>
+    
+    <select id="ResponseTypeCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0036'"></property></include>
+    </select>
+    
+    <select id="TradeIndicatorCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0007'"></property></include>
+    </select>
+    
+    <select id="SellerUseBizNo" parameterType="string" resultType="int">
+		SELECT COUNT(1) FROM CMM_USER WHERE AUTH_CD = 'SELLER' AND BIZ_NO = #{value}    
+	</select>
+	
+	<select id="SellerUseApplicantID" parameterType="string" resultType="int">
+		SELECT COUNT(1) FROM CMM_USER WHERE AUTH_CD = 'SELLER' AND APPLICANT_ID = #{value}    
+	</select>
+    
+    <select id="ManufactureLocCode" parameterType="string" resultType="int">
+        <include refid="checkCode"><property name="CLASS_ID" value="'CUS0013'"></property></include>
+    </select>
+    
+</mapper>

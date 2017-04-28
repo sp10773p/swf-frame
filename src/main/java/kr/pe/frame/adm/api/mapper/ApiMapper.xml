@@ -1,0 +1,334 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="api">
+    <select	id="selectCmmApiKeyMngList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.USER_ID DESC, A.API_KEY DESC) RNUM
+                , A.USER_ID                    /* 사용자ID */
+                , A.API_KEY                    /* APIKey */
+                , TO_CHAR(TO_DATE(A.VALID_FROM_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS VALID_FROM_DT             /* 유효기간시작 */
+                , TO_CHAR(TO_DATE(A.VALID_TO_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS VALID_TO_DT              /* 유효기간종료 */
+                , A.API_REQ_STATUS             /* API키상태 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'API_REQ_STATUS' AND CODE = A.API_REQ_STATUS) AS API_REQ_STATUS_NM
+                , TO_CHAR(TO_DATE(A.API_REQ_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS API_REQ_DT                 	/* API신청일자 */
+                , TO_CHAR(TO_DATE(A.API_APPORVE_DT, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS API_APPORVE_DT          /* API승인일자 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+          FROM CMM_API_KEY_MNG A
+         WHERE 1 = 1
+        <if test="F_API_REQ_DT != null and F_API_REQ_DT != '' and T_API_REQ_DT != null and T_API_REQ_DT != ''">
+            AND API_REQ_DT BETWEEN TO_DATE(#{F_API_REQ_DT}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_API_REQ_DT}||'235959', 'YYYYMMDDHH24MISS')
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+          <if test="SEARCH_COL == 'API_KEY'">
+            AND API_KEY LIKE '%'||#{SEARCH_TXT}||'%'
+          </if>
+        </if>
+        <if test="USER_ID != null and USER_ID != ''">
+            AND USER_ID LIKE '%'||#{USER_ID}||'%'
+        </if>
+        ORDER 	BY A.USER_ID DESC, A.API_KEY DESC
+    </select>
+
+    <select	id="selectCmmApiKeyDtlList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.USER_ID DESC, A.API_ID DESC, A.API_KEY DESC) RNUM
+                , A.USER_ID                    /* 사용자ID */
+                , A.API_ID                     /* API ID */
+                , A.API_KEY                    /* APIKey */
+                , A.LIMIT_DETAIL_CNT           /* 월최대처리건수 */
+                , A.DAILY_CALL_CNT             /* 일일호출건수 */
+                , A.PER_CALL_CNT               /* 회당처리건수 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+                , B.API_NM						/*API 설명*/
+          FROM CMM_API_KEY_DTL A LEFT JOIN CMM_API_MNG B ON A.API_ID = B.API_ID
+         WHERE A.USER_ID = #{USER_ID}
+           AND	A.API_KEY = #{API_KEY}
+        ORDER 	BY A.USER_ID DESC, A.API_ID DESC, A.API_KEY DESC
+    </select>
+
+    <resultMap id="cmmApiLogDetaiMap" type="map" >
+        <result property="TOTAL_COUNT"  column="TOTAL_COUNT"/>
+        <result property="RNUM"         column="RNUM"/>
+        <result property="LOG_DTM"      column="LOG_DTM"/>
+        <result property="ACCECP_DTM"   column="ACCECP_DTM"/>
+        <result property="API_ID"       column="API_ID"/>
+        <result property="USER_ID"      column="USER_ID"/>
+        <result property="ORG_JSON"     column="ORG_JSON" javaType="java.lang.String" jdbcType="CLOB" />
+        <result property="ORG_SEQ"      column="ORG_SEQ"/>
+        <result property="RESULT_CD"    column="RESULT_CD"/>
+        <result property="REQ_NO"       column="REQ_NO"/>
+        <result property="ERROR_DESC"   column="ERROR_DESC"/>
+    </resultMap>
+
+    <select	id="selectCmmApiLogDetailList" parameterType="map" resultMap="cmmApiLogDetaiMap">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.ACCECP_DTM DESC) RNUM
+                , TO_CHAR(A.LOG_DTM, 'YYYY-MM-DD HH24:MI:SS') LOG_DTM                    /* 로그시간 */
+                , TO_CHAR(TO_DATE(A.ACCECP_DTM, 'YYYY-MM-DD HH24:MI:SS'), 'YYYY-MM-DD HH24:MI:SS') AS ACCECP_DTM                 /* 수신일시 */
+                , A.API_ID                     /* APIID */
+                , A.USER_ID                    /* 판매자ID */
+                , A.ORG_JSON                   /* 원본JSON */
+                , A.ORG_SEQ                    /* 원본순번 */
+                , A.RESULT_CD                  /* 처리결과 */
+                , A.REQ_NO                     /* 수신번호 */
+                , A.ERROR_DESC                 /* 오류내용 */
+          FROM CMM_API_LOG_DETAIL A
+         WHERE A.USER_ID = #{USER_ID}
+           AND A.API_ID LIKE '%'||#{API_ID}||'%'
+           AND A.ACCECP_DTM BETWEEN TO_CHAR(TO_DATE(#{F_ACCECP_DTM}||'000000', 'YYYYMMDDHH24MISS'), 'YYYYMMDDHH24MISS') AND TO_CHAR(TO_DATE(#{T_ACCECP_DTM}||'235959', 'YYYYMMDDHH24MISS'), 'YYYYMMDDHH24MISS')
+        ORDER BY A.ACCECP_DTM DESC
+    </select>
+
+    <update id="updateApiKeyDtl" parameterType="map">
+        UPDATE CMM_API_KEY_DTL
+           SET LIMIT_DETAIL_CNT = #{LIMIT_DETAIL_CNT}
+               , DAILY_CALL_CNT = #{DAILY_CALL_CNT}
+               , PER_CALL_CNT 	= #{PER_CALL_CNT}
+        WHERE USER_ID = #{USER_ID}
+          AND API_ID = #{API_ID}
+          AND API_KEY = #{API_KEY}
+    </update>
+
+    <select	id="selectCmmApiMngList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.API_ID DESC) RNUM
+                , A.API_ID                     /* API ID */
+                , A.API_NM                     /* 설명 */
+                , A.API_URL                    /* URL */
+                , A.API_VERSION                /* 버전 */
+                , A.CLASS_ID                   /* 사용클래스 */
+                , A.API_DESC                   /* API 설명 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+                , TO_CHAR(A.LIMIT_DETAIL_CNT, 'FM999,999,999')	AS LIMIT_DETAIL_CNT		/* 월최대처리건수 */
+                , TO_CHAR(A.DAILY_CALL_CNT, 'FM999,999,999') AS DAILY_CALL_CNT			/* 일일호출건수 */
+                , TO_CHAR(A.PER_CALL_CNT, 'FM999,999,999')	AS PER_CALL_CNT			/* 회당처리건수 */
+          FROM CMM_API_MNG A
+         WHERE 1 = 1
+        <if test="API_ID != null and API_ID != ''">
+            AND API_ID LIKE '%'||#{API_ID}||'%'
+        </if>
+        <if test="API_VERSION != null and API_VERSION != ''">
+            AND API_VERSION LIKE '%'||#{API_VERSION}}}'%'
+        </if>
+        <if test="CLASS_ID != null and CLASS_ID != ''">
+            AND CLASS_ID LIKE '%'||#{CLASS_ID}}}'%'
+        </if>
+        ORDER 	BY A.API_ID DESC
+    </select>
+
+    <select	id="selectApiMngCount" parameterType="map" resultType="int">
+          SELECT COUNT(*)
+            FROM CMM_API_MNG
+           WHERE API_ID = #{API_ID}
+    </select>
+
+    <select	id="selectCmmApiMng" parameterType="map" resultType="map">
+          SELECT A.API_ID                     /* API ID */
+                , A.API_NM                     /* 설명 */
+                , A.API_URL                    /* URL */
+                , A.API_VERSION                /* 버전 */
+                , A.CLASS_ID                   /* 사용클래스 */
+                , A.API_DESC                   /* API 설명 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+                , TO_CHAR(A.LIMIT_DETAIL_CNT, 'FM999,999,999')	AS LIMIT_DETAIL_CNT		/* 월최대처리건수 */
+                , TO_CHAR(A.DAILY_CALL_CNT, 'FM999,999,999') AS DAILY_CALL_CNT			/* 일일호출건수 */
+                , TO_CHAR(A.PER_CALL_CNT, 'FM999,999,999')	AS PER_CALL_CNT			/* 회당처리건수 */
+          FROM CMM_API_MNG A
+         WHERE API_ID = #{API_ID}
+    </select>
+
+    <insert id="insertCmmApiMng" parameterType="map">
+        INSERT INTO CMM_API_MNG(
+              API_ID
+            , API_NM
+            , API_URL
+            , API_VERSION
+            , CLASS_ID
+            , API_DESC
+            , ERR_DESC
+            , ATCH_FILE_ID
+            , LIMIT_DETAIL_CNT
+            , DAILY_CALL_CNT
+            , PER_CALL_CNT
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES (
+            #{API_ID}
+            , #{API_NM}
+            , #{API_URL}
+            , #{API_VERSION}
+            , #{CLASS_ID}
+            , #{API_DESC}
+            , #{ERR_DESC}
+            , #{ATCH_FILE_ID}
+            , REPLACE(#{LIMIT_DETAIL_CNT}, ',', '')
+            , REPLACE(#{DAILY_CALL_CNT}, ',', '')
+            , REPLACE(#{PER_CALL_CNT}, ',', '')
+            , #{SSuserId}
+            , SYSDATE
+            , #{SSuserId}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateCmmApiMng" parameterType="map">
+        UPDATE CMM_API_MNG
+           SET API_NM           = #{API_NM}
+                , API_URL          = #{API_URL}
+                , API_VERSION      = #{API_VERSION}
+                , CLASS_ID         = #{CLASS_ID}
+                , API_DESC         = #{API_DESC}
+                , ERR_DESC         = #{ERR_DESC}
+                , ATCH_FILE_ID     = #{ATCH_FILE_ID}
+                , LIMIT_DETAIL_CNT = REPLACE(#{LIMIT_DETAIL_CNT}, ',', '')
+                , DAILY_CALL_CNT   = REPLACE(#{DAILY_CALL_CNT}, ',', '')
+                , PER_CALL_CNT     = REPLACE(#{PER_CALL_CNT}, ',', '')
+                , MOD_ID           = #{SSuserId}
+                , MOD_DTM          = SYSDATE
+          WHERE API_ID = #{API_ID}
+    </update>
+
+    <delete id="deleteApiMng" parameterType="map">
+          DELETE FROM CMM_API_MNG
+          WHERE API_ID = #{API_ID}
+    </delete>
+    
+    <select id="selectApiUsers" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY USER_ID DESC) RNUM, 
+            API_KEY CODE, USER_ID CODE_NM 
+        FROM 
+            CMM_API_KEY_DTL
+        WHERE 
+            API_ID = #{LIKE_CODE}           
+        ORDER BY USER_ID DESC
+    </select>
+
+    <select	id="selectCmmApijaonTree" parameterType="map" resultType="map">
+        SELECT  LEVEL-1 AS LVL, A.*
+           FROM (
+                  SELECT API_ID
+                          , JSON_TYPE
+                          , '000000' AS JSON_ID
+                          , 'Root' AS JSON_KEY
+                          , 'Root[000000]' AS TREE_NM
+                          , NULL AS JSON_NM
+                          , NULL AS JSON_SAMP
+                          , NULL AS P_JSON_ID
+                          , 0 AS ORDR
+                          , NULL AS LOOP_YN
+                          , NULL AS MANDI_TYPE
+                          , 'LIST' AS DATA_TYPE
+                    FROM CMM_API_KEY_INFO A
+                   WHERE API_ID = #{API_ID}
+                      AND  JSON_TYPE = #{P_JSON_TYPE}
+                      AND ROWNUM = 1
+                   UNION ALL
+                   SELECT API_ID
+                           , JSON_TYPE
+                           , JSON_ID
+                           , JSON_KEY
+                           , JSON_KEY||'['||JSON_ID||'] - '||JSON_NM AS TREE_NM
+                           , JSON_NM
+                           , JSON_SAMP
+                           , NVL(P_JSON_ID, '000000') AS P_JSON_ID
+                           , ORDR
+                           , LOOP_YN
+                           , MANDI_TYPE
+                           , DATA_TYPE
+                      FROM CMM_API_KEY_INFO A
+                     WHERE API_ID = #{API_ID}
+                       AND JSON_TYPE = #{P_JSON_TYPE}
+            ) A
+            START 	WITH A.JSON_ID = '000000'
+            CONNECT BY PRIOR A.JSON_ID = A.P_JSON_ID
+            ORDER SIBLINGS BY A.ORDR
+    </select>
+
+    <select	id="selectApiInfoCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM CMM_API_KEY_INFO
+         WHERE API_ID = #{API_ID}
+           AND JSON_TYPE = #{JSON_TYPE}
+           AND JSON_KEY = #{JSON_KEY}
+           AND P_JSON_ID = #{P_JSON_ID}
+    </select>
+
+    <insert id="insertCmmApiInfo" parameterType="map">
+        INSERT INTO CMM_API_KEY_INFO(
+          API_ID, JSON_TYPE, JSON_ID, JSON_KEY, JSON_NM, JSON_SAMP, P_JSON_ID,
+          ORDR, LOOP_YN, MANDI_TYPE, DATA_TYPE
+        )VALUES(
+          #{API_ID},
+          #{JSON_TYPE},
+          (SELECT LPAD(NVL(MAX(TO_NUMBER(JSON_ID)), 0) + 1, 6, '0') FROM CMM_API_KEY_INFO),
+          #{JSON_KEY},
+          #{JSON_NM},
+          #{JSON_SAMP},
+          DECODE(TO_NUMBER(#{P_JSON_ID}), 0, NULL, LPAD(#{P_JSON_ID}, 6, '0')),
+        <if test="ORDR != null and ORDR != ''">
+          #{ORDR},
+        </if>
+        <if test="ORDR == null or ORDR == ''">
+            (SELECT NVL(MAX(ORDR), 0)+10 FROM CMM_API_KEY_INFO
+              WHERE API_ID = #{API_ID}
+                AND JSON_TYPE = #{JSON_TYPE}
+                AND TO_NUMBER(NVL(P_JSON_ID, 0)) = TO_NUMBER(NVL(#{P_JSON_ID}, 0))),
+        </if>
+          #{LOOP_YN},
+          #{MANDI_TYPE},
+          #{DATA_TYPE}
+        )
+    </insert>
+
+    <update id="updateCmmApiInfo" parameterType="map">
+        UPDATE CMM_API_KEY_INFO
+           SET JSON_KEY    = #{JSON_KEY},
+                JSON_NM     = #{JSON_NM},
+                JSON_SAMP   = #{JSON_SAMP},
+                P_JSON_ID   = #{P_JSON_ID},
+                ORDR        = #{ORDR},
+                LOOP_YN     = #{LOOP_YN},
+                MANDI_TYPE  = #{MANDI_TYPE},
+                DATA_TYPE   = #{DATA_TYPE}
+        WHERE API_ID = #{API_ID}
+          AND JSON_TYPE = #{JSON_TYPE}
+          AND JSON_ID = #{JSON_ID}
+    </update>
+
+    <delete id="deleteApiInfo" parameterType="map">
+        DELETE FROM CMM_API_KEY_INFO
+         WHERE API_ID = #{API_ID}
+    </delete>
+
+    <delete id="deleteApiInfoTree" parameterType="map">
+        DELETE FROM CMM_API_KEY_INFO
+         WHERE JSON_ID IN (
+                            SELECT JSON_ID
+                              FROM CMM_API_KEY_INFO
+                             START WITH JSON_ID = #{JSON_ID}
+                            CONNECT BY PRIOR JSON_ID = P_JSON_ID
+                           )
+    </delete>
+
+    <delete id="deleteCmmapikeydtl" parameterType="map">
+        DELETE FROM CMM_API_KEY_DTL
+          WHERE USER_ID = #{USER_ID}
+    </delete>
+
+    <delete id="deleteCmmapikeymst" parameterType="map">
+        DELETE FROM CMM_API_KEY_MNG
+          WHERE USER_ID = #{USER_ID}
+    </delete>
+</mapper>

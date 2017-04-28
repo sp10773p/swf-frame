@@ -1,0 +1,1074 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="res">
+
+    <select	id="selectR20List" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY MOD_DTM DESC) RNUM
+          		, KEY_NO
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 오류통보일시 */
+				, CUS                                                                            /* 세관 */
+				, SEC                                                                            /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, RPT_SEQ                                                                        /* 정정차수 */
+				, DOC_CD                                                                         /* 오류발생 문서구분 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR20
+           WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            	AND (
+	                CASE 
+	                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(SUBSTR(RPT_NO, 1,5), #{USR_SESSION.applicantId}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(SUBSTR(RPT_NO, 1,5), #{USR_SESSION.applicantId}, 1, 0)
+	                    ELSE 0
+	                END) = 1
+           
+            ORDER BY MOD_DTM DESC
+        
+    </select>
+    
+    <select	id="selectR20Detail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 오류통보일시 */
+				, CUS                                                                            /* 세관 */
+				, SEC                                                                            /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, RPT_SEQ                                                                        /* 정정차수 */
+				, DOC_CD                                                                         /* 오류발생 문서구분 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR20
+           WHERE KEY_NO = #{KEY_NO}
+        
+    </select>
+    
+    <select	id="selectR20DetailList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO, SEQ ) RNUM
+                , KEY_NO
+				, SEQ                                                                        	 /* 일련번호 */
+				, ERR_POS                                                                        /* 오류발생위치 */
+				, ERR_RAN_NO                                                                     /* 오류발생 란번호(제출차수) */
+				, ERR_KEY                                                                        /* 오류문서 KEY */
+				, ERR_REASON                                                                     /* 오류내용 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR20_ITEM 
+           WHERE 1 = 1
+             AND KEY_NO = #{KEY_NO}
+           ORDER BY KEY_NO, SEQ 
+        
+    </select>
+    
+    <select	id="select5aaList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') LIS_DTM /* 수리일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 세관수신일시 */
+				, TO_CHAR(TO_DATE(JUK_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') JUK_DTM            /* 적재의무기한 */
+				, RTRIM(TO_CHAR(TOT_RPT_KRW, 'FM999,999,999.99'), '.') TOT_RPT_KRW               /* 총신고가격원화 */
+				, RTRIM(TO_CHAR(TOT_RPT_USD, 'FM999,999,999.99'), '.') TOT_RPT_USD               /* 총신고가격미화 */
+				, CUS_NOTICE1                                                                    /* 세관기재란 */
+				, CUS_NOTICE2                                                                    /* 도로명표기안내 */
+				, CUS_NOTICE3                                                                    /* 특이사항 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBR5AA
+		   WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+           
+            ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    
+    <select	id="select5aaDetail" parameterType="map" resultType="map">
+          
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') LIS_DTM /* 수리일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 세관수신일시 */
+				, TO_CHAR(TO_DATE(JUK_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') JUK_DTM            /* 적재의무기한 */
+				, RTRIM(TO_CHAR(TOT_RPT_KRW, 'FM999,999,999.99'), '.') TOT_RPT_KRW               /* 총신고가격원화 */
+				, RTRIM(TO_CHAR(TOT_RPT_USD, 'FM999,999,999.99'), '.') TOT_RPT_USD               /* 총신고가격미화 */
+				, CUS_NOTICE1                                                                    /* 세관기재란 */
+				, CUS_NOTICE2                                                                    /* 도로명표기안내 */
+				, CUS_NOTICE3                                                                    /* 특이사항 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBR5AA
+          WHERE KEY_NO = #{KEY_NO}
+           
+    </select>
+    
+    <select	id="select5fsList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY MOD_DTM DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DTM            /* 수리일자 */
+				, EXP_FIRM                                                                       /* 수출화주명 */
+				, RPT_MARK                                                                       /* 신고자부호 */
+				, MAK_TGNO                                                                       /* 제조자통관부호 */
+				, STD_GNM                                                                        /* 품명 */
+				, TOT_PACK_CNT                                                                   /* 총포장수량 */
+				, TOT_PACK_UT                                                                    /* 포장종류 */
+				, TOT_WT                                                                         /* 총중량 */
+				, TOT_UT                                                                         /* 총중량단위 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBR5FS
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND LIS_DTM BETWEEN #{F_REG_DTM} AND #{T_REG_DTM}
+            </if>
+            <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND ${SEARCH_COL} LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+	            AND (
+	                CASE 
+	                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(SUBSTR(RPT_NO, 1,5), #{USR_SESSION.applicantId}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(SUBSTR(RPT_NO, 1,5), #{USR_SESSION.applicantId}, 1, 0)
+	                    ELSE 0
+	                END) = 1
+		ORDER BY MOD_DTM DESC
+        
+    </select>
+    
+    <select	id="select5fsDetail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DTM            /* 수리일자 */
+				, EXP_FIRM                                                                       /* 수출화주명 */
+				, RPT_MARK                                                                       /* 신고자부호 */
+				, MAK_TGNO                                                                       /* 제조자통관부호 */
+				, STD_GNM                                                                        /* 품명 */
+				, TOT_PACK_CNT                                                                   /* 총포장수량 */
+				, TOT_PACK_UT                                                                    /* 포장종류 */
+				, TOT_WT                                                                         /* 총중량 */
+				, TOT_UT                                                                         /* 총중량단위 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBR5FS
+		   WHERE KEY_NO = #{KEY_NO}
+        
+    </select>
+    
+    <select	id="select5utList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, SHIP_YN                                                                        /* 선적여부 */
+				, TO_CHAR(TO_DATE(SHIP_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') SHIP_DTM          /* 선적일자 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		   FROM EXP_GOVCBR5UT
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND SHIP_DTM BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="SHIP_YN != null and SHIP_YN != ''">
+                AND SHIP_YN = #{SHIP_YN}
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+            
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="select5utDetail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, SHIP_YN                                                                        /* 선적여부 */
+				, TO_CHAR(TO_DATE(SHIP_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') SHIP_DTM          /* 선적일자 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		   FROM EXP_GOVCBR5UT
+		   WHERE KEY_NO = #{KEY_NO}
+        
+    </select>
+    
+    <select	id="select5dtList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+				, KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, RPT_SEQ                                                                        /* 신청차수 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 통보일시 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DTM            /* 결정일자 */
+				, RESULT_CD                                                                      /* 통보구분 */
+				, PERSON_CD                                                                      /* 세관담당자부호 */
+				, PERSON_NM                                                                      /* 세관담당자명 */
+				, CUS                                                                            /* 세관 */
+				, SEC                                                                            /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, REASON_CD                                                                      /* 귀책사유부호 */
+				, REASON_TXT                                                                     /* 귀책사유부호 변경사유 */
+				, LIS_NO                                                                         /* 정정승인번호 */
+				, NOTICE_TXT                                                                     /* 통보내용 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBR5DT
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="select5dtDetail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, RPT_SEQ                                                                        /* 신청차수 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 통보일시 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DTM            /* 결정일자 */
+				, RESULT_CD                                                                      /* 통보구분 */
+				, PERSON_CD                                                                      /* 세관담당자부호 */
+				, PERSON_NM                                                                      /* 세관담당자명 */
+				, CUS                                                                            /* 세관 */
+				, SEC                                                                            /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0028' AND CODE = REASON_CD) AS REASON_CD  /* 귀책사유부호 */
+				, REASON_TXT                                                                     /* 귀책사유부호 변경사유 */
+				, LIS_NO                                                                         /* 정정승인번호 */
+				, NOTICE_TXT                                                                     /* 통보내용 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBR5DT
+		   WHERE KEY_NO = #{KEY_NO}
+		   
+    </select>
+    
+    <select	id="select5afList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 접수통보일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, DOC_CD                                                                         /* 신청서 문서구분 */
+				, RPT_NO                                                                         /* 신청서 문서번호 */
+				, RPT_SEQ                                                                        /* 신청차수 */
+				, DPT_CUS                                                                        /* 통보세관 */
+				, DPT_SEC                                                                        /* 통보과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = DPT_CUS) AS DPT_CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = DPT_SEC) AS DPT_SEC_NM
+				, RCV_CUS                                                                        /* 접수세관 */
+				, RCV_SEC                                                                        /* 접수과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = RCV_CUS) AS RCV_CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = RCV_SEC) AS RCV_SEC_NM
+				, RCV_PERSON_CD                                                                  /* 세관 담당자 부호 */
+				, RCV_PERSON_NM                                                                  /* 세관 담장자 명 */
+				, CHK_CUS                                                                        /* 심사세관 */
+				, CHK_SEC                                                                        /* 심사과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CHK_CUS) AS CHK_CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = CHK_SEC) AS CHK_SEC_NM
+				, CHK_PERSON_CD                                                                  /* 심사 담당자 부호 */
+				, CHK_PERSON_NM                                                                  /* 심사 담당자 명 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBR5AF
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    
+    <select	id="select5afDetail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 접수통보일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, DOC_CD                                                                         /* 신청서 문서구분 */
+				, RPT_NO                                                                         /* 신청서 문서번호 */
+				, RPT_SEQ                                                                        /* 신청차수 */
+				, DPT_CUS                                                                        /* 통보세관 */
+				, DPT_SEC                                                                        /* 통보과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = DPT_CUS) AS DPT_CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = DPT_SEC) AS DPT_SEC_NM
+				, RCV_CUS                                                                        /* 접수세관 */
+				, RCV_SEC                                                                        /* 접수과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = RCV_CUS) AS RCV_CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = RCV_SEC) AS RCV_SEC_NM
+				, RCV_PERSON_CD                                                                  /* 세관 담당자 부호 */
+				, RCV_PERSON_NM                                                                  /* 세관 담장자 명 */
+				, CHK_CUS                                                                        /* 심사세관 */
+				, CHK_SEC                                                                        /* 심사과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CHK_CUS) AS CHK_CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = CHK_SEC) AS CHK_SEC_NM
+				, CHK_PERSON_CD                                                                  /* 심사 담당자 부호 */
+				, CHK_PERSON_NM                                                                  /* 심사 담당자 명 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBR5AF
+		   WHERE KEY_NO = #{KEY_NO}
+    </select>
+    
+    <select	id="select5afItemList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO, SEQ) RNUM
+                , KEY_NO
+				, SEQ
+				, RESULT_CD
+				, RESULT_TXT
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBR5AF_ITEM
+		   WHERE KEY_NO = #{KEY_NO}
+		ORDER BY KEY_NO, SEQ
+        
+    </select>
+    
+    <select	id="select5afItemDetail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, SEQ
+				, RESULT_CD
+				, RESULT_TXT
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBR5AF_ITEM
+		   WHERE KEY_NO = #{KEY_NO}
+		     AND SEQ = #{SEQ}
+        
+    </select>
+    
+    <select	id="select5gxList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 신고일자 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') DPT_DTM            /* 통보일자 */
+				, TO_CHAR(TO_DATE(LIMIT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIMIT_DTM        /* 보완완료일자 */
+				, DOC_NO                                                                         /* 문서번호 */
+				, RPT_MARK                                                                       /* 신고자부호 */
+				, RPT_FIRM                                                                       /* 신고자상호 */
+				, CUS                                                                            /* 보완통보세관 */
+				, CUS_NM                                                                         /* 보완통보세관명 */
+				, REASON_CD                                                                      /* 보완요구사유코드 */
+				, REASON_NM                                                                      /* 보완요구사유명 */
+				, REQ_TXT                                                                        /* 보완요구사항 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBR5GX
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    
+    <select	id="select5gxDetail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 신고일자 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') DPT_DTM            /* 통보일자 */
+				, TO_CHAR(TO_DATE(LIMIT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIMIT_DTM        /* 보완완료일자 */
+				, DOC_NO                                                                         /* 문서번호 */
+				, RPT_MARK                                                                       /* 신고자부호 */
+				, RPT_FIRM                                                                       /* 신고자상호 */
+				, CUS                                                                            /* 보완통보세관 */
+				, CUS_NM                                                                         /* 보완통보세관명 */
+				, REASON_CD                                                                      /* 보완요구사유코드 */
+				, REASON_NM                                                                      /* 보완요구사유명 */
+				, REQ_TXT                                                                        /* 보완요구사항 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBR5GX
+		   WHERE KEY_NO = #{KEY_NO}
+    </select>
+    
+    <select	id="selectR95List" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, CHK_SEQ                                                                        /* 검사차수 */
+				, RPT_FIRM                                                                       /* 신고인 상호 */
+				, TO_CHAR(TO_DATE(CHK_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') CHK_DTM            /* 검사일자 */
+				, CUS                                                                            /* 검사 세관부호 */
+				, SEC                                                                            /* 검사 과부호 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, CHK_PERSON_NM                                                                  /* 검사담당자 성명 */
+				, CUS_PERSON_TELNO                                                               /* 세관담당자 전화번호 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBRR95
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND CHK_DTM BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="selectr95Detail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, CHK_SEQ                                                                        /* 검사차수 */
+				, RPT_FIRM                                                                       /* 신고인 상호 */
+				, TO_CHAR(TO_DATE(CHK_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') CHK_DTM            /* 검사일자 */
+				, CUS                                                                            /* 검사 세관부호 */
+				, SEC                                                                            /* 검사 과부호 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, CHK_PERSON_NM                                                                  /* 검사담당자 성명 */
+				, CUS_PERSON_TELNO                                                               /* 세관담당자 전화번호 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		    FROM EXP_GOVCBRR95
+		   WHERE KEY_NO = #{KEY_NO}
+        
+    </select>
+    
+    <select	id="selectR96List" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, DOC_NO                                                                         /* 분석회보 문서번호 */
+				, RPT_FIRM                                                                       /* 신고인 상호 */
+				, EXP_FIRM                                                                       /* 화주 상호 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') DPT_DTM            /* 안내일자 */
+				, CARGO_GNM                                                                      /* 신고품명 */
+				, ITEM_GNM                                                                       /* 모델규격 */
+				, CONF_HS                                                                        /* 결정세번 */
+				, RPT_NO                                                                         /* 신고번호 */
+				, RAN_NO                                                                         /* 란번호 */
+				, SEQ_NO                                                                         /* 규격번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 신고일자 */
+				, HS                                                                             /* 신고세번 */
+				, REASON                                                                         /* 분류의견 */
+				, NOTICE1                                                                        /* 참고사항1 */
+				, NOTICE2                                                                        /* 참고사항2 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR96
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    
+    <select	id="selectR96Detail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, DOC_NO                                                                         /* 분석회보 문서번호 */
+				, RPT_FIRM                                                                       /* 신고인 상호 */
+				, EXP_FIRM                                                                       /* 화주 상호 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') DPT_DTM            /* 안내일자 */
+				, CARGO_GNM                                                                      /* 신고품명 */
+				, ITEM_GNM                                                                       /* 모델규격 */
+				, CONF_HS                                                                        /* 결정세번 */
+				, RPT_NO                                                                         /* 신고번호 */
+				, RAN_NO                                                                         /* 란번호 */
+				, SEQ_NO                                                                         /* 규격번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 신고일자 */
+				, HS                                                                             /* 신고세번 */
+				, REASON                                                                         /* 분류의견 */
+				, NOTICE1                                                                        /* 참고사항1 */
+				, NOTICE2                                                                        /* 참고사항2 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR96
+		   WHERE KEY_NO = #{KEY_NO}
+    </select>
+    
+    <select	id="selectR73List" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 신고번호 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 수출신고서 수신일시 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 선별결과 통보일시 */
+				, RESULT_CD                                                                      /* 선별결과 구분 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0101' AND CODE = RESULT_CD) AS RESULT_NM
+				, RESULT_TXT                                                                     /* 서류제출 구분 사항 */
+				, CUS                                                                            /* 접수 세관 */
+				, SEC                                                                            /* 접수 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, PERSON_CD                                                                      /* 세관 담당자 부호 */
+				, PERSON_NM                                                                      /* 세관 담당자 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR73
+		   WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+		ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="selectR73Detail" parameterType="map" resultType="map">
+         
+          SELECT  KEY_NO
+				, RPT_NO                                                                         /* 신고번호 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 수출신고서 수신일시 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 선별결과 통보일시 */
+				, RESULT_CD                                                                      /* 선별결과 구분 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0101' AND CODE = RESULT_CD) AS RESULT_NM
+				, RESULT_TXT                                                                     /* 서류제출 구분 사항 */
+				, CUS                                                                            /* 접수 세관 */
+				, SEC                                                                            /* 접수 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, PERSON_CD                                                                      /* 세관 담당자 부호 */
+				, PERSON_NM                                                                      /* 세관 담당자 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR73
+		   WHERE KEY_NO = #{KEY_NO}
+    </select>
+    
+    <select	id="selectR60List" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+           		, KEY_NO                                                                        
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 통보일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, CUS                                                                        	 /* 세관 */
+				, SEC                                                                        	 /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, EXP_TGNO                                                                       /* 수출화주 통관고유부호 */
+				, EXP_FIRM                                                                       /* 수출화주 상호 */
+				, RPT_NO                                                                         /* 자동보완 내역 발생 신고번호 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR60
+           WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+           
+            ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="selectR60Detail" parameterType="map" resultType="map">
+         
+           SELECT KEY_NO                                                                        
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 통보일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, CUS                                                                        	 /* 세관 */
+				, SEC                                                                        	 /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, EXP_TGNO                                                                       /* 수출화주 통관고유부호 */
+				, EXP_FIRM                                                                       /* 수출화주 상호 */
+				, RPT_NO                                                                         /* 자동보완 내역 발생 신고번호 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR60
+           WHERE KEY_NO = #{KEY_NO}
+        
+    </select>
+    
+    
+    <select	id="selectR60DetailList" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO, SEQ ) RNUM
+           		, KEY_NO   
+           		, SEQ                                                                     
+				, CARGO_GNM                                                                      /* 자동보완 검증모델명 */
+				, REASON                                                                         /* 자동보완 내역 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR60_ITEM
+           WHERE 1 = 1
+             AND KEY_NO = #{KEY_NO}
+           ORDER BY KEY_NO, SEQ 
+        
+    </select>
+    
+    <select	id="selectRr5List" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 수출신고일자 */
+				, CUS                                                                         	 /* 세관 */
+				, SEC                                                                         	 /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, CUS_PERSON_CD                                                                  /* 담당자직원부호 */
+				, CUS_PERSON_NM                                                                  /* 담당자명 */
+				, CHG_PERSON_CD                                                                  /* 변경담당자직원부호 */
+				, CHG_PERSON_NM                                                                  /* 변경담당자명 */
+				, RESULT_CHG_CD                                                                  /* 검사변경통보부호 */
+				, RESULT_CD                                                                      /* 변경결과사유부호 */
+				, RESULT_TXT                                                                     /* 변경사유내용 */
+				, RESULT_ETC_TXT                                                                 /* 검사변경사유 기타 내용 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRRR5
+           WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND RPT_DTM BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+           
+            ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    
+    <select	id="selectRr5Detail" parameterType="map" resultType="map">
+         
+           SELECT KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 수출신고일자 */
+				, CUS                                                                         	 /* 세관 */
+				, SEC                                                                         	 /* 과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, CUS_PERSON_CD                                                                  /* 담당자직원부호 */
+				, CUS_PERSON_NM                                                                  /* 담당자명 */
+				, CHG_PERSON_CD                                                                  /* 변경담당자직원부호 */
+				, CHG_PERSON_NM                                                                  /* 변경담당자명 */
+				, RESULT_CD                                                                      /* 변경결과사유부호 */
+				, RESULT_CHG_CD                                                                  /* 검사변경통보부호 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0102' AND CODE = RESULT_CD) AS RESULT_CD_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0103' AND CODE = RESULT_CHG_CD) AS RESULT_CHG_CD_NM
+				, RESULT_TXT                                                                     /* 변경사유내용 */
+				, RESULT_ETC_TXT                                                                 /* 검사변경사유 기타 내용 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRRR5
+           WHERE KEY_NO = #{KEY_NO}
+    </select>
+    
+    <select	id="selectR97List" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, MODI_TYPE                                                                      /* 정정구분 */
+				, TO_CHAR(TO_DATE(MODI_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') MODI_DTM          /* 정정일자 */
+				, CUS                                                                            /* 정정세관 */
+				, SEC                                                                            /* 정정과 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, CUS_PERSON                                                                     /* 담당자명 */
+				, EXP_FIRM                                                                       /* 수출화주 상호 */
+				, EXP_TGNO                                                                       /* 수출화주 통관고유부호 */
+				, IMPUT_CD                                                                       /* 귀책사유코드 */
+				, MODI_CD                                                                        /* 정정사유코드 */
+				, REASON                                                                         /* 정정/취하/각하사유 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR97
+           WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND MODI_DTM BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+           
+            ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="selectR97Detail" parameterType="map" resultType="map">
+         
+           SELECT KEY_NO
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, MODI_TYPE                                                                      /* 정정구분 */
+				, TO_CHAR(TO_DATE(MODI_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') MODI_DTM          /* 정정일자 */
+				, CUS                                                                            /* 정정세관 */
+				, SEC                                                                            /* 정정과 */
+				, CUS_PERSON                                                                     /* 담당자명 */
+				, EXP_FIRM                                                                       /* 수출화주 상호 */
+				, EXP_TGNO                                                                       /* 수출화주 통관고유부호 */
+				, MODI_CD                                                                        /* 정정사유코드 */
+				, IMPUT_CD                                                                       /* 귀책사유코드 */
+				, REASON                                                                         /* 정정/취하/각하사유 */
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, CASE WHEN MODI_TYPE = 'B' THEN (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0032' AND CODE = MODI_CD)
+           			   ELSE (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0029' AND CODE = MODI_CD) 
+           		  END MODI_CD_NM
+				, (SELECT '['||CODE||'] ' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0028' AND CODE = IMPUT_CD) AS IMPUT_CD_NM
+				, DECODE(MODI_TYPE, 'A', '[A]정정', 'B', '[B]취하', 'C', '[C]각하', MODI_TYPE) AS MODI_TYPE_NM
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR97
+           WHERE KEY_NO = #{KEY_NO}
+    </select>
+    
+    <select	id="selectR97RanList" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO, SEQ ) RNUM
+                , KEY_NO
+				, SEQ
+				, RAN_NO                                                                         /* 정정항목 란번호 */
+				, RAN_DIVI                                                                       /* 란정정구분 */
+				, ITEM_CD                                                                        /* 정정항목번호 */
+				, SEQ_NO                                                                         /* 규격번호 */
+				, CONT_SEQNO                                                                     /* 컨테이너 일련번호 */
+				, LAW_SEQNO                                                                      /* 법령 일련번호 */
+				, CAR_SEQNO                                                                      /* 차대관리번호 일련번호 */
+				, BF_EDIT                                                                        /* 정정전 내역 */
+				, AF_EDIT                                                                        /* 정정후 내역 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR97_ITEM
+           WHERE KEY_NO = #{KEY_NO}
+            ORDER BY KEY_NO, SEQ 
+        
+    </select>
+    
+    
+    <select	id="selectR97RanDetail" parameterType="map" resultType="map">
+         
+           SELECT KEY_NO
+				, SEQ
+				, RAN_NO                                                                         /* 정정항목 란번호 */
+				, RAN_DIVI                                                                       /* 란정정구분 */
+				, ITEM_CD                                                                        /* 정정항목번호 */
+				, SEQ_NO                                                                         /* 규격번호 */
+				, CONT_SEQNO                                                                     /* 컨테이너 일련번호 */
+				, LAW_SEQNO                                                                      /* 법령 일련번호 */
+				, CAR_SEQNO                                                                      /* 차대관리번호 일련번호 */
+				, BF_EDIT                                                                        /* 정정전 내역 */
+				, AF_EDIT                                                                        /* 정정후 내역 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR97_ITEM
+           WHERE KEY_NO = #{KEY_NO}
+             AND SEQ = #{SEQ}
+    </select>
+    
+    <select	id="selectR98List" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, RPT_FIRM                                                                       /* 수신인 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 통보일시 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR98
+           WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND DPT_DTM BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_FIRM != null and S_RPT_FIRM != ''">
+                AND RPT_FIRM LIKE '%'||#{S_RPT_FIRM}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND EXISTS( SELECT B.KEY_NO
+                            FROM EXP_GOVCBRR98_ITEM B WHERE SUBSTR(B.RPT_NO, 1,5) = #{USR_SESSION.applicantId} )
+            </if>
+            <!-- <if test="USER_NM != null and USER_NM != ''">
+                AND RPT_FIRM = #{USER_NM}
+            </if> -->
+           
+            ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="selectR98Detail" parameterType="map" resultType="map">
+         
+           SELECT KEY_NO
+				, RPT_FIRM                                                                       /* 수신인 */
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 통보일시 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR98
+           WHERE KEY_NO = #{KEY_NO}
+        
+    </select>
+    
+    
+    <select	id="selectR98DetailList" parameterType="map" resultType="map">
+        
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO, SEQ ) RNUM
+                , KEY_NO
+				, SEQ
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, TO_CHAR(TO_DATE(RPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DTM            /* 신고일자 */
+				, TO_CHAR(TO_DATE(LIS_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DTM            /* 수리일자 */
+				, TO_CHAR(TO_DATE(JUK_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') JUK_DTM            /* 적재기간 */
+				, EXP_FIRM                                                                       /* 수출자상호 */
+				, ITEM_GNM                                                                       /* 품명 */
+				, PACK_CNT                                                                       /* 포장개수 */
+				, WT                                                                             /* 중량 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRR98_ITEM 
+           WHERE 1 = 1
+             AND KEY_NO = #{KEY_NO}
+           ORDER BY KEY_NO, SEQ 
+           
+        
+    </select>
+    
+    <select	id="selectInfList" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY KEY_NO DESC) RNUM
+                , KEY_NO
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 오류통보일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, MSG_ID                                                                         /* 오류발생 메시지ID */
+				, CONT_ID                                                                        /* 오류발생 컨텐트ID */
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, DOC_CD                                                                         /* 오류발생 문서구분 */
+				, ERROR_CD                                                                       /* 오류코드 */
+				, ERROR_TXT                                                                      /* 오류내역 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRINF
+           WHERE 1 = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND ${SEARCH_DAY} BETWEEN #{F_REG_DTM}||'000000' AND #{T_REG_DTM}||'235959'
+            </if>
+            <if test="S_RPT_NO != null and S_RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{S_RPT_NO}||'%'
+            </if>
+            <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+                AND SUBSTR(RPT_NO, 1,5) = #{USR_SESSION.applicantId}
+            </if>
+           
+            ORDER BY KEY_NO DESC
+        
+    </select>
+    
+    <select	id="selectInfDetail" parameterType="map" resultType="map">
+         
+           SELECT KEY_NO
+				, TO_CHAR(TO_DATE(DPT_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') DPT_DTM /* 오류통보일시 */
+				, TO_CHAR(TO_DATE(RCV_DTM, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD HH24:MI:SS') RCV_DTM /* 신청문서 수신일시 */
+				, MSG_ID                                                                         /* 오류발생 메시지ID */
+				, CONT_ID                                                                        /* 오류발생 컨텐트ID */
+				, RPT_NO                                                                         /* 수출신고번호 */
+				, DOC_CD                                                                         /* 오류발생 문서구분 */
+				, ERROR_CD                                                                       /* 오류코드 */
+				, ERROR_TXT                                                                      /* 오류내역 */
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			FROM EXP_GOVCBRINF
+           WHERE KEY_NO = #{KEY_NO}   
+    </select>
+    
+    <select	id="selectResList" parameterType="map" resultType="map">
+         
+           SELECT ROW_NUMBER() OVER (ORDER BY SND_RCV_DTM DESC) RNUM
+                , DOC_ID
+				, REQ_KEY
+				, REG_TYPE
+				, DOC_TYPE
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'DOC_TYPE_R' AND CODE = DOC_TYPE) AS DOC_TYPE_NM
+				, ORG_NM
+				, SND_RCV_DTM
+				, ERR_MSG
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+			 FROM CMM_EDI_HIS
+            WHERE 1 = 1
+            AND SND_RCV_DIV  = 'R'
+			AND DOC_TYPE LIKE 'GOVCBR%'
+			AND (
+                CASE 
+                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(SUBSTR(REQ_KEY, 1,5), #{USR_SESSION.applicantId}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(SUBSTR(REQ_KEY, 1,5), #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND SND_RCV_DTM BETWEEN TO_DATE(#{F_REG_DTM}||'000000' ,'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959','YYYYMMDDHH24MISS')
+            </if>
+            <if test="DOC_TYPE_R != null and DOC_TYPE_R != ''">
+                AND DOC_TYPE = #{DOC_TYPE_R}
+            </if>
+            <if test='CALL_TYPE == "DEC"'>
+                AND  DOC_TYPE != 'GOVCBR5DT'
+	            <if test="RPT_NO != null and RPT_NO != ''">
+	                AND REQ_KEY = #{RPT_NO}
+	            </if>
+            </if>
+            <if test='CALL_TYPE == "MOD"'>
+                AND  DOC_TYPE IN ('GOVCBR5DT','GOVCBRR20','GOVCBR5AF')
+                <if test="RPT_NO != null and RPT_NO != ''">
+	                AND REQ_KEY LIKE #{RPT_NO}||'%'
+	            </if>
+            </if>
+			ORDER BY SND_RCV_DTM DESC
+        
+    </select>
+
+</mapper>

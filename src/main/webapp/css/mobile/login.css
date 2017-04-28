@@ -1,0 +1,10 @@
+@charset "UTF-8";
+body{ position:relative; background:url(/images/bg/bg_login.jpg) no-repeat; background-size:cover; text-align: center;}
+#header h1{ margin:23% 0 15px;}
+#header h1 img{width:70%;}
+#header h1 + p{ margin-bottom:22px;color:#fff; font-weight:bold; font-size:16px; font-family:'NanumGothic'; line-height:21px;}
+#header p + span{display:inline-block; width:65px; border-bottom:1px solid rgba(255,255,255,0.2);}
+#container{margin:8% 20px 0; padding-bottom:68px;}
+#container input {margin-bottom:7px; height:47px; font-size:16px;}
+#container fieldset p:last-child input{margin-bottom:15px;}
+#container .login_btn{ margin-bottom:40px;width:100%; height:50px; border:none; background:#3e454f; color:#fff; font-weight:bold;}

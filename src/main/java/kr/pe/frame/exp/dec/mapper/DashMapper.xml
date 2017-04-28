@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="dash">
+    
+    <select id="selectDecMonthCnt" parameterType="map" resultType="map">
+ 		SELECT SUM(R01_CNT) R01_CNT
+		     , SUM(R02_CNT) R02_CNT
+		     , SUM(R03_CNT) R03_CNT
+		     , SUM(R04_CNT) R04_CNT
+		     , SUM(R05_CNT) R05_CNT
+		     , SUM(R06_CNT) R06_CNT
+		     , SUM(R07_CNT) R07_CNT
+		     , SUM(R08_CNT) R08_CNT
+		     , SUM(R09_CNT) R09_CNT
+		     , SUM(R10_CNT) R10_CNT
+		     , SUM(R11_CNT) R11_CNT
+		     , SUM(R12_CNT) R12_CNT
+		     , SUM(R13_CNT) R13_CNT
+		     , SUM(R90_CNT) R90_CNT
+             , SUM(NULL_CNT) NULL_CNT
+			 , SUM(LEAVE_CNT) LEAVE_CNT
+		     , SUM(TOT_CNT) TOT_CNT
+		FROM(
+		      SELECT DECODE(NVL(LEAVE_DAY, RECE), '01', 1, 0) R01_CNT		/* 오류 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '02', 1, 0) R02_CNT		/* 접수 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '03', 1, 0) R03_CNT		/* 수리 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '04', 1, 0) R04_CNT		/* 보완 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '05', 1, 0) R05_CNT		/* 검사완료 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '06', 1, 0) R06_CNT		/* 자동보완 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '07', 1, 0) R07_CNT		/* 화면심사 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '08', 1, 0) R08_CNT		/* 서류심사 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '09', 1, 0) R09_CNT		/* 신고지검사 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '10', 1, 0) R10_CNT		/* 적재지검사 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '11', 1, 0) R11_CNT		/* 서류제출 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '12', 1, 0) R12_CNT		/* 검사생략 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '13', 1, 0) R13_CNT		/* 담당자변경 */
+		           , DECODE(NVL(LEAVE_DAY, RECE), '90', 1, 0) R90_CNT		/* 취하 */
+                   , DECODE(NVL(LEAVE_DAY, RECE), NULL, 1, 0) NULL_CNT	    /* NULL */
+				   , DECODE(LEAVE_DAY, NULL, 0, 1) LEAVE_CNT				/* 이행 */
+		           , 1 AS TOT_CNT
+		        FROM EXP_CUSDEC830
+		       WHERE 1=1
+		         AND RPT_SEQ = '00' 
+		         AND RPT_DAY BETWEEN TO_CHAR(SYSDATE - ${P_DATE}, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+	             AND (
+	                CASE 
+	                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+	                    ELSE 0
+	                END) = 1
+		      
+		      )
+         
+    </select>
+    
+    <select id="selectTACnt" parameterType="map" resultType="map">
+ 		SELECT AAA.*
+		FROM(
+		      SELECT AA.*
+		      FROM (
+		            SELECT A.*
+		            FROM(
+		                SELECT TA_ST_ISO, NVL(COUNT(RECE), 0) RECE_CNT, NVL(SUM(TOT_RPT_KRW), 0) AS TOT_RPT_KRW
+		                FROM EXP_CUSDEC830
+		                WHERE 1=1
+		                AND RPT_SEQ = '00' 
+		                AND RECE ='03'
+		                AND RPT_DAY BETWEEN TO_CHAR(SYSDATE - ${P_DATE}, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+		                AND (
+			                CASE 
+			                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+			                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+			                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+			                    ELSE 0
+			                END) = 1
+		                GROUP BY TA_ST_ISO
+		                ) A
+		            ORDER BY RECE_CNT DESC
+		            ) AA
+		      WHERE ROWNUM <![CDATA[<]]> 5
+		) AAA
+		UNION ALL
+		SELECT '기타' AS TA_ST_ISO , NVL(SUM(RECE_CNT), 0), NVL(SUM(TOT_RPT_KRW), 0) AS TOT_RPT_KRW
+		FROM (
+		        SELECT AA.*
+		        FROM (
+		              SELECT A.*
+		              FROM(
+		                  SELECT TA_ST_ISO, NVL(COUNT(RECE), 0) RECE_CNT, NVL(SUM(TOT_RPT_KRW), 0) AS TOT_RPT_KRW
+		                  FROM EXP_CUSDEC830
+		                  WHERE 1=1
+		                  AND RPT_SEQ = '00' 
+		                  AND RECE ='03'
+		                  AND RPT_DAY BETWEEN TO_CHAR(SYSDATE - ${P_DATE}, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+		                  AND (
+			                CASE 
+			                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+			                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+			                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+			                    ELSE 0
+			                END) = 1
+		                  GROUP BY TA_ST_ISO
+		                  ) A
+		              ORDER BY RECE_CNT DESC
+		        ) AA
+		        MINUS
+		        SELECT AAA.*
+		        FROM(
+		              SELECT AA.*
+		              FROM (
+		                    SELECT A.*
+		                    FROM(
+		                        SELECT TA_ST_ISO, NVL(COUNT(RECE), 0) RECE_CNT, NVL(SUM(TOT_RPT_KRW), 0) AS TOT_RPT_KRW
+		                        FROM EXP_CUSDEC830
+		                        WHERE 1=1
+		                        AND RPT_SEQ = '00' 
+		                        AND RECE ='03'
+		                        AND RPT_DAY BETWEEN TO_CHAR(SYSDATE - ${P_DATE}, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+		                        AND (
+					                CASE 
+					                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+					                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_SDNO, #{USR_SESSION.bizNo}, 1, 0)
+					                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+					                    ELSE 0
+					                END) = 1
+		                        GROUP BY TA_ST_ISO
+		                        ) A
+		                    ORDER BY RECE_CNT DESC
+		                    ) AA
+		              WHERE ROWNUM <![CDATA[<]]> 5
+		        ) AAA
+		) AAAA
+    </select>
+    
+    <select id="selectModMonthCnt" parameterType="map" resultType="map">
+ 		SELECT SUM(R01_CNT) R01_CNT
+		     , SUM(R02_CNT) R02_CNT
+		     , SUM(R05_CNT) R05_CNT
+		     , SUM(R07_CNT) R07_CNT
+		     , SUM(R09_CNT) R09_CNT
+		     , SUM(NULL_CNT) NULL_CNT
+		     , SUM(TOT_CNT) TOT_CNT
+		FROM(
+		      SELECT DECODE(RECE, '01', 1, 0) R01_CNT		/* 오류 */
+		           , DECODE(RECE, '02', 1, 0) R02_CNT		/* 접수 */
+		           , DECODE(RECE, '05', 1, 0) R05_CNT		/* 승인 */
+		           , DECODE(RECE, '07', 1, 0) R07_CNT		/* 서류변경 */
+		           , DECODE(RECE, '09', 1, 0) R09_CNT		/* 기각 */
+		           , DECODE(RECE, NULL, 1, 0) NULL_CNT
+		           , 1 AS TOT_CNT
+		        FROM EXP_CUSDMR5AS
+		       WHERE 1=1
+		         AND MODI_DAY BETWEEN TO_CHAR(SYSDATE - ${P_DATE}, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+			     AND (
+	                CASE 
+	                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+	                    ELSE 0
+	                END) = 1
+		      )
+         
+    </select>
+    
+    <select id="selectSendDiviCnt" parameterType="map" resultType="map">
+ 		 SELECT SEND_DIVI
+		      , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0030' AND CODE = SEND_DIVI) AS SEND_DIVI_NM
+		      , NVL(COUNT(SEND_DIVI), 0) SEND_DIVI_CNT
+		   FROM EXP_CUSDMR5AS
+		  WHERE 1=1
+	    	AND MODI_DAY BETWEEN TO_CHAR(SYSDATE - ${P_DATE}, 'YYYYMMDD') AND TO_CHAR(SYSDATE, 'YYYYMMDD')
+	        AND (
+                CASE 
+                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+	   		GROUP BY SEND_DIVI
+         
+    </select>
+
+
+</mapper>

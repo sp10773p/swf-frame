@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE properties SYSTEM "http://java.sun.com/dtd/properties.dtd">
+<properties>
+    <comment>Configuration</comment>
+    <entry key="site.name">https://203.242.255.121:5555</entry>
+    <entry key="isTest">true</entry>
+    <entry key="login.view">main/login</entry>
+    <entry key="login.action.url">/doLoginAction.do</entry> <!-- 사용자 사이트 로그인 -->
+    <entry key="login.admin.action.url">/doAdminLoginAction.do</entry> <!-- 어드민 사이트 로그인 -->
+    <entry key="login.mobile.action.url">/doMobileLoginAction.do</entry> <!-- 모바일 사이트 로그인 -->
+    <entry key="logout.action.url">/logout.do</entry>   <!-- 어드민 사이트 로그아웃 -->
+    <entry key="use.password.encrypt">true</entry>
+
+    <entry key="login.admin.view">main/adminLogin</entry>
+    <entry key="login.mobile.view">main/mobileLogin</entry>
+
+    <entry key="login.admin.ipcheck">true</entry>
+
+    <entry key="main.url">/main.do</entry>
+    <entry key="main.admin.url">/adminMain.do</entry>
+    <entry key="main.mobile.url">/mobileMain.do</entry>
+
+
+    <entry key="date.button.term.trd">180</entry>
+    <entry key="date.button.term">62</entry>
+
+    <entry key="login.password.change.period">0</entry>
+    <entry key="convert.util.DefaultDateformat">yyyy-MM-dd</entry>
+
+
+    <entry key="login.password.complex.pattern">^(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^*+=-])(?=.*[0-9]+)</entry>
+    <entry key="login.password.complex.pattern.min">10</entry>
+    <entry key="login.password.complex.pattern.max">20</entry>
+
+    <entry key="openapi.cuncurrent.user.cnt.limit">10</entry>
+
+    <!-- file-->
+    <entry key="file.upload.path">/nfs/goglobal/upload</entry>
+    <entry key="file.download.path">/nfs/goglobal/download</entry>
+
+    <!-- ems -->
+    <entry key="ems.pickup.req.url">http://eship.epost.go.kr:80/api.EmsApplyInsertReceiveTempCmdNewDEV.ems</entry>
+
+    <!-- ubireport -->
+    <entry key="ubi.viewer.url">/ubireport/reportViewer.jsp</entry>
+
+    <!-- 수발신식별자 / 구매확인서 거래약정 -->
+    <entry key="tpagent.server.ip">203.242.162.41</entry>
+    <entry key="tpagent.server.port">9871</entry>
+    <entry key="tpagent.recv.tp.id">EKTNET</entry>                  <!-- KTNET 수발신명 -->
+    <entry key="tpagent.recv.aut.key">1208102922</entry>            <!-- KTNET 전자서명 -->
+    <entry key="tpagent.recv.tp.name">KTNET(구매확인발급)</entry>   <!-- KTNET 수발신명 -->
+    <entry key="tpagent.ecc.asp.user.id">ECESPCUSTOMS</entry>       <!-- 관세청용 ASP 서비스 ID -->
+    <entry key="tpagent.ecp.asp.user.id">ECESPETRADE</entry>        <!-- 구매확인서용 ASP 서비스 ID -->
+    <entry key="tpagent.ecc.document.type">XML:KCS40_KTNET</entry>  <!-- 관세청용 문서형식 -->
+    <entry key="tpagent.ecp.document.type">XML:eTrade10</entry>     <!-- 구매확인서용 문서형식 -->
+    <entry key="tpagent.ecc.location.id">FTPO</entry>               <!-- 관세청용 문서형식 -->
+    <entry key="tpagent.ecp.location.id">FTPO</entry>               <!-- 구매확인서용 문서형식 -->
+    <entry key="uth.approve.user.id">INFRAJHHAN</entry>             <!-- uTH사용자 가입승인한 ID -->
+
+    <!-- 건수 조회 기간 Index -->
+    <entry key="summary.from.date.period">30</entry>
+    <!-- 대시보드 건수 조회 기간 Index -->
+    <entry key="dashBoard.from.date.period">60</entry>
+
+    <!-- 뉴스레터 자동개시 여부 -->
+    <entry key="news.letter.open">Y</entry>
+
+    <!-- CREATE DOC_ID Key 목록-->
+    <entry key="regist.docnm.list">APPPCR,IMPREQ</entry>
+
+</properties>

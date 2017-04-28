@@ -1,0 +1,50 @@
+@charset "UTF-8";
+
+/*table title*/
+.contents h2{ margin-bottom:8px; padding-left:9px; background:url(/images/icon/icon_menuarrow_on.png)no-repeat left center; background-size:auto 7px;color:#15a4fa; font-size:18px;}
+/*table style*/
+.contents .veiw_table{ position:relative;padding-bottom:25px;}
+.contents .veiw_table h2+p{position:absolute; top:3px; right:0; font-weight:normal;}
+.contents .veiw_table table{ margin-bottom:5px; width:100%;background-color:#fff; line-height:1.2em;}
+.contents .veiw_table tbody{border-top:1px solid #dedede;}
+.contents .veiw_table table tr{border-bottom:1px solid #dedede;}
+.contents .veiw_table table th{padding:7px 8px; width:36%; height:34px;background:#ebeced; vertical-align:middle; text-align:left; line-height:1.3em;}
+.contents .veiw_table table td{ overflow:hidden; padding:2px 0 2px 8px;padding-left:8px; height:41px; color:#777; vertical-align:middle;}
+.contents .veiw_table table td span{display:inline-block;padding-top:11px;}
+.contents .veiw_table table .btn{ float:right;margin:0; font-weight:normal;}
+.contents .veiw_table table textarea{margin:4px 0;}
+.util_frame  > h2:first-child{margin-top:10px;}
+.contents .veiw_table .zip_code + .btn{width:auto;}
+.contents .veiw_table .zip_code {width:calc(100% - 106px);}
+
+/*상세페이지 내부 목록 추가*/
+/*page button*/
+.list_btn {padding:15px 0 20px;text-align:center; font-family:'NanumGothic';}
+.list_btn > * {display:inline-block;}
+.list_btn a {width:40px;height:33px;text-indent:-9999em;}
+.list_btn .btn_prev {background:url(/images/btn/btn_prev_list.png) no-repeat;background-size:40px auto;}
+.list_btn .btn_next {background:url(/images/btn/btn_next_list.png) no-repeat;background-size:40px auto;}
+.list_btn span {padding:9px 15px 0 15px;color:#bcbcbc;vertical-align:top;font-size:17px;}
+.list_btn strong {color:#757575;}
+
+/*list style*/
+.list_style{margin-top: 5px;}
+.list_style > li { margin-top:5px; padding:13px 10px; border:1px solid #d9d9d9; border-radius:1px; background:#f7f7f8;}
+.list_style h2{ margin-bottom:8px; color:#333;letter-spacing:-0.02em; letter-spacing:-0.02em; font-size:17px; line-height:20px;}
+.list_style ul li{float:left; margin-right:15px; color:#333; letter-spacing:-0.02em; line-height:18px;}
+.list_style li ul:after{ display:block; clear:both;content:"";}
+.list_style li li span:first-child{ padding-left:8px;background:url(/images/icon/icon_bullet.png)no-repeat left center;background-size:3px auto;color:#777;}
+.list_style li li strong{ font-weight:normal;}
+.list_style li li strong + span{color:#777;}
+
+.checklist > li{position:relative; overflow:hidden;}
+.checklist li a{ float:left; margin-left:30px;width:calc(100% - 30px);}
+.checklist li input[type=checkbox]{ position:absolute; top:50%;float:left; transform:translateY(-50%);}
+.btn_frame .uncheck_all{display:none;}
+
+/*total number style*/
+.total{float:left; padding-top:2px;}
+.util_left{overflow:hidden;}
+.total span{ padding:2px 5px 3px; width:auto; height:18px; border-radius:2px; background:#f7941d;color:#fff; line-height:2.5em;}
+
+.view_list{margin-bottom:25px;}

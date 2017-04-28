@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="file">
+    <select id="getMaxFileSN" parameterType="map" resultType="int">
+        <![CDATA[
+			SELECT NVL(MAX(FILE_SN),0)+1 AS FILE_SN
+			  FROM 	CMM_FILE_DTL
+			 WHERE 	ATCH_FILE_ID =  #atchFileId:VARCHAR#
+		]]>
+    </select>
+
+
+    <select id="selectFileInfo" parameterType="map" resultType="map" >
+        <![CDATA[
+			SELECT ATCH_FILE_ID,
+			        FILE_CN,
+			        FILE_SN,
+			        FILE_STRE_COURS,
+			        STRE_FILE_NM,
+				    FILE_EXTSN,
+				    ORIGNL_FILE_NM,
+				    FILE_MG
+			  FROM CMM_FILE_DTL
+			 WHERE ATCH_FILE_ID = #{ATCH_FILE_ID:VARCHAR}
+
+ 		]]>
+        <if test="FILE_SN != null and FILE_SN != ''">
+            AND FILE_SN = #{FILE_SN}
+        </if>
+    </select>
+
+    <select id="selectFileInfoPaging" parameterType="map" resultType="map" >
+			SELECT ROW_NUMBER() OVER (ORDER BY FILE_SN) RNUM,
+                    ATCH_FILE_ID,
+			        FILE_CN,
+			        FILE_SN,
+			        FILE_STRE_COURS,
+			        STRE_FILE_NM,
+				    FILE_EXTSN,
+				    ORIGNL_FILE_NM,
+                    TO_CHAR(FILE_MG, 'FM9,999,999,999,999,999')||' byte' AS FILE_MG
+			  FROM CMM_FILE_DTL
+			 WHERE ATCH_FILE_ID = #{ATCH_FILE_ID:VARCHAR}
+        <if test="FILE_SN != null and FILE_SN != ''">
+            AND FILE_SN = #{FILE_SN}
+        </if>
+    </select>
+
+    <delete id="deleteFileMst" parameterType="string">
+        DELETE FROM CMM_FILE_MST
+        WHERE ATCH_FILE_ID = #{value}
+          AND 0 = (SELECT COUNT(*) FROM CMM_FILE_DTL WHERE ATCH_FILE_ID = #{value})
+    </delete>
+
+    <delete id="deleteFileInfo" parameterType="map">
+			DELETE FROM CMM_FILE_DTL
+			 WHERE ATCH_FILE_ID = #{ATCH_FILE_ID:VARCHAR}
+            <if test="FILE_SN != null and FILE_SN != ''">
+                AND FILE_SN = #{FILE_SN}
+            </if>
+    </delete>
+
+    <insert id="insertCmmFileMst" parameterType="map">
+        <selectKey resultType="string" order="BEFORE" keyProperty="ATCH_FILE_ID">
+            SELECT 'FILE_'||LPAD(NVL(MAX(TO_NUMBER(REPLACE(ATCH_FILE_ID, 'FILE_', '')))+1, 1), 15, '0') FROM CMM_FILE_MST
+        </selectKey>
+		INSERT INTO CMM_FILE_MST(
+            ATCH_FILE_ID
+            , CREAT_DT
+            , USE_AT
+        )VALUES(
+            #{ATCH_FILE_ID}
+            , SYSDATE
+            , 'Y'
+        )
+    </insert>
+
+    <insert id="insertCmmFileDtl" parameterType="map">
+        <selectKey resultType="string" order="BEFORE" keyProperty="FILE_SN">
+            SELECT NVL(MAX(FILE_SN)+1, '0') FROM CMM_FILE_DTL WHERE ATCH_FILE_ID = #{ATCH_FILE_ID}
+        </selectKey>
+		INSERT INTO CMM_FILE_DTL(
+            ATCH_FILE_ID
+            , FILE_SN
+            , FILE_STRE_COURS
+            , STRE_FILE_NM
+            , ORIGNL_FILE_NM
+            , FILE_EXTSN
+            , FILE_MG
+            , FILE_CN
+            , FILE_USE_GB
+            , REG_DTM
+        )VALUES(
+            #{ATCH_FILE_ID}
+            , #{FILE_SN}
+            , #{FILE_STRE_COURS}
+            , #{STRE_FILE_NM}||#{FILE_SN}
+            , #{ORIGNL_FILE_NM}
+            , #{FILE_EXTSN}
+            , #{FILE_MG}
+            , #{FILE_CN}
+            , #{FILE_USE_GB}
+            , SYSDATE
+        )
+    </insert>
+
+    <select id="selectFileDtlMaxAtchfileid" parameterType="string" resultType="string" >
+        SELECT ATCH_FILE_ID
+          FROM CMM_FILE_MST
+         WHERE ATCH_FILE_ID = #{value}
+    </select>
+
+    <select id="selectFileNameList" parameterType="string" resultType="string" >
+        SELECT FILE_STRE_COURS||STRE_FILE_NM AS FILE_NAME
+          FROM CMM_FILE_MST A, CMM_FILE_DTL B
+         WHERE A.ATCH_FILE_ID = B.ATCH_FILE_ID
+           AND A.ATCH_FILE_ID IN (${value})
+    </select>
+
+    <delete id="deleteDtlFiles" parameterType="string">
+        DELETE FROM CMM_FILE_DTL
+         WHERE ATCH_FILE_ID IN (${value})
+    </delete>
+
+    <delete id="deleteMstFiles" parameterType="string">
+        DELETE FROM CMM_FILE_MST
+         WHERE ATCH_FILE_ID IN (${value})
+    </delete>
+
+</mapper>
