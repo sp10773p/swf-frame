@@ -5,10 +5,9 @@ import java.util.Map;
 
 import javax.annotation.Resource;
 
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
+import kr.pe.frame.cmm.core.base.Sha256;
 import kr.pe.frame.cmm.core.base.CommonDAO;
 import kr.pe.frame.cmm.core.base.Constant;
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
 import kr.pe.frame.cmm.core.model.AjaxModel;
 import kr.pe.frame.cmm.util.DocUtil;
 import org.apache.commons.lang.StringUtils;
@@ -16,11 +15,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
-import kr.pe.frame.cmm.core.base.CommonDAO;
-import kr.pe.frame.cmm.core.base.Constant;
-import kr.pe.frame.cmm.core.model.AjaxModel;
 import kr.pe.frame.cmm.core.service.CommonService;
-import kr.pe.frame.cmm.util.DocUtil;
 import kr.pe.frame.cmm.util.RandomString;
 
 /**
@@ -123,7 +118,7 @@ public class ProfServiceImpl implements ProfService {
         }
         
         String userPw = StringUtils.defaultIfEmpty((String) param.get("USER_PW"), "");
-        param.put("USER_PW", OneWayCipherM.encryptText(userPw));
+        param.put("USER_PW", Sha256.encrypt(userPw));
 		commonDAO.update("prof.updateUser", param);
         model.setCode("I00000003"); //저장되었습니다.
 		return model;

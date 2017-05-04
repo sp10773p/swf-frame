@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.servlet.ModelAndView;
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
+import kr.pe.frame.cmm.core.base.Sha256;
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -166,7 +166,7 @@ public class UsrController {
         HttpSession session = request.getSession(false);
         sb.append(userId).append(session.getId()).append(RandomString.random(10));
 
-        String key = OneWayCipherM.encryptText(sb.toString());
+        String key = Sha256.encrypt(sb.toString());
 
         addWebAccessKey(key);
 

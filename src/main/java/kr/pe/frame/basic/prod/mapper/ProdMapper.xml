@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="prod">
+    <select	id="selectItemList" parameterType="map" resultType="map">
+		SELECT	ROW_NUMBER() OVER (ORDER BY A.REG_DTM DESC, A.MALL_ID DESC, A.MALL_SELLER_ID DESC, A.MALL_ITEM_NO DESC) RNUM
+			    , A.MALL_ID                    /* 몰ID */
+			    , A.MALL_SELLER_ID             /* 판매자몰ID */
+			    , A.MALL_ITEM_NO               /* 몰상품번호 */
+			    , A.ITEM_NM                    /* 품명 */
+			    , A.HS_CD                      /* 세번부호 */
+			    , A.BRAND_NM                   /* 상표명 */
+			    , A.ORG_NAT_CD                 /* 원산지국가코드 */
+			    , A.WEIGHT                     /* 중량 */
+			    , A.WEIGHT_UT                  /* 중량단위 */
+			    , A.QUANTY_UT                  /* 수량단위 */
+			    , A.MAKER_NM                   /* 제조자 */
+			    , A.EXPORT_DEC                 /* 수출신고여부 */
+			    , A.CATEGORY1                  /* 카테고리1 */
+			    , A.CATEGORY2                  /* 카테고리2 */
+			    , A.CATEGORY3                  /* 카테고리3 */
+			    , A.SPEC_DETAIL                /* 상세스펙 */
+			    , A.REG_ID                     /* 등록자ID */
+			    , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM	/* 등록일시 */
+			    , A.MOD_ID                     			/* 수정자ID */
+			    , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM  /* 수정일시 */
+			    , A.ITEM_VIEW_URL 						/* 상품정보 URL */
+			    , A.REGIST_METHOD						/* 등록구분 */
+			    , A.BIZ_NO								/* 사업자등록번호 */
+		  FROM CMM_ITEM_INFO A 
+	     WHERE 1 = 1 
+        <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+            AND A.REG_DTM BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+        </if> 
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+           <if test="SEARCH_COL == 'MALL_ITEM_NO'">
+           	   AND A.MALL_ITEM_NO LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'BRAND_NM'">
+           	   AND A.BRAND_NM LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+           <if test="SEARCH_COL == 'HS_CD'">
+           	   AND A.HS_CD LIKE '%'||#{SEARCH_TXT}||'%'
+           </if>
+        </if>
+        <if test="S_REGIST_METHOD != null and S_REGIST_METHOD != ''">
+            AND A.REGIST_METHOD = #{S_REGIST_METHOD}
+        </if>
+        <if test="S_MALL_ID != null and S_MALL_ID != ''">
+            AND A.MALL_ID = #{S_MALL_ID}
+        </if>	
+        <if test="SSuserDiv != null and SSuserDiv != ''">
+        	<if test='SSuserDiv == "M"'>
+        		AND A.MALL_ID = #{SSuserId}
+        	</if>
+        	<if test='SSuserDiv == "S"'>
+        		AND EXISTS (
+	                    SELECT 1 
+	                      FROM CMM_USER B
+	                     WHERE B.BIZ_NO = #{SSbizNo}
+	                       AND B.USER_ID = A.REG_ID   
+             		) 
+        	</if>
+        </if>
+        ORDER BY A.REG_DTM DESC, A.MALL_ID DESC, A.MALL_SELLER_ID DESC, A.MALL_ITEM_NO DESC
+
+    </select>
+    
+    <select	id="selectItem" parameterType="map" resultType="map">
+		SELECT	ROW_NUMBER() OVER (ORDER BY A.REG_DTM DESC, A.MALL_ID DESC, A.MALL_SELLER_ID DESC, A.MALL_ITEM_NO DESC) RNUM
+			    , A.MALL_ID                    /* 몰ID */
+			    , A.MALL_SELLER_ID             /* 판매자몰ID */
+			    , A.MALL_ITEM_NO               /* 몰상품번호 */
+			    , A.ITEM_NM                    /* 품명 */
+			    , A.HS_CD                      /* 세번부호 */
+			    , A.BRAND_NM                   /* 상표명 */
+			    , A.ORG_NAT_CD                 /* 원산지국가코드 */
+			    , A.WEIGHT                     /* 중량 */
+			    , A.WEIGHT_UT                  /* 중량단위 */
+			    , A.QUANTY_UT                  /* 수량단위 */
+			    , A.MAKER_NM                   /* 제조자 */
+			    , A.MAKER_TGNO                 /* 제조자통관고유부호 */
+			    , A.MAKER_POST_NO              /* 제조자우편번호 */
+			    , A.EXPORT_DEC                 /* 수출신고여부 */
+			    , A.CATEGORY1                  /* 카테고리1 */
+			    , A.CATEGORY2                  /* 카테고리2 */
+			    , A.CATEGORY3                  /* 카테고리3 */
+			    , A.GNM                  	   /* 규격 */
+			    , A.INGREDIENTS                /* 성분 */
+			    , A.SPEC_DETAIL                /* 상세스펙 */
+			    , A.REG_ID                     /* 등록자ID */
+			    , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM	/* 등록일시 */
+			    , A.MOD_ID                     			        /* 수정자ID */
+			    , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM   /* 수정일시 */
+			    , A.ITEM_VIEW_URL 						/* 상품정보 URL */
+			    , A.REGIST_METHOD						/* 등록구분 */
+			    , A.BIZ_NO								/* 사업자등록번호 */
+		  FROM CMM_ITEM_INFO A 
+	     WHERE A.MALL_ID = #{MALL_ID}
+	       AND A.BIZ_NO = #{BIZ_NO}
+	       AND A.MALL_ITEM_NO = #{MALL_ITEM_NO}
+    </select>
+    
+    <update id="updateItem" parameterType="map">
+        UPDATE CMM_ITEM_INFO
+           SET   ITEM_NM 	   = #{ITEM_NM}
+                ,HS_CD 		   = #{HS_CD}
+                ,BRAND_NM 	   = #{BRAND_NM}
+                ,ORG_NAT_CD    = #{ORG_NAT_CD}
+                ,WEIGHT  	   = #{WEIGHT}
+                ,WEIGHT_UT     = #{WEIGHT_UT}
+                ,QUANTY_UT     = #{QUANTY_UT}
+                ,MAKER_NM      = #{MAKER_NM}
+                ,CATEGORY1     = #{CATEGORY1}
+                ,CATEGORY2     = #{CATEGORY2}
+                ,CATEGORY3     = #{CATEGORY3}
+                ,MAKER_TGNO    = #{MAKER_TGNO}
+                ,MAKER_POST_NO = #{MAKER_POST_NO}
+                ,GNM           = #{GNM}
+                ,INGREDIENTS   = #{INGREDIENTS}
+                ,SPEC_DETAIL   = #{SPEC_DETAIL}
+                ,ITEM_VIEW_URL = #{ITEM_VIEW_URL}
+                ,MOD_ID        = #{MOD_ID}
+                ,MOD_DTM       = SYSDATE
+         WHERE MALL_ID = #{MALL_ID}
+		   AND MALL_ITEM_NO = #{MALL_ITEM_NO}
+		   AND BIZ_NO = #{BIZ_NO}
+    </update>
+    
+    <insert id="insertItemExcel" parameterType="map">
+        <selectKey resultType="string" keyProperty="SN" order="BEFORE">
+    		SELECT NVL(MAX(SN), 0) + 1 FROM CMM_ITEM_EXCEL 
+    	</selectKey>    
+        <![CDATA[
+		    INSERT INTO CMM_ITEM_EXCEL 
+		    (
+               SN
+             , USER_ID
+             , REG_DTM
+		    )
+			VALUES
+		    (
+			   #{SN}
+             , #{USER_ID:VARCHAR}
+             , SYSDATE
+			)
+		]]>
+    </insert>
+    
+    <insert id="insertItemExcelDetail" parameterType="map">
+        <selectKey resultType="string" keyProperty="SEQ" order="BEFORE">
+    		SELECT NVL(MAX(SEQ), 0) + 1 FROM CMM_ITEM_EXCEL_DETAIL WHERE SN = #{SN}
+    	</selectKey>     
+        <![CDATA[
+		    INSERT INTO CMM_ITEM_EXCEL_DETAIL (
+                 SN
+                ,SEQ
+                ,MALL_ITEM_NO
+                ,ITEM_NM
+                ,HS_CD
+                ,BRAND_NM
+                ,ORG_NAT_CD
+                ,WEIGHT
+                ,WEIGHT_UT
+                ,QUANTY_UT
+                ,MAKER_NM
+			    ,MAKER_TGNO
+			    ,MAKER_POST_NO
+			    ,GNM
+			    ,INGREDIENTS
+			    ,CATEGORY1
+			    ,CATEGORY2
+			    ,CATEGORY3
+			    ,SPEC_DETAIL
+			    ,ITEM_VIEW_URL
+
+			)VALUES(
+				 #{SN}
+                ,#{SEQ}
+                ,#{MALL_ITEM_NO}
+                ,#{ITEM_NM}
+                ,#{HS_CD}
+                ,#{BRAND_NM}
+                ,#{ORG_NAT_CD}
+                ,#{WEIGHT}
+                ,#{WEIGHT_UT}
+                ,#{QUANTY_UT}
+                ,#{MAKER_NM}
+                ,#{MAKER_TGNO}
+                ,#{MAKER_POST_NO}
+                ,#{GNM}
+                ,#{INGREDIENTS}
+                ,#{CATEGORY1}
+                ,#{CATEGORY2}
+                ,#{CATEGORY3}
+                ,#{SPEC_DETAIL}
+                ,#{ITEM_VIEW_URL}
+
+			)
+		]]>
+    </insert>
+    
+    <delete id="deleteItemExcelDetailEmpty" parameterType="map">      
+		DELETE FROM CMM_ITEM_EXCEL_DETAIL 
+		 WHERE MALL_ITEM_NO IS NULL
+		   AND ITEM_NM IS NULL 
+		   AND HS_CD IS NULL
+		   AND BRAND_NM IS NULL
+		   AND ORG_NAT_CD IS NULL
+		   AND WEIGHT IS NULL
+		   AND WEIGHT_UT IS NULL
+		   AND QUANTY_UT IS NULL
+		   AND MAKER_NM IS NULL
+		   AND MAKER_TGNO IS NULL
+		   AND MAKER_POST_NO IS NULL
+		   AND GNM IS NULL
+		   AND INGREDIENTS IS NULL
+		   AND CATEGORY1 IS NULL
+		   AND CATEGORY2 IS NULL
+		   AND CATEGORY3 IS NULL
+		   AND SPEC_DETAIL IS NULL
+		   AND ITEM_VIEW_URL IS NULL
+	</delete>
+	
+	<select	id="selectItemExcelDetailList" parameterType="map" resultType="map">
+		SELECT	  A.SN               /*SN*/
+			    , A.SEQ              /*고유번호*/
+			    , A.MALL_ITEM_NO     /*몰상품번호*/
+			    , A.ITEM_NM          /*품명*/
+			    , A.HS_CD            /*세번부호*/
+			    , A.BRAND_NM         /*상표명*/
+			    , A.ORG_NAT_CD       /*원산지국가코드*/
+			    , A.WEIGHT           /*중량*/
+			    , A.WEIGHT_UT        /*중량단위*/
+			    , A.QUANTY_UT        /*수량단위*/
+			    , A.MAKER_NM         /*제조자*/
+			    , A.MAKER_TGNO       /*제조자통관고유부호*/
+			    , A.MAKER_POST_NO    /*제조자우편번호*/
+			    , A.GNM              /*규격*/
+			    , A.INGREDIENTS      /*성분*/
+			    , A.CATEGORY1        /*카테고리1*/
+			    , A.CATEGORY2        /*카테고리2*/
+			    , A.CATEGORY3   	 /*카테고리3*/
+			    , A.SPEC_DETAIL      /*상세스펙*/
+			    , A.ITEM_VIEW_URL    /*상품조회URL*/
+		  FROM CMM_ITEM_EXCEL_DETAIL A
+	     WHERE A.SN = #{SN}
+    </select>
+	
+    <insert id="insertItemInfo" parameterType="map">
+        INSERT INTO CMM_ITEM_INFO(
+             MALL_ID
+			,MALL_ITEM_NO 
+			,BIZ_NO
+			,MALL_SELLER_ID
+			,ITEM_NM
+			,HS_CD
+			,BRAND_NM
+			,ORG_NAT_CD
+			,WEIGHT
+			,WEIGHT_UT
+			,QUANTY_UT
+			,MAKER_NM
+			,MAKER_TGNO
+			,MAKER_POST_NO
+			,GNM
+			,INGREDIENTS
+			,CATEGORY1
+			,CATEGORY2
+			,CATEGORY3
+			,SPEC_DETAIL
+			,ITEM_VIEW_URL
+			,REGIST_METHOD
+			,REG_ID  
+			,REG_DTM
+			,MOD_ID
+			,MOD_DTM
+        )
+        SELECT    #{MALL_ID}        /*몰ID*/
+				, MALL_ITEM_NO 	    /*몰상품번호*/
+				, #{BIZ_NO}         /*사업자등록번호*/
+				, #{USER_ID}        /*판매자몰ID*/
+				, ITEM_NM           /*품명*/
+				, HS_CD             /*세번부호*/
+				, BRAND_NM          /*상표명*/
+				, ORG_NAT_CD        /*원산지국가코드*/
+				, WEIGHT            /*중량*/
+				, WEIGHT_UT         /*중량단위*/
+				, QUANTY_UT         /*수량단위*/
+				, MAKER_NM          /*제조자*/
+				, MAKER_TGNO        /*제조자통관고유부호*/
+				, MAKER_POST_NO     /*제조자우편번호*/
+				, GNM               /*규격*/
+				, INGREDIENTS       /*성분*/
+				, CATEGORY1         /*카테고리1*/
+				, CATEGORY2         /*카테고리2*/
+				, CATEGORY3         /*카테고리3*/
+				, SPEC_DETAIL       /*상세스펙*/
+				, ITEM_VIEW_URL     /*상품조회URL*/
+				, 'EXCEL'           /*등록구분*/
+				, #{USER_ID}  	    /*등록자ID*/
+				, SYSDATE           /*등록일시*/
+				, #{USER_ID}		/*수정자ID*/
+				, SYSDATE           /*수정일시*/
+         FROM  CMM_ITEM_EXCEL_DETAIL A
+        WHERE  A.SN = #{SN}
+    </insert>
+    
+    <delete id="deleteItemInfo" parameterType="map">
+		DELETE FROM CMM_ITEM_INFO WHERE MALL_ID = #{MALL_ID} AND MALL_ITEM_NO = #{MALL_ITEM_NO}
+	</delete>
+	
+	<select id="selectItemInfoCnt"  parameterType="map" resultType="int">
+	    SELECT COUNT(*) AS CNT
+	      FROM (
+				SELECT *
+				  FROM  CMM_ITEM_EXCEL_DETAIL A, CMM_ITEM_INFO B
+				 WHERE A.SN = #{SN}
+				   AND A.MALL_ITEM_NO = B.MALL_ITEM_NO
+				   AND B.MALL_ID = #{MALL_ID}
+               )
+	</select>
+	
+	<select id="selectItemExcelDetailCnt"  parameterType="map" resultType="int">
+	    SELECT COUNT(*) AS CNT
+	      FROM (
+				SELECT COUNT(MALL_ITEM_NO) AS CNT
+                  FROM CMM_ITEM_EXCEL_DETAIL 
+                 WHERE SN = #{SN}
+                 GROUP BY MALL_ITEM_NO
+               ) 
+         WHERE CNT &gt; 1
+	</select>
+	
+        
+    
+</mapper>

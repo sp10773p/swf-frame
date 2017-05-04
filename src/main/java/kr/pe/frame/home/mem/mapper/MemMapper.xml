@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mem">
+    <select	id="selectUser" parameterType="map" resultType="map">
+        SELECT A.*
+          FROM (
+	        SELECT USER_ID 
+	          FROM CMM_USER
+	         WHERE USER_DIV IN ('S', 'M', 'G', 'E')
+	           AND USER_ID = #{USER_ID}
+	        ORDER BY USER_ID DESC
+        )A
+        WHERE ROWNUM = 1
+        
+    </select>
+    
+    <insert id="insertMember" parameterType="map">
+        INSERT INTO CMM_USER(
+			 USER_ID
+			,USER_NM
+			,USER_PW
+			,TEL_NO
+			,HP_NO
+			,EMAIL
+			,USER_DIV
+			,AUTH_CD
+			,APPLICANT_ID
+			,BIZ_NO
+			,CHARGE_NM
+			,DEPT
+			,POS
+			,CO_NM_ENG
+			,REP_NM
+			,REP_NM_ENG
+			,ZIP_CD
+			,ADDRESS
+			,ADDRESS2
+			,ADDRESS_EN
+			,TG_NO
+			,ATCH_FILE_ID
+			,USER_STATUS
+			,USE_CHK
+			,UTH_USER_ID
+			,SIGN_VALUE
+			,REG_ID
+			,REG_DTM
+			,MOD_ID
+			,MOD_DTM
+
+        )VALUES(
+             #{USER_ID}
+			,#{USER_NM}
+			,#{USER_PW}
+			,#{TEL_NO}
+			,#{HP_NO}
+			,#{EMAIL}
+			,#{USER_DIV}
+			,DECODE(#{USER_DIV}, 'S', 'SELLER', 'M', 'SELLER', 'G', 'CUSTOMS', 'E', 'EXPRESS', '')
+			,#{APPLICANT_ID}
+			,#{BIZ_NO}
+			,#{CHARGE_NM}
+			,#{DEPT}
+			,#{POS}
+			,#{CO_NM_ENG}
+			,#{REP_NM}
+			,#{REP_NM_ENG}
+			,#{ZIP_CD}
+			,#{ADDRESS}
+			,#{ADDRESS2}
+			,#{ADDRESS_EN}
+			,#{TG_NO}
+			,#{ATCH_FILE_ID}
+			,'0'
+			,'N'
+			,#{UTH_USER_ID}
+			,#{BIZ_NO}
+			,#{REG_ID}
+			,SYSDATE
+			,#{MOD_ID}
+			,SYSDATE
+        )
+    </insert>
+    
+    <delete id="deleteEmailAuth">
+        DELETE FROM CMM_EMAIL_AUTHENTICATION
+         WHERE EMAIL_ADDRESS = #{EMAIL_ADDRESS}
+    </delete>
+    
+    <insert id="insertEmailAuth" parameterType="map">
+        INSERT INTO CMM_EMAIL_AUTHENTICATION(
+			 EMAIL_ADDRESS
+			,AUTHENTICATION_KEY
+			,REG_DTM
+
+        )VALUES(
+             #{EMAIL_ADDRESS}
+			,#{AUTHENTICATION_KEY}
+			,SYSDATE
+        )
+    </insert>
+    
+    <select	id="selectEmailAuth" parameterType="map" resultType="map">
+        SELECT  A.*, ROUND((SYSDATE - REG_DTM) * 24 * 60 * 60) AS DIFF
+          FROM  CMM_EMAIL_AUTHENTICATION A
+         WHERE  A.EMAIL_ADDRESS = #{EMAIL_ADDRESS}
+        
+    </select>
+    
+    <select	id="selectUthUser" parameterType="map" resultType="map">
+        SELECT USERID AS USER_ID 
+          FROM MEMBER
+         WHERE USERID = #{USER_ID}
+           AND PRTNUM = #{BIZ_NO} 
+    </select>
+    
+    <select	id="selectTgNoCnt" parameterType="map" resultType="map">
+        SELECT COUNT(1) AS CNT
+         FROM  CMM_USER A
+        WHERE  A.TG_NO = #{TG_NO}
+        <if test="SSuserId != null and SSuserId != ''">
+          AND  A.USER_ID NOT IN (#{SSuserId})
+        </if>  
+    </select>
+    
+    <select	id="selectApplicantIdCnt" parameterType="map" resultType="map">
+        SELECT COUNT(1) AS CNT
+         FROM  CMM_USER A
+        WHERE  A.APPLICANT_ID = #{APPLICANT_ID}
+       	<if test="SSuserId != null and SSuserId != ''">
+       		AND  A.USER_ID NOT IN (#{SSuserId})
+        </if>
+    </select>
+
+</mapper>

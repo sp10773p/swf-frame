@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="cust">
+    <select	id="selectCustList" parameterType="map" resultType="map">
+        SELECT    ROW_NUMBER() OVER (ORDER BY A.CUST_CD DESC) RNUM  
+                , A.CUST_CD            /*거래처코드*/
+				, A.ORG_ID             /*사업자등록번호*/
+				, A.ORG_NM             /*상호*/
+				, A.ORG_EN_NM          /*상호(영문명)*/
+				, A.ORG_CEO_NM         /*대표자명*/
+				, A.ORG_EN_CEO_NM      /*대표자명(영문명)*/
+				, A.ADDR1              /*주소1*/
+				, A.ADDR2              /*주소2*/
+                , A.ADDR3              /*주소3*/
+                , A.ADDR1 || A.ADDR2 || A.ADDR3 AS ADDR /*주소*/
+                , A.EN_ADDR1           /*주소1(영문명)*/
+                , A.EN_ADDR2           /*주소2(영문명)*/
+                , A.EN_ADDR3           /*주소3(영문명)*/
+                , A.BIZ_TYPE           /*업태*/
+                , A.BIZ_ITEM           /*종목*/
+                , A.TRADE_ORG_NO       /*무역업체번호*/
+                , A.CUSTOMS_SERIAL_NO  /*통관고유번호*/
+                , A.HOMEPAGE_URL       /*홈페이지 URL*/
+                , A.TEL_NO             /*전화번호*/
+                , A.FAX_NO             /*FAX*/
+                , A.REMARK             /*특이사항*/
+                , A.USE_YN             /*사용여부*/
+                , A.ALLY_BIZ_PLACE_ID  /*종사업장번호*/
+                , A.MANAGER_NM         /*담당자명*/
+                , A.MANAGE_DEPT        /*담당부서*/
+                , A.MANAGER_EMAIL      /*담당자이메일*/
+                , A.TAX_MANAGER_NM     /*세금계산서 담당자명*/
+                , A.TAX_MANAGE_DEPT    /*세금계산서 담당부서*/
+                , A.TAX_MANAGER_EMAIL  /*세금계산서 담당자이메일*/
+                , A.REG_ID             /*등록자*/
+                , A.REG_DTM            /*등록일시*/
+                , A.MOD_ID             /*수정자*/
+                , A.MOD_DTM            /*수정일시*/
+         FROM  CMM_CUST A
+        WHERE  A.MOD_ID = #{SSuserId} 
+         <if test="F_DTM != null and F_DTM != '' and T_DTM != null and T_DTM != ''">
+        	<if test="SEARCH_DTM == 'REG_DTM'">
+       			AND A.REG_DTM BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       		</if>
+       		<if test="SEARCH_DTM == 'MOD_DTM'">
+       			AND A.MOD_DTM BETWEEN TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+       		</if>
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+	    	<choose>
+		    	<when test='SEARCH_COL != null and SEARCH_COL == "ADDR"'>
+		      		AND A.ADDR1 || A.ADDR2 || A.ADDR3 LIKE '%'||#{SEARCH_TXT}||'%'
+		      	</when>
+		    	<otherwise>
+		    		<if test="SEARCH_COL == 'ORG_NM'">
+		           		AND A.ORG_NM LIKE '%'||#{SEARCH_TXT}||'%'
+		            </if>
+		      		<if test="SEARCH_COL == 'ORG_ID'">
+		           		AND A.ORG_ID LIKE '%'||#{SEARCH_TXT}||'%'
+		            </if>
+		            <if test="SEARCH_COL == 'ORG_CEO_NM'">
+		           		AND A.ORG_CEO_NM LIKE '%'||#{SEARCH_TXT}||'%'
+		            </if>
+		            <if test="SEARCH_COL == 'MANAGER_NM'">
+		           		AND A.MANAGER_NM LIKE '%'||#{SEARCH_TXT}||'%'
+		            </if>
+		            <if test="SEARCH_COL == 'TEL_NO'">
+		           		AND A.TEL_NO LIKE '%'||#{SEARCH_TXT}||'%'
+		            </if>
+		      	</otherwise>
+	       </choose>
+        </if>
+        ORDER BY A.CUST_CD DESC
+
+    </select>
+
+    <select	id="selectCust" parameterType="map" resultType="map">
+        SELECT    A.CUST_CD            /*거래처코드*/
+				, A.ORG_ID             /*사업자등록번호*/
+				, A.ORG_NM             /*상호*/
+				, A.ORG_EN_NM          /*상호(영문명)*/
+				, A.ORG_CEO_NM         /*대표자명*/
+				, A.ORG_EN_CEO_NM      /*대표자명(영문명)*/
+				, A.ADDR1              /*주소1*/
+				, A.ADDR2              /*주소2*/
+                , A.ADDR3              /*주소3*/
+                , A.EN_ADDR1           /*주소1(영문명)*/
+                , A.EN_ADDR2           /*주소2(영문명)*/
+                , A.EN_ADDR3           /*주소3(영문명)*/
+                , A.BIZ_TYPE           /*업태*/
+                , A.BIZ_ITEM           /*종목*/
+                , A.TRADE_ORG_NO       /*무역업체번호*/
+                , A.CUSTOMS_SERIAL_NO  /*통관고유번호*/
+                , A.HOMEPAGE_URL       /*홈페이지 URL*/
+                , A.TEL_NO             /*전화번호*/
+                , A.FAX_NO             /*FAX*/
+                , A.REMARK             /*특이사항*/
+                , A.USE_YN             /*사용여부*/
+                , A.ALLY_BIZ_PLACE_ID  /*종사업장번호*/
+                , A.MANAGER_NM         /*담당자명*/
+                , A.MANAGE_DEPT        /*담당부서*/
+                , A.MANAGER_EMAIL      /*담당자이메일*/
+                , A.TAX_MANAGER_NM     /*세금계산서 담당자명*/
+                , A.TAX_MANAGE_DEPT    /*세금계산서 담당부서*/
+                , A.TAX_MANAGER_EMAIL  /*세금계산서 담당자이메일*/
+                , A.REG_ID             /*등록자*/
+                , A.REG_DTM            /*등록일시*/
+                , A.MOD_ID             /*수정자*/
+                , A.MOD_DTM            /*수정일시*/
+         FROM  CMM_CUST A
+        WHERE  A.CUST_CD = #{CUST_CD}
+    </select>    
+    <insert id="insertCmmCust" parameterType="map">
+    	<selectKey resultType="string" keyProperty="CUST_CD" order="BEFORE">
+    		SELECT LPAD(NVL(MAX(TO_NUMBER(CUST_CD)), 0) + 1,10,0) FROM CMM_CUST 
+        </selectKey>
+        INSERT INTO CMM_CUST(
+			 CUST_CD
+			,ORG_ID
+			,ORG_NM
+			,ORG_EN_NM
+			,ORG_CEO_NM
+			,ORG_EN_CEO_NM
+			,ADDR1
+			,ADDR2
+			,ADDR3
+			,EN_ADDR1
+			,EN_ADDR2
+			,EN_ADDR3
+			,BIZ_TYPE
+			,BIZ_ITEM
+			,TRADE_ORG_NO
+			,CUSTOMS_SERIAL_NO
+			,HOMEPAGE_URL
+			,TEL_NO
+			,FAX_NO
+			,REMARK
+			,USE_YN
+			,ALLY_BIZ_PLACE_ID
+			,MANAGER_NM
+			,MANAGE_DEPT
+			,MANAGER_EMAIL
+			,TAX_MANAGER_NM
+			,TAX_MANAGE_DEPT
+			,TAX_MANAGER_EMAIL
+			,REG_ID
+			,REG_DTM
+			,MOD_ID
+			,MOD_DTM
+        )VALUES(
+           	 #{CUST_CD}
+			,#{ORG_ID}
+			,#{ORG_NM}
+			,#{ORG_EN_NM}
+			,#{ORG_CEO_NM}
+			,#{ORG_EN_CEO_NM}
+			,#{ADDR1}
+			,#{ADDR2}
+			,#{ADDR3}
+			,#{EN_ADDR1}
+			,#{EN_ADDR2}
+			,#{EN_ADDR3}
+			,#{BIZ_TYPE}
+			,#{BIZ_ITEM}
+			,#{TRADE_ORG_NO}
+			,#{CUSTOMS_SERIAL_NO}
+			,#{HOMEPAGE_URL}
+			,#{TEL_NO}
+			,#{FAX_NO}
+			,#{REMARK}
+			,#{USE_YN}
+			,#{ALLY_BIZ_PLACE_ID}
+			,#{MANAGER_NM}
+			,#{MANAGE_DEPT}
+			,#{MANAGER_EMAIL}
+			,#{TAX_MANAGER_NM}
+			,#{TAX_MANAGE_DEPT}
+			,#{TAX_MANAGER_EMAIL}
+			,#{REG_ID}
+			,SYSDATE
+			,#{MOD_ID}
+			,SYSDATE
+        )
+    </insert>
+    
+    <update id="updateCmmCust" parameterType="map">
+        UPDATE CMM_CUST
+           SET
+                 ORG_ID            = #{ORG_ID}
+                ,ORG_NM            = #{ORG_NM}
+                ,ORG_EN_NM         = #{ORG_EN_NM}
+                ,ORG_CEO_NM        = #{ORG_CEO_NM}
+                ,ORG_EN_CEO_NM     = #{ORG_EN_CEO_NM}
+                ,ADDR1             = #{ADDR1}
+                ,ADDR2             = #{ADDR2}
+                ,ADDR3             = #{ADDR3}
+                ,EN_ADDR1          = #{EN_ADDR1}
+                ,EN_ADDR2          = #{EN_ADDR2}
+                ,EN_ADDR3          = #{EN_ADDR3}
+                ,BIZ_TYPE          = #{BIZ_TYPE}
+                ,BIZ_ITEM          = #{BIZ_ITEM}
+                ,TRADE_ORG_NO      = #{TRADE_ORG_NO}
+                ,CUSTOMS_SERIAL_NO = #{CUSTOMS_SERIAL_NO}
+                ,HOMEPAGE_URL      = #{HOMEPAGE_URL}
+                ,TEL_NO            = #{TEL_NO}
+                ,FAX_NO            = #{FAX_NO}
+                ,REMARK            = #{REMARK}
+                ,USE_YN            = #{USE_YN}
+                ,ALLY_BIZ_PLACE_ID = #{ALLY_BIZ_PLACE_ID}
+                ,MANAGER_NM        = #{MANAGER_NM}
+                ,MANAGE_DEPT       = #{MANAGE_DEPT}
+                ,MANAGER_EMAIL     = #{MANAGER_EMAIL}
+                ,TAX_MANAGER_NM    = #{TAX_MANAGER_NM}
+                ,TAX_MANAGE_DEPT   = #{TAX_MANAGE_DEPT}
+                ,TAX_MANAGER_EMAIL = #{TAX_MANAGER_EMAIL}
+                ,MOD_ID            = #{MOD_ID}
+                ,MOD_DTM           = #{MOD_DTM}
+        WHERE CUST_CD = #{CUST_CD}
+    </update>
+    
+    <delete id="deleteCustList">
+        DELETE FROM CMM_CUST
+         WHERE CUST_CD = #{CUST_CD}
+    </delete>
+ 
+</mapper>

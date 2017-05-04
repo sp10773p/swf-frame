@@ -1,7 +1,7 @@
 package kr.pe.frame.adm.sys.service;
 
 import kr.pe.frame.cmm.core.base.CommonDAO;
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
+import kr.pe.frame.cmm.core.base.Sha256;
 import kr.pe.frame.cmm.core.model.AjaxModel;
 import kr.pe.frame.cmm.util.DocUtil;
 import kr.pe.frame.cmm.util.StringUtil;
@@ -68,7 +68,7 @@ public class AdmServiceImpl implements AdmService {
 
         // 신규저장일경우
         if("I".equals(saveMode)){
-            param.put("USER_PW", OneWayCipherM.encryptText(userPw));
+            param.put("USER_PW", Sha256.encrypt(userPw));
 
             int cnt = Integer.parseInt(String.valueOf(commonDAO.select("adm.selectCmmUserCount", param)));
             if(cnt > 0){
@@ -88,7 +88,7 @@ public class AdmServiceImpl implements AdmService {
                  param.put("USER_PW", orgUserPw);
 
              }else{
-                 param.put("USER_PW", OneWayCipherM.encryptText(userPw));
+                 param.put("USER_PW", Sha256.encrypt(userPw));
 
              }
 

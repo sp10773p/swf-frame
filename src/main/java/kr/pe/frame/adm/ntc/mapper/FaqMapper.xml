@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="faq">
+    <select	id="selectCmmFaqList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.REG_DTM DESC) RNUM
+                , SN
+                , TITLE
+                , CONTENTS
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM
+                , ATCH_FILE_ID
+         FROM  CMM_FAQ A
+        WHERE  1=1
+            <if test="F_MOD_DTM != null and F_MOD_DTM != '' and T_MOD_DTM != null and T_MOD_DTM != ''">
+                AND MOD_DTM BETWEEN TO_DATE(#{F_MOD_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_MOD_DTM}||'235959', 'YYYYMMDDHH24MISS')
+            </if>
+            <if test="P_TITLE != null and P_TITLE != ''">
+                AND TITLE LIKE '%'||#{P_TITLE}||'%'
+            </if>
+        ORDER 	BY A.REG_DTM DESC
+    </select>
+
+    <select	id="selectCmmFaq" parameterType="map" resultType="map">
+        SELECT SN
+                , TITLE
+                , CONTENTS
+                , REG_ID
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM
+                , MOD_ID
+                , TO_CHAR(MOD_DTM, 'YYYY-MM-DD') AS MOD_DTM
+                , ATCH_FILE_ID
+         FROM  CMM_FAQ A
+        WHERE  SN = #{SN}
+    </select>
+
+    <insert id="insertCmmFaq" parameterType="map">
+        <selectKey resultType="int" keyProperty="SN" order="BEFORE">
+            SELECT	NVL(MAX(SN)+1,1) AS SN FROM CMM_FAQ
+        </selectKey>
+        INSERT INTO CMM_FAQ(
+            SN
+            , TITLE
+            , CONTENTS
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES(
+            #{SN}
+            , #{TITLE}
+            , #{CONTENTS}
+            , #{SSuserId}
+            , SYSDATE
+            , #{SSuserId}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateCmmFaq" parameterType="map">
+        UPDATE CMM_FAQ
+           SET TITLE = #{TITLE}
+                , CONTENTS = #{CONTENTS}
+                , MOD_ID = #{SSuserId}
+                , MOD_DTM = SYSDATE
+          WHERE SN = #{SN}
+    </update>
+
+    <update id="updateCmmFileAttchId" parameterType="map">
+        UPDATE CMM_FAQ
+           SET ATCH_FILE_ID = #{ATCH_FILE_ID}
+                , MOD_ID = #{MOD_ID}
+                , MOD_DTM = SYSDATE
+          WHERE SN = #{SN}
+    </update>
+
+    <delete id="deleteCmmFaq" parameterType="map">
+        DELETE FROM CMM_FAQ
+         WHERE SN = #{SN}
+    </delete>
+
+
+    <delete id="deleteCmmFileMst" parameterType="map">
+        DELETE FROM CMM_FILE_MST
+        WHERE ATCH_FILE_ID = (SELECT ATCH_FILE_ID FROM CMM_FAQ WHERE SN = #{SN})
+    </delete>
+
+    <delete id="deleteCmmFileDtl" parameterType="map">
+        DELETE FROM CMM_FILE_DTL
+        WHERE ATCH_FILE_ID = (SELECT ATCH_FILE_ID FROM CMM_FAQ WHERE SN = #{SN})
+    </delete>
+</mapper>

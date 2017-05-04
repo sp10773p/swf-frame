@@ -1,0 +1,352 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="req">
+
+    <select	id="selectDecReqList" parameterType="map" resultType="map">
+        
+ 
+		  SELECT ROW_NUMBER() OVER (ORDER BY A.REQ_NO DESC) RNUM
+		       , A.REQ_NO                    	                                                 /* 요청관리번호 */ 
+		       , A.STATUS                    	                                                 /* 상태 */
+		       , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1005' AND CODE = A.STATUS) AS STATUS_NM
+		       , A.MALL_ID																		 /* 몰ID */
+		       , A.SELLER_ID																	 /* 셀러ID */
+		       , A.ORDER_ID                                                                      /* 주문번호 */
+		       , B.RPT_NO                    	                                                 /* 수출신고번호 */
+		       , B.RECE                    	                                                     /* 수출신고상태 */
+		       , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1002' AND CODE = B.RECE) AS RECE_NM
+		       , A.DELIVERY_METHOD                    	                                         /* 배송방법 */
+		       , TO_CHAR(A.PAYMENTAMOUNT, 'FM999,999,999') PAYMENTAMOUNT                     	 /* 결제금액 */
+		       , A.PAYMENTAMOUNT_CUR                    	                                     /* 결제통화코드 */
+		       , A.DESTINATIONCOUNTRYCODE                     	                                 /* 목적국국가코드 */
+		       , A.BUYERPARTYORGNAME                     	                                     /* 구매자상호명 */
+		       , TO_CHAR(A.SUMMARY_TOTALQUANTITY, 'FM999,999,999') SUMMARY_TOTALQUANTITY         /* 총포장갯수 */
+		       , A.SUMMARY_TOTALQUANTITY_UC                     	                             /* 포장단위 */
+		       , TO_CHAR(A.SUMMARY_TOTALWEIGHT, 'FM999,999,999') SUMMARY_TOTALWEIGHT             /* 중량합계 */
+		       , A.SUMMARY_TOTALWEIGHT_UC                     	                                 /* 중량단위 */
+		       , A.EOCPARTYORGNAME2                     	                                     /* 판매자상호 */
+		       , A.EOCPARTYPARTYIDID1                     	                                     /* 판매자사업자등록번호 */
+		  	   , A.REGIST_METHOD																 /* 등록구분 */
+		  FROM EXP_EXPDEC_REQ A 
+		     , EXP_CUSDEC830 B
+		 WHERE A.REQ_NO = B.REQ_NO(+)
+           AND B.RPT_SEQ(+) = '00'
+           
+         <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+             AND ${SEARCH_DTM} BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+         </if>
+         <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+             AND ${SEARCH_COL} LIKE '%'||#{SEARCH_TXT}||'%'
+         </if>
+         <if test="REQ_STATUS != null and REQ_STATUS != ''">
+             AND A.STATUS = #{REQ_STATUS}
+         </if>
+         	AND (
+                CASE 
+                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(A.EOCPARTYPARTYIDID1, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(A.EOCPARTYPARTYIDID1, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(A.RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+         ORDER BY A.REQ_NO DESC
+        
+    </select>
+    
+    
+    <select	id="selectDecReqDetail" parameterType="map" resultType="map">
+           SELECT   AAA.*
+			     , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1005' AND CODE = AAA.STATUS) AS STATUS_NM                         									
+	          	 , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1002' AND CODE = AAA.RECE) AS RECE_NM
+	          	 , (SELECT CODE||' ['||CODE_NM||']' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0034' AND CODE = AAA.TRANSPORTMEANSCODE) AS TRANSPORTMEANSCODE_NM 
+	          	 , (SELECT CODE||' ['||CODE_NM||']' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0027' AND CODE = AAA.EXPORTERCLASSCODE) AS EXPORTERCLASSCODE_NM
+	          	 
+             FROM (
+		           SELECT   AA.REQ_NO                          									/* 요청관리번호 */                          									
+						  , AA.STATUS                          									/* 상태 */ 
+						  , AA.MALL_ID                           								/* 몰ID */                       									
+						  , AA.SELLER_ID                           								/* 판매자ID */                          									
+						  , AA.ORDER_ID                        									/* 주문번호 */
+						  , AA.DELIVERY_CHECK                  									/* 배송구분 */
+						  , AA.DELIVERY_METHOD                 									/* 배송방법 */
+						  , AA.REQUEST_DIV                     									/* 요청구분 */
+						  , AA.LODINGLOCATIONTYPECODE          									/* 적재항종류 */   									
+						  , AA.MANUPARTYLOCSEQ             									    /* 제조자사업장일련번호 */
+						  , AA.TOTALDECAMOUNT              									    /* 총신고가격금액 */
+						  , AA.SEND_CHECK                  									    /* 자동전송여부 */
+						  , AA.DELIVERY_NO                  									/* 배송번호 */
+						  , AA.ERROR_DESC                   									/* 작성오류 */
+						  , AA.REGIST_METHOD                   									/* 등록방법, API, EXCEL */
+						  , AA.IDENTIFY_ID     													/* 식별자ID */
+						  , AA.RPT_NO                    	                                    /* 수출신고번호 */
+				          , AA.RECE                    	                                        /* 수출신고상태 */
+						  , MAX(AA.SUMMARY_TOTALWEIGHT_UC) AS SUMMARY_TOTALWEIGHT_UC			/* 중량단위 */
+						  , MAX(AA.DECLARATIONCLASSCODE) AS DECLARATIONCLASSCODE				/* 신고구분 */
+						  , MAX(AA.DOCNAME) AS DOCNAME											/* 문서명 */
+						  , MAX(AA.DOCCODE) AS DOCCODE											/* 문서코드 */
+						  , MAX(AA.DOCRESTYPECODE) AS DOCRESTYPECODE							/* 응답유형 */
+						  , MAX(AA.TRANSACTIONTYPECODE) AS TRANSACTIONTYPECODE					/* 거래구분 */
+						  , MAX(AA.EXPORTTYPECODE) AS EXPORTTYPECODE							/* 수출종류 */
+						  , MAX(AA.EOCPARTYPARTYIDTYPECODE1) AS EOCPARTYPARTYIDTYPECODE1		/* 화주번호유형 */
+						  , MAX(AA.EOCPARTYPARTYIDTYPECODE2) AS EOCPARTYPARTYIDTYPECODE2		/* 수출대행번호유형 */
+						  , MAX(AA.TOTALDECAMOUNT_CUR) AS TOTALDECAMOUNT_CUR					/* 총신고가격통화 */
+						  , MAX(AA.SUMMARY_TOTALQUANTITY_UC) AS SUMMARY_TOTALQUANTITY_UC		/* 포장단위 */
+						  , MAX(AA.PAYMENTAMOUNT) AS PAYMENTAMOUNT 								/* 결제금액 */
+						  , MAX(AA.PAYMENTAMOUNT_CUR) AS PAYMENTAMOUNT_CUR  					/* 결제통화코드 */
+						  , MAX(AA.DESTINATIONCOUNTRYCODE) AS DESTINATIONCOUNTRYCODE 			/* 목적국국가코드 */
+						  , MAX(AA.BUYERPARTYORGNAME) AS BUYERPARTYORGNAME  					/* 구매자상호명 */
+						  , MAX(AA.SUMMARY_TOTALQUANTITY) AS SUMMARY_TOTALQUANTITY 				/* 총포장갯수 */
+						  , MAX(AA.SUMMARY_TOTALWEIGHT) AS SUMMARY_TOTALWEIGHT  				/* 중량합계 */
+						  , MAX(AA.EOCPARTYORGNAME2) AS EOCPARTYORGNAME2						/* 판매자상호 */
+						  , MAX(AA.EOCPARTYADDRLINE) AS EOCPARTYADDRLINE						/* 판매자주소 */
+						  , MAX(AA.EOCPARTYORGCEONAME) AS EOCPARTYORGCEONAME					/* 판매자대표자명 */
+						  , MAX(AA.EOCPARTYLOCID) AS EOCPARTYLOCID								/* 판매자우편번호 */
+						  , MAX(AA.EOCPARTYPARTYIDID1) AS EOCPARTYPARTYIDID1  					/* 판매자사업자등록번호 */
+						  , MAX(AA.EOCPARTYPARTYIDID2) AS EOCPARTYPARTYIDID2 					/* 판매자통관고유부호 */
+						  , MAX(AA.APPLICANTPARTYORGID) AS APPLICANTPARTYORGID 					/* 판매자신고인부호 */
+						  , MAX(AA.GOODSLOCATIONID1) AS GOODSLOCATIONID1						/* 물품소재지우편번호 */
+						  , MAX(AA.GOODSLOCATIONID2) AS GOODSLOCATIONID2 				 		/* 산업단지부호 */ 
+						  , MAX(AA.GOODSLOCATIONNAME) AS GOODSLOCATIONNAME  					/* 물품소재지 */
+						  , MAX(AA.LODINGLOCATIONID) AS LODINGLOCATIONID 						/* 적재항코드 */
+						  , MAX(AA.TRANSPORTMEANSCODE) AS TRANSPORTMEANSCODE 					/* 주운송수단 */
+						  , MAX(AA.CUSTOMORGANIZATIONID) AS CUSTOMORGANIZATIONID  				/* 세관코드 */
+						  , MAX(AA.CUSTOMDEPARTMENTID) AS CUSTOMDEPARTMENTID  					/* 과코드 */
+						  , MAX(AA.PAYMENTTERMSTYPECODE) AS PAYMENTTERMSTYPECODE  				/* 결제방법코드 */
+						  , MAX(AA.EXPORTERCLASSCODE) AS EXPORTERCLASSCODE  					/* 수출자구분 */
+						  , MAX(AA.SIMPLEDRAWAPPINDICATOR) AS SIMPLEDRAWAPPINDICATOR  			/* 간이환급신청여부 */
+						  , MAX(AA.INSPECTIONCODE) AS INSPECTIONCODE  							/* 검사방법 */
+						  , MAX(AA.MANUPARTYORGID) AS MANUPARTYORGID  							/* 제조자통관고유부호 */
+						  , MAX(AA.MANUPARTYORGNAME) AS MANUPARTYORGNAME  						/* 제조자상호명 */
+						  , MAX(AA.MANUPARTYLOCID) AS MANUPARTYLOCID  							/* 제조자우편번호 */
+						  , MAX(AA.DELIVERYTERMSCODE) AS DELIVERYTERMSCODE						/* 인도조건 */
+						  , MAX(AA.DRAWBACKROLE) AS DRAWBACKROLE								/* 환급신청인 */
+					FROM (
+							SELECT  A.REQ_NO                          									
+								  , A.STATUS                          									
+								  , A.MALL_ID                         									
+								  , A.SELLER_ID                       									
+								  , A.ORDER_ID                        									
+								  , A.DELIVERY_CHECK                  									
+								  , A.DELIVERY_METHOD                 									
+								  , A.REQUEST_DIV                     									
+								  , A.LODINGLOCATIONTYPECODE          															                  									
+								  , A.MANUPARTYLOCSEQ             									    
+								  , A.TOTALDECAMOUNT              									   
+								  , A.SEND_CHECK                  									    
+								  , A.DELIVERY_NO                  									   
+								  , A.ERROR_DESC                   									   
+								  , A.REGIST_METHOD                   									
+								  , C.IDENTIFY_ID
+								  , E.RPT_NO                    	                                            
+				          		  , E.RECE                    	                                                  
+					              , DECODE(UPPER(V.DOC_ITEM), 'SUMMARY_TOTALWEIGHT_UC', V.BASE_VAL, NULL) AS SUMMARY_TOTALWEIGHT_UC
+								  , DECODE(UPPER(V.DOC_ITEM), 'DECLARATIONCLASSCODE', V.BASE_VAL, NULL) AS DECLARATIONCLASSCODE
+								  , DECODE(UPPER(V.DOC_ITEM), 'DOCNAME', V.BASE_VAL, NULL) AS DOCNAME
+								  , DECODE(UPPER(V.DOC_ITEM), 'DOCCODE', V.BASE_VAL, NULL) AS DOCCODE
+								  , DECODE(UPPER(V.DOC_ITEM), 'DOCRESTYPECODE', V.BASE_VAL, NULL) AS DOCRESTYPECODE
+								  , DECODE(UPPER(V.DOC_ITEM), 'TRANSACTIONTYPECODE', V.BASE_VAL, NULL) AS TRANSACTIONTYPECODE
+								  , DECODE(UPPER(V.DOC_ITEM), 'EXPORTTYPECODE', V.BASE_VAL, NULL) AS EXPORTTYPECODE
+								  , DECODE(UPPER(V.DOC_ITEM), 'EOCPARTYPARTYIDTYPECODE1', V.BASE_VAL, NULL) AS EOCPARTYPARTYIDTYPECODE1
+								  , DECODE(UPPER(V.DOC_ITEM), 'EOCPARTYPARTYIDTYPECODE2', V.BASE_VAL, NULL) AS EOCPARTYPARTYIDTYPECODE2
+								  , DECODE(UPPER(V.DOC_ITEM), 'TOTALDECAMOUNT_CUR', V.BASE_VAL, NULL) AS TOTALDECAMOUNT_CUR
+								  , DECODE(UPPER(V.DOC_ITEM), 'SUMMARY_TOTALQUANTITY_UC', V.BASE_VAL, NULL) AS SUMMARY_TOTALQUANTITY_UC
+								  , NVL(NVL(A.PAYMENTAMOUNT, DECODE(UPPER(S.DOC_ITEM), 'PAYMENTAMOUNT', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'PAYMENTAMOUNT', V2.BASE_VAL, NULL)) AS PAYMENTAMOUNT 
+								  , NVL(NVL(A.PAYMENTAMOUNT_CUR, DECODE(UPPER(S.DOC_ITEM), 'PAYMENTAMOUNT_CUR', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'PAYMENTAMOUNT_CUR', V2.BASE_VAL, NULL)) AS PAYMENTAMOUNT_CUR  
+								  , NVL(NVL(A.DESTINATIONCOUNTRYCODE, DECODE(UPPER(S.DOC_ITEM), 'DESTINATIONCOUNTRYCODE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'DESTINATIONCOUNTRYCODE', V2.BASE_VAL, NULL)) AS DESTINATIONCOUNTRYCODE 
+								  , NVL(NVL(A.BUYERPARTYORGNAME, DECODE(UPPER(S.DOC_ITEM), 'BUYERPARTYORGNAME', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'BUYERPARTYORGNAME', V2.BASE_VAL, NULL)) AS BUYERPARTYORGNAME  
+								  , NVL(NVL(A.SUMMARY_TOTALQUANTITY, DECODE(UPPER(S.DOC_ITEM), 'SUMMARY_TOTALQUANTITY', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'SUMMARY_TOTALQUANTITY', V2.BASE_VAL, NULL)) AS SUMMARY_TOTALQUANTITY 
+								  , NVL(NVL(A.SUMMARY_TOTALWEIGHT, DECODE(UPPER(S.DOC_ITEM), 'SUMMARY_TOTALWEIGHT', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'SUMMARY_TOTALWEIGHT', V2.BASE_VAL, NULL)) AS SUMMARY_TOTALWEIGHT  
+								  , NVL(NVL(NVL(A.EOCPARTYORGNAME2 , B.USER_NM), DECODE(UPPER(S.DOC_ITEM), 'EOCPARTYORGNAME2', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EOCPARTYORGNAME2', V2.BASE_VAL, NULL)) AS EOCPARTYORGNAME2
+								  , NVL(NVL(NVL(A.EOCPARTYADDRLINE , B.ADDRESS), DECODE(UPPER(S.DOC_ITEM), 'EOCPARTYADDRLINE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EOCPARTYADDRLINE', V2.BASE_VAL, NULL)) AS EOCPARTYADDRLINE
+								  , NVL(NVL(NVL(A.EOCPARTYORGCEONAME , B.REP_NM), DECODE(UPPER(S.DOC_ITEM), 'EOCPARTYORGCEONAME', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EOCPARTYORGCEONAME', V2.BASE_VAL, NULL)) AS EOCPARTYORGCEONAME
+								  , NVL(NVL(NVL(A.EOCPARTYLOCID , B.ZIP_CD), DECODE(UPPER(S.DOC_ITEM), 'EOCPARTYLOCID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EOCPARTYLOCID', V2.BASE_VAL, NULL)) AS EOCPARTYLOCID
+								  , NVL(NVL(A.EOCPARTYPARTYIDID1, DECODE(UPPER(S.DOC_ITEM), 'EOCPARTYPARTYIDID1', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EOCPARTYPARTYIDID1', V2.BASE_VAL, NULL)) AS EOCPARTYPARTYIDID1  
+								  , NVL(NVL(NVL(A.EOCPARTYPARTYIDID2, B.TG_NO), DECODE(UPPER(S.DOC_ITEM), 'EOCPARTYPARTYIDID2', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EOCPARTYPARTYIDID2', V2.BASE_VAL, NULL)) AS EOCPARTYPARTYIDID2 
+								  , NVL(NVL(NVL(A.APPLICANTPARTYORGID, B.APPLICANT_ID), DECODE(UPPER(S.DOC_ITEM), 'APPLICANTPARTYORGID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'APPLICANTPARTYORGID', V2.BASE_VAL, NULL)) AS APPLICANTPARTYORGID 
+								  , NVL(NVL(A.GOODSLOCATIONID1, DECODE(UPPER(S.DOC_ITEM), 'GOODSLOCATIONID1', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'GOODSLOCATIONID1', V2.BASE_VAL, NULL)) AS GOODSLOCATIONID1 
+								  , NVL(A.GOODSLOCATIONID2, DECODE(UPPER(V2.DOC_ITEM), 'CUSTOMDEPARTMENTID', V2.BASE_VAL, NULL)) AS GOODSLOCATIONID2
+								  , NVL(NVL(A.GOODSLOCATIONNAME, DECODE(UPPER(S.DOC_ITEM), 'GOODSLOCATIONNAME', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'GOODSLOCATIONNAME', V2.BASE_VAL, NULL)) AS GOODSLOCATIONNAME  
+								  , NVL(NVL(A.LODINGLOCATIONID, DECODE(UPPER(S.DOC_ITEM), 'LODINGLOCATIONID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'LODINGLOCATIONID', V2.BASE_VAL, NULL)) AS LODINGLOCATIONID 
+								  , NVL(NVL(A.TRANSPORTMEANSCODE, DECODE(UPPER(S.DOC_ITEM), 'TRANSPORTMEANSCODE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'TRANSPORTMEANSCODE', V2.BASE_VAL, NULL)) AS TRANSPORTMEANSCODE 
+								  , NVL(NVL(A.CUSTOMORGANIZATIONID, DECODE(UPPER(S.DOC_ITEM), 'CUSTOMORGANIZATIONID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'CUSTOMORGANIZATIONID', V2.BASE_VAL, NULL)) AS CUSTOMORGANIZATIONID  
+								  , NVL(NVL(A.CUSTOMDEPARTMENTID, DECODE(UPPER(S.DOC_ITEM), 'CUSTOMDEPARTMENTID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'CUSTOMDEPARTMENTID', V2.BASE_VAL, NULL)) AS CUSTOMDEPARTMENTID  
+								  , NVL(NVL(A.PAYMENTTERMSTYPECODE, DECODE(UPPER(S.DOC_ITEM), 'PAYMENTTERMSTYPECODE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'PAYMENTTERMSTYPECODE', V2.BASE_VAL, NULL)) AS PAYMENTTERMSTYPECODE  
+								  , NVL(NVL(A.EXPORTERCLASSCODE, DECODE(UPPER(S.DOC_ITEM), 'EXPORTERCLASSCODE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'EXPORTERCLASSCODE', V2.BASE_VAL, NULL)) AS EXPORTERCLASSCODE  
+								  , NVL(NVL(A.SIMPLEDRAWAPPINDICATOR, DECODE(UPPER(S.DOC_ITEM), 'SIMPLEDRAWAPPINDICATOR', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'SIMPLEDRAWAPPINDICATOR', V2.BASE_VAL, NULL)) AS SIMPLEDRAWAPPINDICATOR  
+								  , NVL(NVL(A.INSPECTIONCODE, DECODE(UPPER(S.DOC_ITEM), 'INSPECTIONCODE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'INSPECTIONCODE', V2.BASE_VAL, NULL)) AS INSPECTIONCODE  
+								  , NVL(NVL(A.MANUPARTYORGID, DECODE(UPPER(S.DOC_ITEM), 'MANUPARTYORGID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'MANUPARTYORGID', V2.BASE_VAL, NULL)) AS MANUPARTYORGID  
+								  , NVL(NVL(A.MANUPARTYORGNAME, DECODE(UPPER(S.DOC_ITEM), 'MANUPARTYORGNAME', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'MANUPARTYORGNAME', V2.BASE_VAL, NULL)) AS MANUPARTYORGNAME  
+								  , NVl(NVL(A.MANUPARTYLOCID, DECODE(UPPER(S.DOC_ITEM), 'MANUPARTYLOCID', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'MANUPARTYLOCID', V2.BASE_VAL, NULL)) AS MANUPARTYLOCID  
+								  , NVL(NVL(A.DELIVERYTERMSCODE, DECODE(UPPER(S.DOC_ITEM), 'DELIVERYTERMSCODE', S.BASE_VAL, NULL)), DECODE(UPPER(V2.DOC_ITEM), 'DELIVERYTERMSCODE', V2.BASE_VAL, NULL)) AS DELIVERYTERMSCODE
+								  , DECODE(UPPER(V2.DOC_ITEM), 'DRAWBACKROLE', V2.BASE_VAL, NULL) AS DRAWBACKROLE  
+							 FROM EXP_EXPDEC_REQ A
+								, CMM_USER B
+								, CMM_IDENTIFIER C
+								, EXP_CUSDEC830 E
+								, CMM_BASEVAL_SELLER S
+					            , CMM_BASEVAL V
+					            , CMM_BASEVAL V2
+							WHERE 1=1
+							  AND A.EOCPARTYPARTYIDID1 = B.BIZ_NO
+							  AND A.SELLER_ID = B.USER_ID
+							  AND B.USER_ID = C.USER_ID(+)
+							  AND C.TYPE(+) = 'CUS'
+							  AND A.REQ_NO = E.REQ_NO(+)
+		                	  AND E.RPT_SEQ(+) = '00'
+							  AND A.EOCPARTYPARTYIDID1 = S.BIZ_NO
+							  AND S.DOC_ID = #{DOC_ID}
+					          AND V.DOC_ID = #{DOC_ID}
+					          AND V.TABLE_NM = #{TABLE_NM}
+					          AND V.BASE_VAL_DIV = 'F'
+					          AND V2.DOC_ID = #{DOC_ID}
+					          AND V2.TABLE_NM = #{TABLE_NM}
+					          AND V2.BASE_VAL_DIV = 'N'
+							  AND A.REQ_NO  = #{REQ_NO}
+					  ) AA
+					  GROUP BY AA.REQ_NO                          									
+						  , AA.STATUS                          									
+						  , AA.MALL_ID                         									
+						  , AA.SELLER_ID                       									
+						  , AA.ORDER_ID                        									
+						  , AA.DELIVERY_CHECK                  									
+						  , AA.DELIVERY_METHOD                 									
+						  , AA.REQUEST_DIV                     									
+						  , AA.LODINGLOCATIONTYPECODE          									             									
+						  , AA.MANUPARTYLOCSEQ             									    
+						  , AA.TOTALDECAMOUNT              									   
+						  , AA.SEND_CHECK                  									    
+						  , AA.DELIVERY_NO                  									   
+						  , AA.ERROR_DESC                   									   
+						  , AA.REGIST_METHOD                   									
+						  , AA.IDENTIFY_ID
+						  , AA.RPT_NO                    	                                   
+				          , AA.RECE
+		      ) AAA                    	                                       
+    </select>
+    
+    <select	id="selectDecReqItemList" parameterType="map" resultType="map">
+ 
+		   SELECT REQ_NO
+				, SN
+				, MALL_ITEM_NO
+				, ORIGINLOCID
+				, NETWEIGHTMEASURE
+				, NETWEIGHTMEASURE_UC
+				, LINEITEMQUANTITY
+				, LINEITEMQUANTITY_UC
+				, BRANDNAME_EN
+				, ITEMNAME_EN
+				, ITEMNAME_HS
+				, CLASSIDHSID
+				, PACKAGINGQUANTITY
+				, PACKAGINGQUANTITY_UC
+				, BASEPRICEAMT
+				, DECLARATIONAMOUNT
+				, DECLARATIONAMOUNT_CUR
+				, ATTACHCODE
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+		     FROM EXP_EXPDEC_REQ_ITEM
+            WHERE REQ_NO = #{REQ_NO}
+    </select>
+    
+    <select	id="selectModReqList" parameterType="map" resultType="map">
+        
+ 
+		  SELECT ROW_NUMBER() OVER (ORDER BY A.REQ_NO DESC) RNUM
+		       , A.REQ_NO                                                                        /* 요청관리번호 */
+		       , A.STATUS                                                                        /* 상태 */
+		       , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1006' AND CODE = A.STATUS) AS STATUS_NM
+		       , A.MALL_ID                                                                       /* 몰ID */
+		       , A.SELLER_ID                                                                     /* 판매자ID */
+		       , A.ORDER_ID                                                                      /* 주문번호 */
+		       , A.REQUEST_DIV                                                                   /* 요청구분 */
+		       , A.MODI_CONTENTS                                                                 /* 정정요청내역 */
+		       , A.OFFICECODE                                                                    /* 세관 */
+		       , (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = A.OFFICECODE) AS OFFICECODE_NM
+		       , A.DEPARTMENTCODE                                                                /* 과 */
+		       , (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = A.DEPARTMENTCODE) AS DEPARTMENTCODE_NM
+		       , A.TYPECODE                                                                      /* 정정구분 */
+		       , (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0030' AND CODE = A.TYPECODE) AS TYPECODE_NM
+		       , A.ISSUEDATE                                                                     /* 정정일자 */
+		       , A.REFERENCEID                                                                   /* 수출신고번호 */
+		       , TO_CHAR(TO_DATE(A.ISSUEDATETIME, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') AS ISSUEDATETIME                                                                 /* 신고일자 */
+		       , A.AGENTREPNAME                                                                  /* 신고자대표자명 */
+		       , A.AGENTNAME                                                                     /* 신고자상호 */
+		       , A.EXPORTERNAME                                                                  /* 수출자성명 */
+		       , A.EXPORTERTGNO                                                                  /* 수출자통관고유부호 */
+		       , A.AMENDTYPECD                                                                   /* 정정사유코드 */
+		       , A.AMENDREASON                                                                   /* 정정사유 */
+		       , A.OBLIGATIONREASONCD                                                            /* 귀책사유 */
+		       , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM                                            /* 등록일시 */
+		       , A.MOD_ID                                                                        /* 수정자ID */
+		       , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS MOD_DTM                                            /* 수정일시 */
+		       , A.REG_ID                                                                        /* 등록자ID */
+		       , A.APPLICANTPARTYORGID                                                           /* 수출자신고인부호 */
+	           , A.BIZ_NO                                                                        /* 사업자등록번호 */
+	           , A.CUS_USER_ID                                                                   /* 관세사ID */
+	           , A.REGIST_METHOD                                                                 /* 등록구분 */
+	           , A.ATCH_FILE_ID                                                                  /* 수입의뢰첨부파일ID */
+	      FROM EXP_EXPMOD_REQ A
+         WHERE 1 = 1
+         <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+             AND ${SEARCH_DTM} BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+         </if>
+         <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+             AND ${SEARCH_COL} LIKE '%'||#{SEARCH_TXT}||'%'
+         </if>
+         <if test="REQ_STATUS != null and REQ_STATUS != ''">
+             AND A.STATUS = #{REQ_STATUS}
+         </if>
+	         AND (
+                CASE 
+                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(A.BIZ_NO, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(A.BIZ_NO, #{USR_SESSION.bizNo}, 1, 0)
+                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(A.APPLICANTPARTYORGID, #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+         
+         ORDER BY A.REQ_NO DESC
+        
+    </select>
+    
+    
+    <select	id="selectModReqDetail" parameterType="map" resultType="map">
+ 
+		  SELECT A.REQ_NO                                                                        /* 요청관리번호 */
+		       , A.STATUS                                                                        /* 상태 */
+		       , A.MALL_ID                                                                       /* 몰ID */
+		       , A.SELLER_ID                                                                     /* 판매자ID */
+		       , A.ORDER_ID                                                                      /* 주문번호 */
+		       , A.REQUEST_DIV                                                                   /* 요청구분 */
+		       , A.MODI_CONTENTS                                                                 /* 정정요청내역 */
+		       , A.OFFICECODE                                                                    /* 세관 */
+		       , A.DEPARTMENTCODE                                                                /* 과 */
+		       , A.TYPECODE                                                                      /* 송신구분 */
+		       , A.ISSUEDATE                                                                     /* 정정일자 */
+		       , A.REFERENCEID                                                                   /* 수출신고번호 */
+		       , A.ISSUEDATETIME                                                                 /* 신고일자 */
+		       , A.AGENTREPNAME                                                                  /* 신고자대표자명 */
+		       , A.AGENTNAME                                                                     /* 신고자상호 */
+		       , A.EXPORTERNAME                                                                  /* 수출자성명 */
+		       , A.EXPORTERTGNO                                                                  /* 수출자통관고유부호 */
+		       , A.AMENDTYPECD                                                                   /* 정정사유코드 */
+		       , A.AMENDREASON                                                                   /* 정정사유 */
+		       , A.OBLIGATIONREASONCD                                                            /* 귀책사유 */
+		       , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM                                            /* 등록일시 */
+		       , A.MOD_ID                                                                        /* 수정자ID */
+		       , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS MOD_DTM                                            /* 수정일시 */
+		       , A.REG_ID                                                                        /* 등록자ID */
+		       , A.APPLICANTPARTYORGID                                                           /* 수출자신고인부호 */
+	           , A.BIZ_NO                                                                        /* 사업자등록번호 */
+	           , A.CUS_USER_ID                                                                   /* 관세사ID */
+	           , A.REGIST_METHOD                                                                 /* 등록구분 */
+	           , A.ATCH_FILE_ID                                                                  /* 수입의뢰첨부파일ID */
+	      FROM EXP_EXPMOD_REQ A
+         WHERE A.REQ_NO = #{REQ_NO}    
+         
+    </select>
+
+</mapper>

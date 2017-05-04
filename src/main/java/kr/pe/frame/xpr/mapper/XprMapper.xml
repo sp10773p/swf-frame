@@ -1,0 +1,1018 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="xpr">
+
+    <!-- ===================================================================================================================================== -->
+    <!-- ============================================================= 엑셀업로드 ============================================================= -->
+    <!-- ===================================================================================================================================== -->
+    
+    <!-- [특송] 배송요청 메인 테이블 SEQ -->
+    <select id="getShipExcelMainSeq" parameterType="map" resultType="map">
+        SELECT SEQ_XPR_XPRREG_EXCEL.NEXTVAL AS SN FROM DUAL
+    </select>
+    
+    <!-- [특송] 특송사 리스트 -->
+    <select id="selectExpressUsers" parameterType="map" resultType="map">
+        SELECT BIZ_NO       AS CODE
+<!--              , CO_NM_ENG    AS CODE_NM -->
+             , USER_NM      AS CODE_NM
+          FROM CMM_USER WHERE USER_DIV = 'E'
+         ORDER BY CODE_NM
+    </select>
+    
+    <!-- [특송] 주거래특송사 조회 -->
+    <select id="getMainExpressCode" parameterType="map" resultType="java.lang.String">
+        SELECT BASE_VAL 
+          FROM CMM_BASEVAL_SELLER
+         WHERE BIZ_NO   = (SELECT BIZ_NO FROM CMM_USER WHERE USER_ID = #{USER_ID})
+           AND DOC_ID   = '특송'
+           AND DOC_ITEM = 'MainExpressCode'
+    </select>
+    
+    <!-- [특송] 배송요청 테이블 저장 (메인) -->
+    <insert id="insertShipExcelMain" parameterType="map">
+        INSERT INTO XPR_XPRREG_EXCEL ( SN
+                                     , USER_ID
+                                     , REG_DTM
+                                     , EXPRESS_BIZ_NO
+                                     )
+        VALUES ( #{SN}
+               , #{USER_ID}
+               , SYSDATE
+               , #{EXPRESS_BIZ_NO}
+               )
+    </insert>
+    
+    <!-- [특송] 배송요청 테이블 저장 (상세) -->
+    <insert id="insertShipExcelDetail" parameterType="map">
+        INSERT INTO XPR_XPRREG_EXCEL_DETAIL (SN
+                                           , SEQ
+                                           , REGINO
+                                           , RPT_NO
+<!--                                            , BLNO -->
+                                           , STORE_NAME
+                                           , ORDER_DATE
+                                           , STORE_ORDER_NO
+                                           , PROD_DESC
+                                           , RECIPIENT_NAME
+                                           , RECIPIENT_PHONE
+                                           , RECIPIENT_EMAIL
+                                           , RECIPIENT_ADDRESS1
+                                           , RECIPIENT_ADDRESS2
+                                           , RECIPIENT_CITY
+                                           , RECIPIENT_STATE
+                                           , RECIPIENT_ZIPCD
+                                           , RECIPIENT_COUNTRY
+                                           , DELIVERY_OPTION
+                                           , TOTAL_WEIGHT
+                                           , WEIGHT_UNIT
+                                           , TOTAL_PACK_CNT
+                                           , TOTAL_PACK_UNIT
+                                           , BOX_WIDTH
+                                           , BOX_LENGTH
+                                           , BOX_HEIGHT
+                                           , BOX_DIMENSION_UNIT
+                                           , ITEM_QUANTITY_UNIT
+                                           , CURRENCY_UNIT
+                                           , ITEM_TITLE1
+                                           , ITEM_QUANTITY1
+                                           , ITEM_SALE_PRICE1
+                                           , ITEM_CATEGORY1
+                                           , ITEM_WEIGHT1
+                                           , ITEM_ORIGIN1
+                                           , ITEM_HSCODE1
+                                           , ITEM_SKU1
+                                           , ITEM_COMPOSITION1
+                                           , ITEM_TITLE2
+                                           , ITEM_QUANTITY2
+                                           , ITEM_SALE_PRICE2
+                                           , ITEM_CATEGORY2
+                                           , ITEM_WEIGHT2
+                                           , ITEM_ORIGIN2
+                                           , ITEM_HSCODE2
+                                           , ITEM_SKU2
+                                           , ITEM_COMPOSITION2
+                                           , ITEM_TITLE3
+                                           , ITEM_QUANTITY3
+                                           , ITEM_SALE_PRICE3
+                                           , ITEM_CATEGORY3
+                                           , ITEM_WEIGHT3
+                                           , ITEM_ORIGIN3
+                                           , ITEM_HSCODE3
+                                           , ITEM_SKU3
+                                           , ITEM_COMPOSITION3
+                                           , ITEM_TITLE4
+                                           , ITEM_QUANTITY4
+                                           , ITEM_SALE_PRICE4
+                                           , ITEM_CATEGORY4
+                                           , ITEM_WEIGHT4
+                                           , ITEM_ORIGIN4
+                                           , ITEM_HSCODE4
+                                           , ITEM_SKU4
+                                           , ITEM_COMPOSITION4
+                                           , ITEM_TITLE5
+                                           , ITEM_QUANTITY5
+                                           , ITEM_SALE_PRICE5
+                                           , ITEM_CATEGORY5
+                                           , ITEM_WEIGHT5
+                                           , ITEM_ORIGIN5
+                                           , ITEM_HSCODE5
+                                           , ITEM_SKU5
+                                           , ITEM_COMPOSITION5
+                                           , REG_ID
+                                           , REG_DTM
+                                           , STATUS
+                                           , STATUS_DESC
+                                           )
+        VALUES (#{SN}
+              , (SELECT NVL(MAX(SEQ), 0) + 1 FROM XPR_XPRREG_EXCEL_DETAIL WHERE SN = #{SN}) 
+              , #{REGINO}
+              , #{RPT_NO}
+<!--               , #{BLNO} -->
+              , #{STORE_NAME}
+              , DECODE (#{ORDER_DATE}, NULL, TO_CHAR (SYSDATE, 'YYYYMMDD'), #{ORDER_DATE})
+              , #{STORE_ORDER_NO}
+              , #{PROD_DESC}
+              , #{RECIPIENT_NAME:NVARCHAR}
+              , #{RECIPIENT_PHONE}
+              , #{RECIPIENT_EMAIL}
+              , #{RECIPIENT_ADDRESS1:NVARCHAR}
+              , #{RECIPIENT_ADDRESS2:NVARCHAR}
+              , #{RECIPIENT_CITY:NVARCHAR}
+              , #{RECIPIENT_STATE:NVARCHAR}
+              , #{RECIPIENT_ZIPCD}
+              , #{RECIPIENT_COUNTRY}
+              , #{DELIVERY_OPTION}
+              , #{TOTAL_WEIGHT}
+              , #{WEIGHT_UNIT}
+              , #{TOTAL_PACK_CNT}
+              , #{TOTAL_PACK_UNIT}
+              , #{BOX_WIDTH}
+              , #{BOX_LENGTH}
+              , #{BOX_HEIGHT}
+              , #{BOX_DIMENSION_UNIT}
+              , #{ITEM_QUANTITY_UNIT}
+              , #{CURRENCY_UNIT}
+              , #{ITEM_TITLE1:NVARCHAR}
+              , #{ITEM_QUANTITY1}
+              , #{ITEM_SALE_PRICE1}
+              , #{ITEM_CATEGORY1}
+              , #{ITEM_WEIGHT1}
+              , #{ITEM_ORIGIN1}
+              , #{ITEM_HSCODE1}
+              , #{ITEM_SKU1}
+              , #{ITEM_COMPOSITION1}
+              , #{ITEM_TITLE2:NVARCHAR}
+              , #{ITEM_QUANTITY2}
+              , #{ITEM_SALE_PRICE2}
+              , #{ITEM_CATEGORY2}
+              , #{ITEM_WEIGHT2}
+              , #{ITEM_ORIGIN2}
+              , #{ITEM_HSCODE2}
+              , #{ITEM_SKU2}
+              , #{ITEM_COMPOSITION2}
+              , #{ITEM_TITLE3:NVARCHAR}
+              , #{ITEM_QUANTITY3}
+              , #{ITEM_SALE_PRICE3}
+              , #{ITEM_CATEGORY3}
+              , #{ITEM_WEIGHT3}
+              , #{ITEM_ORIGIN3}
+              , #{ITEM_HSCODE3}
+              , #{ITEM_SKU3}
+              , #{ITEM_COMPOSITION3}
+              , #{ITEM_TITLE4:NVARCHAR}
+              , #{ITEM_QUANTITY4}
+              , #{ITEM_SALE_PRICE4}
+              , #{ITEM_CATEGORY4}
+              , #{ITEM_WEIGHT4}
+              , #{ITEM_ORIGIN4}
+              , #{ITEM_HSCODE4}
+              , #{ITEM_SKU4}
+              , #{ITEM_COMPOSITION4}
+              , #{ITEM_TITLE5:NVARCHAR}
+              , #{ITEM_QUANTITY5}
+              , #{ITEM_SALE_PRICE5}
+              , #{ITEM_CATEGORY5}
+              , #{ITEM_WEIGHT5}
+              , #{ITEM_ORIGIN5}
+              , #{ITEM_HSCODE5}
+              , #{ITEM_SKU5}
+              , #{ITEM_COMPOSITION5}
+              , #{USER_ID}
+              , SYSDATE
+              , #{STATUS}
+              , #{STATUS_DESC}
+              )
+    </insert>
+    
+    <!-- [특송] 배송요청 엑셀 등록시 공백으로 올라가는 ROW 삭제 -->
+    <delete id="deleteShipExcelDetailEmpty" parameterType="map">
+        DELETE FROM XPR_XPRREG_EXCEL_DETAIL
+         WHERE SN = #{SN}
+           AND REGINO IS NULL
+           AND RPT_NO IS NULL
+<!--            AND BLNO IS NULL -->
+           AND STORE_NAME IS NULL
+           AND STORE_ORDER_NO IS NULL
+           AND PROD_DESC IS NULL
+           AND RECIPIENT_NAME IS NULL
+           AND RECIPIENT_PHONE IS NULL
+           AND RECIPIENT_EMAIL IS NULL
+           AND RECIPIENT_ADDRESS1 IS NULL
+           AND RECIPIENT_ADDRESS2 IS NULL
+           AND RECIPIENT_CITY IS NULL
+           AND RECIPIENT_STATE IS NULL
+           AND RECIPIENT_ZIPCD IS NULL
+           AND RECIPIENT_COUNTRY IS NULL
+           AND DELIVERY_OPTION IS NULL
+           AND TOTAL_WEIGHT IS NULL
+           AND WEIGHT_UNIT IS NULL
+           AND BOX_WIDTH IS NULL
+           AND BOX_LENGTH IS NULL
+           AND BOX_HEIGHT IS NULL
+           AND BOX_DIMENSION_UNIT IS NULL
+           AND CURRENCY_UNIT IS NULL
+           AND ITEM_TITLE1 IS NULL
+           AND ITEM_QUANTITY1 IS NULL
+           AND ITEM_SALE_PRICE1 IS NULL
+           AND ITEM_CATEGORY1 IS NULL
+           AND ITEM_WEIGHT1 IS NULL
+           AND ITEM_ORIGIN1 IS NULL
+           AND ITEM_HSCODE1 IS NULL
+           AND ITEM_SKU1 IS NULL
+           AND ITEM_COMPOSITION1 IS NULL
+    </delete>
+    
+    <!-- [특송] 배송요청 직접요청 상세 조회 -->
+    <select id="selectShipExcelDetailList" parameterType="map" resultType="map">
+        SELECT A.*
+          FROM XPR_XPRREG_EXCEL_DETAIL A
+         WHERE 1 = 1
+           AND A.SN = #{SN}
+    </select>
+    
+    <!-- [특송] 배송요청 테이블 저장 (오류) -->
+    <insert id="insertShipExcelErrmsgSelect" parameterType="map">
+        INSERT INTO XPR_XPRREG_EXCEL_ERRMSG (SN
+                                           , SEQ
+                                           , ERROR_COLUMN_NAME
+                                           , ERROR_COLUMN_DATA
+                                           , ERROR_MESSAGE)
+        SELECT #{SN}
+             , #{SEQ}
+             , #{ERROR_COLUMN_NAME}
+             , ${ERROR_COLUMN_NAME}
+             , #{ERROR_MESSAGE}
+          FROM XPR_XPRREG_EXCEL_DETAIL
+         WHERE SN  = #{SN}
+           AND SEQ = #{SEQ}
+    </insert>
+    
+    <!-- [특송] 수출신고번호에 해당되는 [주문번호] -->
+    <select id="selectOrderNo" parameterType="map" resultType="map">
+        SELECT A.ORDER_ID
+          FROM EXP_EXPDEC_REQ A
+          JOIN EXP_CUSDEC830 B ON A.REQ_NO = B.REQ_NO
+         WHERE B.RECE     = '03'    /* 수리 */
+           AND B.RPT_NO   = #{RPT_NO}
+           AND B.EXP_SDNO = #{BIZ_NO}
+           AND ROWNUM = 1
+    </select>
+    
+    <!-- [특송] 주문번호에 해당되는 [수출신고번호] -->
+    <select id="selectRptNo" parameterType="map" resultType="map">
+        SELECT B.RPT_NO
+          FROM EXP_EXPDEC_REQ A
+          JOIN EXP_CUSDEC830 B ON A.REQ_NO = B.REQ_NO
+         WHERE B.RECE     = '03'    /* 수리 */
+           AND A.ORDER_ID = #{STORE_ORDER_NO}
+           AND B.EXP_SDNO = #{BIZ_NO}
+           AND ROWNUM = 1
+    </select>
+    
+    <!-- [특송] 주문번호 존재여부 확인 -->
+    <select id="selectExistOrderId" parameterType="map" resultType="int">
+        SELECT COUNT (A.ORDER_ID) CNT
+          FROM EXP_EXPDEC_REQ A
+          JOIN EXP_CUSDEC830 B 
+            ON A.REQ_NO   = B.REQ_NO
+         WHERE B.RECE     = '03'    /* 수리 */
+           AND A.ORDER_ID = #{STORE_ORDER_NO}
+           AND B.EXP_SDNO = #{BIZ_NO}
+    </select>
+    
+    <!-- [특송] 수출번호 존재여부 확인 -->
+    <select id="selectExistRptNo" parameterType="map" resultType="int">
+        SELECT COUNT (B.RPT_NO) CNT
+          FROM EXP_EXPDEC_REQ A
+          JOIN EXP_CUSDEC830 B 
+            ON A.REQ_NO   = B.REQ_NO
+         WHERE B.RECE     = '03'    /* 수리 */
+           AND B.RPT_NO   = #{RPT_NO}
+           AND B.EXP_SDNO = #{BIZ_NO}
+    </select>
+    
+    <!-- [특송] 수출신고번호에 해당하는 목적국 -->
+    <select id="selectDestinationCountryCode" parameterType="map" resultType="string">
+        SELECT A.DESTINATIONCOUNTRYCODE
+          FROM EXP_EXPDEC_REQ A
+          JOIN EXP_CUSDEC830 B
+            ON A.REQ_NO   = B.REQ_NO
+           AND B.RPT_SEQ  = '00'
+         WHERE B.EXP_SDNO = #{BIZ_NO}
+        <if test="RPT_NO != null and RPT_NO != ''">
+           AND B.RPT_NO   = #{RPT_NO}
+        </if>
+        <if test="STORE_ORDER_NO != null and STORE_ORDER_NO != ''">
+           AND A.ORDER_ID = #{STORE_ORDER_NO}
+        </if>
+    </select>
+    
+    <!-- [특송] Validation 오류컬럼 업데이트 -->
+    <update id="updateShipExcelDetail" parameterType="map">
+        UPDATE XPR_XPRREG_EXCEL_DETAIL
+           SET STATUS = #{STATUS}
+             , STATUS_DESC = DECODE(STATUS_DESC, '', #{STATUS_DESC}, STATUS_DESC || '/' || #{STATUS_DESC})
+         WHERE SN  = #{SN}
+           AND SEQ = #{SEQ}
+    </update>
+    
+    <!-- [특송] Validation 오류컬럼 상태 DESC 업데이트 -->
+    <update id="updateShipExcelDetailStatusDesc" parameterType="map">
+        UPDATE XPR_XPRREG_EXCEL_DETAIL
+           SET STATUS = #{STATUS}
+             , STATUS_DESC = NULL
+         WHERE SN  = #{SN}
+           AND SEQ = #{SEQ}
+    </update>
+    
+    <!-- [특송] 배송요청 테이블 저장 (오류) -->
+    <insert id="insertShipExcelErrmsg" parameterType="map">
+        MERGE INTO XPR_XPRREG_EXCEL_ERRMSG
+        USING DUAL ON (SN = #{SN} AND SEQ = #{SEQ} AND ERROR_COLUMN_NAME = #{ERROR_COLUMN_NAME})
+         WHEN MATCHED THEN UPDATE SET ERROR_COLUMN_DATA = #{ERROR_COLUMN_DATA}
+                                    , ERROR_MESSAGE = ERROR_MESSAGE || '\n' || #{ERROR_MESSAGE}
+         WHEN NOT MATCHED THEN INSERT (SN
+                                     , SEQ
+                                     , ERROR_COLUMN_NAME
+                                     , ERROR_COLUMN_DATA
+                                     , ERROR_MESSAGE
+                                     )
+                               VALUES (#{SN}
+                                     , #{SEQ}
+                                     , #{ERROR_COLUMN_NAME}
+                                     , #{ERROR_COLUMN_DATA}
+                                     , #{ERROR_MESSAGE}
+                                     )
+    </insert>
+    
+    <!-- [특송] 배송요청 테이블 삭제 (오류) -->
+    <delete id="deleteShipExcelErrmsg" parameterType="map">
+        DELETE FROM XPR_XPRREG_EXCEL_ERRMSG
+         WHERE SN = #{SN} 
+           AND SEQ = #{SEQ}
+    </delete>
+    
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 배송요청 업로드 내역 (팝업) ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    
+    <!-- [특송] 배송요청 업로드내역 상세 리스트 -->
+    <select id="selectShipExcelList" parameterType="map" resultType="map">
+        SELECT A.*
+          FROM XPR_XPRREG_EXCEL_DETAIL A
+         WHERE A.REG_ID = #{USER_ID}
+           AND A.SN = #{SN}
+        <if test="SUCCESS_YN != null and SUCCESS_YN == 'Y'.toString()">
+           AND A.STATUS IS NULL 
+        </if>
+        <if test="SUCCESS_YN != null and SUCCESS_YN == 'N'.toString()">
+           AND A.STATUS = 'E'
+        </if>
+    </select>
+    
+    <!-- [특송] 배송요청 업로드내역 오류 리스트 -->
+    <select id="selectShipExcelErrorList" parameterType="map" resultType="map">
+        SELECT E.ERROR_COLUMN_NAME, E.ERROR_COLUMN_DATA, E.ERROR_MESSAGE
+          FROM XPR_XPRREG_EXCEL_DETAIL D
+             , XPR_XPRREG_EXCEL_ERRMSG E
+         WHERE D.SN     = E.SN
+           AND D.SEQ    = E.SEQ
+           AND D.REG_ID = #{SSuserId}
+           AND E.SN     = #{SN}
+           AND E.SEQ    = #{SEQ}
+    </select>
+
+    <!-- ===================================================================================================================================== -->
+    <!-- ============================================================== 배송요청 ============================================================== -->
+    <!-- ===================================================================================================================================== -->
+
+    <!-- [특송] 배송요청 엑셀 업로드 리스트 -->
+    <select id="selectShipList" parameterType="map" resultType="map">
+        SELECT A.SN
+             , A.USER_ID
+             , A.EXPRESS_BIZ_NO
+             , (SELECT USER_NM FROM CMM_USER WHERE USER_DIV = 'E' AND BIZ_NO = A.EXPRESS_BIZ_NO) AS EXPRESS_NM
+             , TO_CHAR (A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+             , (SELECT COUNT(*) FROM XPR_XPRREG_EXCEL_DETAIL B WHERE B.SN = A.SN) AS TOT_CNT
+             , (SELECT COUNT(*) FROM XPR_XPRREG_EXCEL_DETAIL B WHERE B.SN = A.SN AND B.STATUS IS NULL) AS REG_CNT
+             , (SELECT COUNT(*) FROM XPR_XPRREG_EXCEL_DETAIL B WHERE B.SN = A.SN AND B.STATUS = 'E') AS ERR_CNT
+             , (SELECT COUNT(*) FROM XPR_XPRREG_EXCEL_DETAIL B, XPR_RECEPT_REQ C WHERE B.SN = A.SN AND B.SN = C.SN AND B.SEQ = C.SEQ) AS SHIP_TOT_CNT
+             , (SELECT COUNT(*) FROM XPR_XPRREG_EXCEL_DETAIL B, XPR_RECEPT_REQ C WHERE B.SN = A.SN AND B.SN = C.SN AND B.SEQ = C.SEQ AND STATUSCD NOT IN ('1')) AS SHIP_REG_CNT
+             , (SELECT COUNT(*) FROM XPR_XPRREG_EXCEL_DETAIL B, XPR_RECEPT_REQ C WHERE B.SN = A.SN AND B.SN = C.SN AND B.SEQ = C.SEQ AND STATUSCD = 'B') AS SHIP_REC_CNT
+          FROM XPR_XPRREG_EXCEL A
+         WHERE 1 = 1
+           AND A.USER_ID = #{USER_ID}
+        <if test="F_REG_DTM != null and F_REG_DTM != ''">
+           AND TO_CHAR(A.REG_DTM, 'YYYYMMDD') <![CDATA[ >= ]]> #{F_REG_DTM}
+        </if>
+        <if test="T_REG_DTM != null and T_REG_DTM != ''">
+           AND TO_CHAR(A.REG_DTM, 'YYYYMMDD') <![CDATA[ <= ]]> #{T_REG_DTM}
+        </if>
+        <if test="EXPRESS_BIZ_NO != null and EXPRESS_BIZ_NO != ''">
+           AND A.EXPRESS_BIZ_NO = #{EXPRESS_BIZ_NO}
+        </if>
+    </select>
+    
+    <!-- [특송] 배송요청 정보 등록 -->
+    <insert id="insertXprReceptReq" parameterType="map">
+        INSERT INTO XPR_RECEPT_REQ (REGNO
+                                  , EXPRESS_BIZ_NO
+                                  , STATUS
+                                  , STATUSCD
+                                  , SENDER
+                                  , SENDERZIPCODE
+                                  , SENDERADDR1
+                                  , SENDERADDR2
+                                  , SENDERTELNO1
+                                  , SENDERTELNO2
+                                  , SENDERTELNO3
+                                  , SENDERTELNO4
+                                  , SENDERMOBILE1
+                                  , SENDERMOBILE2
+                                  , SENDERMOBILE3
+                                  , SENDERMOBILE4
+                                  , SENDEREMAIL
+                                  , REGINO
+                                  , RPT_NO
+<!--                                   , BLNO -->
+                                  , STORE_NAME
+                                  , ORDER_DATE
+                                  , STORE_ORDER_NO
+                                  , PROD_DESC
+                                  , RECIPIENT_NAME
+                                  , RECIPIENT_PHONE
+                                  , RECIPIENT_EMAIL
+                                  , RECIPIENT_ADDRESS1
+                                  , RECIPIENT_ADDRESS2
+                                  , RECIPIENT_CITY
+                                  , RECIPIENT_STATE
+                                  , RECIPIENT_ZIPCD
+                                  , RECIPIENT_COUNTRY
+                                  , DELIVERY_OPTION
+                                  , TOTAL_WEIGHT
+                                  , WEIGHT_UNIT
+                                  , TOTAL_PACK_CNT
+                                  , TOTAL_PACK_UNIT
+                                  , BOX_WIDTH
+                                  , BOX_LENGTH
+                                  , BOX_HEIGHT
+                                  , BOX_DIMENSION_UNIT
+                                  , ITEM_QUANTITY_UNIT
+                                  , CURRENCY_UNIT
+                                  , ITEM_TITLE1
+                                  , ITEM_QUANTITY1
+                                  , ITEM_SALE_PRICE1
+                                  , ITEM_CATEGORY1
+                                  , ITEM_WEIGHT1
+                                  , ITEM_ORIGIN1
+                                  , ITEM_HSCODE1
+                                  , ITEM_SKU1
+                                  , ITEM_COMPOSITION1
+                                  , ITEM_TITLE2
+                                  , ITEM_QUANTITY2
+                                  , ITEM_SALE_PRICE2
+                                  , ITEM_CATEGORY2
+                                  , ITEM_WEIGHT2
+                                  , ITEM_ORIGIN2
+                                  , ITEM_HSCODE2
+                                  , ITEM_SKU2
+                                  , ITEM_COMPOSITION2
+                                  , ITEM_TITLE3
+                                  , ITEM_QUANTITY3
+                                  , ITEM_SALE_PRICE3
+                                  , ITEM_CATEGORY3
+                                  , ITEM_WEIGHT3
+                                  , ITEM_ORIGIN3
+                                  , ITEM_HSCODE3
+                                  , ITEM_SKU3
+                                  , ITEM_COMPOSITION3
+                                  , ITEM_TITLE4
+                                  , ITEM_QUANTITY4
+                                  , ITEM_SALE_PRICE4
+                                  , ITEM_CATEGORY4
+                                  , ITEM_WEIGHT4
+                                  , ITEM_ORIGIN4
+                                  , ITEM_HSCODE4
+                                  , ITEM_SKU4
+                                  , ITEM_COMPOSITION4
+                                  , ITEM_TITLE5
+                                  , ITEM_QUANTITY5
+                                  , ITEM_SALE_PRICE5
+                                  , ITEM_CATEGORY5
+                                  , ITEM_WEIGHT5
+                                  , ITEM_ORIGIN5
+                                  , ITEM_HSCODE5
+                                  , ITEM_SKU5
+                                  , ITEM_COMPOSITION5
+                                  , SN
+                                  , SEQ
+                                  , REG_ID
+                                  , REG_DTM)
+            SELECT 
+                   SEQ_XPR_RECEPT_REQ.NEXTVAL                               /* 등록번호 */
+                 , A.EXPRESS_BIZ_NO                                         /* 특송사 사업자번호 */
+                 , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'XPR_SHIP_STATUS' AND CODE = #{STATUSCD}) /* 상태 */
+                 , #{STATUSCD}                                              /* 상태코드 */
+                 , #{SENDER}                                                /* 발송인명 */
+                 , #{SENDERZIPCODE}                                         /* 발송인 우편번호 */
+                 , #{SENDERADDR1}                                           /* 발송인 주소1(상세) */
+                 , #{SENDERADDR2}                                           /* 발송인 주소2(기본) */
+                 , #{SENDERTELNO1}                                          /* 발송인 전화번호1 */
+                 , #{SENDERTELNO2}                                          /* 발송인 전화번호2 */
+                 , #{SENDERTELNO3}                                          /* 발송인 전화번호3 */
+                 , #{SENDERTELNO4}                                          /* 발송인 전화번호4 */
+                 , #{SENDERMOBILE1}                                         /* 발송인 이동통신1 */
+                 , #{SENDERMOBILE2}                                         /* 발송인 이동통신2 */
+                 , #{SENDERMOBILE3}                                         /* 발송인 이동통신3 */
+                 , #{SENDERMOBILE4}                                         /* 발송인 이동통신4 */
+                 , #{SENDEREMAIL}                                           /* 발송인 이메일 */
+                 , B.REGINO                                                 /* 운송장번호 */
+                 , B.RPT_NO                                                 /* 수출신고번호 */
+<!--                  , B.BLNO                                                   /* B/L No. */ -->
+                 , B.STORE_NAME                                             /* 판매 쇼핑몰 */
+                 , B.ORDER_DATE                                             /* 주문일자 */
+                 , B.STORE_ORDER_NO                                         /* 주문번호 */
+                 , B.PROD_DESC                                              /* 상품구분 */
+                 , B.RECIPIENT_NAME                                         /* 수취인 이름 */
+                 , B.RECIPIENT_PHONE                                        /* 수취인 전화 */
+                 , B.RECIPIENT_EMAIL                                        /* 수취인 이메일 */
+                 , B.RECIPIENT_ADDRESS1                                     /* 수취인 주소1 */
+                 , B.RECIPIENT_ADDRESS2                                     /* 수취인 주소2 */
+                 , B.RECIPIENT_CITY                                         /* 수취인 도시 */
+                 , B.RECIPIENT_STATE                                        /* 수취인 주 */
+                 , B.RECIPIENT_ZIPCD                                        /* 수취인 우편번호 */
+                 , B.RECIPIENT_COUNTRY                                      /* 수취인 국가 */
+                 , B.DELIVERY_OPTION                                        /* 배송 서비스 */
+                 , B.TOTAL_WEIGHT                                           /* 총무게 */
+                 , B.WEIGHT_UNIT                                            /* 무게 단위 */
+                 , B.TOTAL_PACK_CNT                                         /* 총포장수 */
+                 , B.TOTAL_PACK_UNIT                                        /* 총포장 단위 */
+                 , B.BOX_WIDTH                                              /* 가로 길이 */
+                 , B.BOX_LENGTH                                             /* 세로 길이 */
+                 , B.BOX_HEIGHT                                             /* 높이 */
+                 , B.BOX_DIMENSION_UNIT                                     /* 크기 단위 */
+                 , B.ITEM_QUANTITY_UNIT                                     /* 상품 수량 단위 */
+                 , B.CURRENCY_UNIT                                          /* 통화 단위 */
+                 , B.ITEM_TITLE1                                            /* 상품 1 */
+                 , B.ITEM_QUANTITY1                                         /* 상품 수량 1 */
+                 , B.ITEM_SALE_PRICE1                                       /* 상품 가격 1 */
+                 , B.ITEM_CATEGORY1                                         /* 상품 분류 1 */
+                 , B.ITEM_WEIGHT1                                           /* 상품 무게 1 */
+                 , B.ITEM_ORIGIN1                                           /* 원산지 1 */
+                 , B.ITEM_HSCODE1                                           /* HSCODE 1 */
+                 , B.ITEM_SKU1                                              /* SKU 1 */
+                 , B.ITEM_COMPOSITION1                                      /* 소재 1 */
+                 , B.ITEM_TITLE2                                            /* 상품 2 */
+                 , B.ITEM_QUANTITY2                                         /* 상품 수량 2 */
+                 , B.ITEM_SALE_PRICE2                                       /* 상품 가격 2 */
+                 , B.ITEM_CATEGORY2                                         /* 상품 분류 2 */
+                 , B.ITEM_WEIGHT2                                           /* 상품 무게 2 */
+                 , B.ITEM_ORIGIN2                                           /* 원산지 2 */
+                 , B.ITEM_HSCODE2                                           /* HSCODE 2 */
+                 , B.ITEM_SKU2                                              /* SKU 2 */
+                 , B.ITEM_COMPOSITION2                                      /* 소재 2 */
+                 , B.ITEM_TITLE3                                            /* 상품 3 */
+                 , B.ITEM_QUANTITY3                                         /* 상품 수량 3 */
+                 , B.ITEM_SALE_PRICE3                                       /* 상품 가격 3 */
+                 , B.ITEM_CATEGORY3                                         /* 상품 분류 3 */
+                 , B.ITEM_WEIGHT3                                           /* 상품 무게 3 */
+                 , B.ITEM_ORIGIN3                                           /* 원산지 3 */
+                 , B.ITEM_HSCODE3                                           /* HSCODE 3 */
+                 , B.ITEM_SKU3                                              /* SKU 3 */
+                 , B.ITEM_COMPOSITION3                                      /* 소재 3 */
+                 , B.ITEM_TITLE4                                            /* 상품 4 */
+                 , B.ITEM_QUANTITY4                                         /* 상품 수량 4 */
+                 , B.ITEM_SALE_PRICE4                                       /* 상품 가격 4 */
+                 , B.ITEM_CATEGORY4                                         /* 상품 분류 4 */
+                 , B.ITEM_WEIGHT4                                           /* 상품 무게 4 */
+                 , B.ITEM_ORIGIN4                                           /* 원산지 4 */
+                 , B.ITEM_HSCODE4                                           /* HSCODE 4 */
+                 , B.ITEM_SKU4                                              /* SKU 4 */
+                 , B.ITEM_COMPOSITION4                                      /* 소재 4 */
+                 , B.ITEM_TITLE5                                            /* 상품 5 */
+                 , B.ITEM_QUANTITY5                                         /* 상품 수량 5 */
+                 , B.ITEM_SALE_PRICE5                                       /* 상품 가격 5 */
+                 , B.ITEM_CATEGORY5                                         /* 상품 분류 5 */
+                 , B.ITEM_WEIGHT5                                           /* 상품 무게 5 */
+                 , B.ITEM_ORIGIN5                                           /* 원산지 5 */
+                 , B.ITEM_HSCODE5                                           /* HSCODE 5 */
+                 , B.ITEM_SKU5                                              /* SKU 5 */
+                 , B.ITEM_COMPOSITION5                                      /* 소재 5 */
+                 , B.SN                                                     /* SN */
+                 , B.SEQ                                                    /* 고유번호 */
+                 , #{USER_ID} REG_ID                                        /* 등록자 */
+                 , SYSDATE REG_DTM                                          /* 등록일시 */
+              FROM XPR_XPRREG_EXCEL A
+                 , XPR_XPRREG_EXCEL_DETAIL B
+             WHERE A.SN = B.SN
+               AND A.SN = #{SN}
+            <if test="SEQ != null and SEQ != ''">
+               AND SEQ = #{SEQ}
+            </if>
+               AND A.USER_ID = #{USER_ID}
+               AND B.STATUS IS NULL /* 엑셀업로드시 오류건은 대상에서 제외 */
+               AND (B.SN, B.SEQ) NOT IN (SELECT SN, SEQ FROM XPR_RECEPT_REQ WHERE SN = A.SN AND SEQ = B.SEQ AND STATUSCD NOT IN ('1')) /* 취소를 제외한 나머지 상태는 중복등록하지 않는다 */
+    </insert>
+    
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 배송요청 상세 목록 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    
+    <!-- [특송] 배송요청 엑셀 업로드 리스트 (상세목록) -->
+    <select id="selectShipDetailList" parameterType="map" resultType="map">
+        SELECT A.SN
+             , A.SEQ
+             , A.RECIPIENT_NAME
+             , A.RECIPIENT_PHONE
+             , A.RECIPIENT_EMAIL
+             , A.RPT_NO
+             , A.STORE_ORDER_NO
+             , A.REGINO
+<!--              , A.BLNO -->
+             , A.STATUS
+             , B.STATUSCD SHIP_STATUS
+             , (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'XPR_SHIP_STATUS' AND CODE = B.STATUSCD) AS SHIP_STATUS_NM
+          FROM XPR_XPRREG_EXCEL_DETAIL A
+          LEFT OUTER JOIN XPR_RECEPT_REQ B
+            ON A.SN  = B.SN
+           AND A.SEQ = B.SEQ
+           AND B.STATUSCD NOT IN ('1')
+         WHERE A.SN = #{SN}
+        <if test="SEARCH_REG_STATUS != null and SEARCH_REG_STATUS.equalsIgnoreCase('NORMAL')">
+           AND A.STATUS IS NULL
+        </if>
+        <if test="SEARCH_REG_STATUS != null and SEARCH_REG_STATUS.equalsIgnoreCase('ERROR')">
+           AND A.STATUS = 'E'
+        </if>
+        <if test="SEARCH_SHIP_STATUS != null and SEARCH_SHIP_STATUS.equalsIgnoreCase('REQUEST')">
+           AND B.STATUSCD IS NOT NULL
+        </if>
+        <if test="SEARCH_SHIP_STATUS != null and SEARCH_SHIP_STATUS.equalsIgnoreCase('NOT_REQUESTED')">
+           AND B.STATUSCD IS NULL
+        </if>
+    </select>
+    
+    <!-- [특송] 배송요청 다운로드 리스트 -->
+    <select id="shipReqFieldsList" parameterType="map" resultType="map">
+        SELECT A.*
+             , (SELECT USER_NM FROM CMM_USER WHERE USER_DIV = 'E' AND BIZ_NO = A.EXPRESS_BIZ_NO) AS EXPRESS_NM
+          FROM XPR_RECEPT_REQ A
+         WHERE 1 = 1
+           AND A.STATUSCD NOT IN ('1')
+        <choose>
+            <when test="USER_DIV != null and USER_DIV.equalsIgnoreCase('E')"><!-- 특송사 -->
+                AND A.EXPRESS_BIZ_NO = #{BIZ_NO}
+            </when>
+            <when test="USER_DIV != null and USER_DIV.equalsIgnoreCase('S')"><!-- 셀러 -->
+                AND A.REG_ID = #{USER_ID}
+            </when>
+        </choose>
+        <if test="F_REG_DTM != null and F_REG_DTM != ''">
+           AND TO_CHAR(A.REG_DTM, 'YYYYMMDD') <![CDATA[ >= ]]> #{F_REG_DTM}
+        </if>
+        <if test="T_REG_DTM != null and T_REG_DTM != ''">
+           AND TO_CHAR(A.REG_DTM, 'YYYYMMDD') <![CDATA[ <= ]]> #{T_REG_DTM}
+        </if>
+        <if test="EXPRESS_BIZ_NO != null and EXPRESS_BIZ_NO != ''">
+           AND A.EXPRESS_BIZ_NO = #{EXPRESS_BIZ_NO}
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            <choose>
+                <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('order_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                    AND A.STORE_ORDER_NO = UPPER (#{SEARCH_TXT})
+                </when>
+                <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('exprt_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                    AND A.RPT_NO = UPPER (#{SEARCH_TXT})
+                </when>
+                <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('regi_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                    AND A.REGINO = UPPER (#{SEARCH_TXT})
+                </when>
+            </choose>
+        </if>
+        <if test="SEARCH_COUNTRY_CD != null and SEARCH_COUNTRY_CD != ''">
+           AND A.RECIPIENT_COUNTRY = UPPER (#{SEARCH_COUNTRY_CD})
+        </if>
+    </select>
+    
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ 배송요청 상세 정보 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    
+    <!-- [특송] 배송요청 상세 업로드 정보 -->
+    <select id="selectShipDetailInfo" parameterType="map" resultType="map">
+        SELECT A.EXPRESS_BIZ_NO AS EXPRESS_BIZ_NO
+             , (SELECT USER_NM FROM CMM_USER WHERE USER_DIV = 'E' AND BIZ_NO = A.EXPRESS_BIZ_NO) AS EXPRESS_NM
+             , B.*
+          FROM XPR_XPRREG_EXCEL A
+             , XPR_XPRREG_EXCEL_DETAIL B
+         WHERE A.SN         = B.SN
+           AND A.USER_ID    = #{SSuserId}
+           AND B.SN         = #{SN}
+           AND B.SEQ        = #{SEQ} 
+    </select>
+    
+    <!-- [특송] 수출신고번호 존재여부 확인 -->
+    <select id="selectXprtNoCheck" parameterType="map" resultType="map">
+        SELECT DECODE (COUNT (RPT_NO), 0, 'N', 'Y') EXIST_RPT_NO_YN
+          FROM EXP_CUSDEC830
+         WHERE RPT_NO = #{RPT_NO}
+           AND EXP_SDNO = #{USR_SESSION.bizNo}
+    </select>
+    
+    <!-- [특송] 배송요청 대상 건 조회 -->
+    <select id="selectXprShipReqExcelChk" parameterType="map" resultType="map">
+        SELECT COUNT (B.SEQ) - COUNT (C.REGNO) AS CNT
+          FROM XPR_XPRREG_EXCEL A
+          JOIN XPR_XPRREG_EXCEL_DETAIL B
+            ON A.SN = B.SN
+           AND A.USER_ID = #{SSuserId}
+           AND B.STATUS IS NULL
+          LEFT OUTER JOIN XPR_RECEPT_REQ C
+            ON B.SN = C.SN
+           AND B.SEQ = C.SEQ
+           AND C.STATUSCD != '1'
+         WHERE A.SN = #{SN}
+    </select>
+    
+    <!-- [특송] 배송요청 상세정보 변경  -->
+    <update id="updateShipDetailInfo" parameterType="map">
+        UPDATE XPR_XPRREG_EXCEL_DETAIL
+           SET REGINO             = #{REGINO}
+             , RPT_NO             = #{RPT_NO}
+<!--              , BLNO               = #{BLNO} -->
+             , STORE_NAME         = #{STORE_NAME}
+             , ORDER_DATE         = #{ORDER_DATE}
+             , STORE_ORDER_NO     = #{STORE_ORDER_NO}
+             , PROD_DESC          = #{PROD_DESC}
+             , RECIPIENT_NAME     = #{RECIPIENT_NAME:NVARCHAR}
+             , RECIPIENT_PHONE    = #{RECIPIENT_PHONE}
+             , RECIPIENT_EMAIL    = #{RECIPIENT_EMAIL}
+             , RECIPIENT_ADDRESS1 = #{RECIPIENT_ADDRESS1:NVARCHAR}
+             , RECIPIENT_ADDRESS2 = #{RECIPIENT_ADDRESS2:NVARCHAR}
+             , RECIPIENT_CITY     = #{RECIPIENT_CITY:NVARCHAR}
+             , RECIPIENT_STATE    = #{RECIPIENT_STATE:NVARCHAR}
+             , RECIPIENT_ZIPCD    = #{RECIPIENT_ZIPCD}
+             , RECIPIENT_COUNTRY  = #{RECIPIENT_COUNTRY}
+             , DELIVERY_OPTION    = #{DELIVERY_OPTION}
+             , TOTAL_WEIGHT       = #{TOTAL_WEIGHT}
+             , WEIGHT_UNIT        = #{WEIGHT_UNIT}
+             , TOTAL_PACK_CNT     = #{TOTAL_PACK_CNT}
+             , TOTAL_PACK_UNIT    = #{TOTAL_PACK_UNIT}
+             , BOX_WIDTH          = #{BOX_WIDTH}
+             , BOX_LENGTH         = #{BOX_LENGTH}
+             , BOX_HEIGHT         = #{BOX_HEIGHT}
+             , BOX_DIMENSION_UNIT = #{BOX_DIMENSION_UNIT}
+             , ITEM_QUANTITY_UNIT = #{ITEM_QUANTITY_UNIT}
+             , CURRENCY_UNIT      = #{CURRENCY_UNIT}
+             , ITEM_TITLE1        = #{ITEM_TITLE1:NVARCHAR}
+             , ITEM_QUANTITY1     = #{ITEM_QUANTITY1}
+             , ITEM_SALE_PRICE1   = #{ITEM_SALE_PRICE1}
+             , ITEM_CATEGORY1     = #{ITEM_CATEGORY1}
+             , ITEM_WEIGHT1       = #{ITEM_WEIGHT1}
+             , ITEM_ORIGIN1       = #{ITEM_ORIGIN1}
+             , ITEM_HSCODE1       = #{ITEM_HSCODE1}
+             , ITEM_SKU1          = #{ITEM_SKU1}
+             , ITEM_COMPOSITION1  = #{ITEM_COMPOSITION1}
+             , ITEM_TITLE2        = #{ITEM_TITLE2:NVARCHAR}
+             , ITEM_QUANTITY2     = #{ITEM_QUANTITY2}
+             , ITEM_SALE_PRICE2   = #{ITEM_SALE_PRICE2}
+             , ITEM_CATEGORY2     = #{ITEM_CATEGORY2}
+             , ITEM_WEIGHT2       = #{ITEM_WEIGHT2}
+             , ITEM_ORIGIN2       = #{ITEM_ORIGIN2}
+             , ITEM_HSCODE2       = #{ITEM_HSCODE2}
+             , ITEM_SKU2          = #{ITEM_SKU2}
+             , ITEM_COMPOSITION2  = #{ITEM_COMPOSITION2}
+             , ITEM_TITLE3        = #{ITEM_TITLE3:NVARCHAR}
+             , ITEM_QUANTITY3     = #{ITEM_QUANTITY3}
+             , ITEM_SALE_PRICE3   = #{ITEM_SALE_PRICE3}
+             , ITEM_CATEGORY3     = #{ITEM_CATEGORY3}
+             , ITEM_WEIGHT3       = #{ITEM_WEIGHT3}
+             , ITEM_ORIGIN3       = #{ITEM_ORIGIN3}
+             , ITEM_HSCODE3       = #{ITEM_HSCODE3}
+             , ITEM_SKU3          = #{ITEM_SKU3}
+             , ITEM_COMPOSITION3  = #{ITEM_COMPOSITION3}
+             , ITEM_TITLE4        = #{ITEM_TITLE4:NVARCHAR}
+             , ITEM_QUANTITY4     = #{ITEM_QUANTITY4}
+             , ITEM_SALE_PRICE4   = #{ITEM_SALE_PRICE4}
+             , ITEM_CATEGORY4     = #{ITEM_CATEGORY4}
+             , ITEM_WEIGHT4       = #{ITEM_WEIGHT4}
+             , ITEM_ORIGIN4       = #{ITEM_ORIGIN4}
+             , ITEM_HSCODE4       = #{ITEM_HSCODE4}
+             , ITEM_SKU4          = #{ITEM_SKU4}
+             , ITEM_COMPOSITION4  = #{ITEM_COMPOSITION4}
+             , ITEM_TITLE5        = #{ITEM_TITLE5:NVARCHAR}
+             , ITEM_QUANTITY5     = #{ITEM_QUANTITY5}
+             , ITEM_SALE_PRICE5   = #{ITEM_SALE_PRICE5}
+             , ITEM_CATEGORY5     = #{ITEM_CATEGORY5}
+             , ITEM_WEIGHT5       = #{ITEM_WEIGHT5}
+             , ITEM_ORIGIN5       = #{ITEM_ORIGIN5}
+             , ITEM_HSCODE5       = #{ITEM_HSCODE5}
+             , ITEM_SKU5          = #{ITEM_SKU5}
+             , ITEM_COMPOSITION5  = #{ITEM_COMPOSITION5}
+             , MOD_ID             = #{SSuserId}
+             , MOD_DTM            = SYSDATE
+         WHERE SN                 = #{SN}
+           AND SEQ                = #{SEQ}
+           AND REG_ID             = #{SSuserId}
+    </update>
+    
+    <!-- ===================================================================================================================================== -->
+    <!-- ========================================================== 배송예약 (특송사) ========================================================== -->
+    <!-- ===================================================================================================================================== -->
+
+    <!-- [특송] 배송요청 리스트 -->
+    <select id="selectShipReqList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY REGNO DESC) RNUM
+             , REGNO
+             , SN
+             , SEQ
+             , EXPRESS_BIZ_NO
+             , REGINO
+             , RPT_NO
+             , STORE_ORDER_NO
+             , RECIPIENT_NAME
+             , RECIPIENT_PHONE
+             , RECIPIENT_EMAIL
+             , RECIPIENT_ADDRESS1
+             , RECIPIENT_ADDRESS2
+             , RECIPIENT_CITY
+             , RECIPIENT_STATE
+             , RECIPIENT_ZIPCD
+             , RECIPIENT_COUNTRY
+             , TOTAL_WEIGHT
+             , ITEM_TITLE1
+             , ITEM_QUANTITY1
+             , ITEM_SALE_PRICE1
+             , CURRENCY_UNIT
+             , ITEM_CATEGORY1
+             , ITEM_WEIGHT1
+             , STATUS
+             , STATUSCD
+             , TO_CHAR (REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM
+          FROM XPR_RECEPT_REQ
+         WHERE EXPRESS_BIZ_NO = #{BIZ_NO}
+        <if test="F_REG_DTM != null and F_REG_DTM != ''">
+           AND TO_CHAR(REG_DTM, 'YYYYMMDD') <![CDATA[ >= ]]> #{F_REG_DTM}
+        </if>
+        <if test="T_REG_DTM != null and T_REG_DTM != ''">
+           AND TO_CHAR(REG_DTM, 'YYYYMMDD') <![CDATA[ <= ]]> #{T_REG_DTM}
+        </if>
+        <if test="XPR_SHIP_STATUS != null and XPR_SHIP_STATUS != ''">
+           AND STATUSCD = #{XPR_SHIP_STATUS}
+        </if>
+        <choose>
+            <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('regi_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND REGINO = UPPER (#{SEARCH_TXT})
+            </when>
+            <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('exprt_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND RPT_NO = UPPER (#{SEARCH_TXT})
+            </when>
+            <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('order_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND STORE_ORDER_NO = UPPER (#{SEARCH_TXT})
+            </when>
+        </choose>
+      ORDER BY REGNO DESC
+    </select>
+    
+    <!-- [특송] 배송요청 상세 정보 -->
+    <select id="selectShipReqDetailInfo" parameterType="map" resultType="map">
+        SELECT A.*
+             , A.SENDERTELNO1 || '-' || A.SENDERTELNO2 || '-' || A.SENDERTELNO3 || '-' || A.SENDERTELNO4                                            AS SENDERTELNO
+             , (SELECT USER_NM FROM CMM_USER WHERE USER_DIV = 'E' AND BIZ_NO = A.EXPRESS_BIZ_NO)                                                    AS EXPRESS_NM
+             , '[' || A.RECIPIENT_COUNTRY || '] ' || (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0005' AND CODE = A.RECIPIENT_COUNTRY)   AS RECIPIENT_COUNTRY_DESC
+             , '[' || A.WEIGHT_UNIT || '] ' || (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0006' AND CODE = A.WEIGHT_UNIT)               AS WEIGHT_UNIT_DESC
+             , '[' || A.TOTAL_PACK_UNIT || '] ' || (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0043' AND CODE = A.TOTAL_PACK_UNIT)       AS TOTAL_PACK_UNIT_DESC
+             , '[' || A.ITEM_QUANTITY_UNIT || '] ' || (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0006' AND CODE = A.ITEM_QUANTITY_UNIT) AS ITEM_QUANTITY_UNIT_DESC
+             , '[' || A.CURRENCY_UNIT || '] ' || (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0042' AND CODE = A.CURRENCY_UNIT)           AS CURRENCY_UNIT_DESC
+          FROM XPR_RECEPT_REQ A
+         WHERE A.EXPRESS_BIZ_NO = #{BIZ_NO}
+           AND A.REGNO          = #{REGNO}
+    </select>
+    
+    <!-- [특송] 배송요청 접수확인 -->
+    <update id="updateShipReqStatus" parameterType="map">
+        UPDATE XPR_RECEPT_REQ
+           SET STATUS   = (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'XPR_SHIP_STATUS' AND CODE = #{STATUSCD})
+             , STATUSCD = #{STATUSCD}
+             , MOD_ID   = #{USER_ID}
+             , MOD_DTM  = SYSDATE
+         WHERE EXPRESS_BIZ_NO = #{BIZ_NO}
+           AND SN             = #{SN}
+           AND SEQ            = #{SEQ}
+    </update>
+    
+    <!-- [특송] 이행신고용 엑셀다운로드 리스트 -->
+    <select id="selectShipReportListAll" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY B.SN, B.SEQ) RNUM
+             , A.ORDER_ID                                               AS ORDER_NO                         /* 주문번호 */
+             , B.REGINO                                                 AS REGINO                           /* 운송장번호 */ 
+             , A.RPT_NO                                                 AS EXP_DECL_NO                      /* 수출신고번호 */
+             , A.EXP_LIS_DAY                                            AS CONFIRM_DATE_TIME                /* 수리일자 */
+             , B.TOTAL_WEIGHT                                           AS TOTAL_PACKAGE_WEIGHT             /* 총중량 */
+             , B.WEIGHT_UNIT                                            AS TOTAL_PACKAGE_WEIGHT_UNIT_CODE   /* 총중량단위 */
+             , B.TOTAL_PACK_CNT                                         AS TOTAL_PACKAGE_QUANTITY           /* 총포장수 */
+             , B.TOTAL_PACK_UNIT                                        AS TOTAL_PACKAGE_UNIT_CODE          /* 총포장수단위 */
+             , NVL (B.ITEM_QUANTITY1, 0) +
+               NVL (B.ITEM_QUANTITY2, 0) +
+               NVL (B.ITEM_QUANTITY3, 0) +
+               NVL (B.ITEM_QUANTITY4, 0) +
+               NVL (B.ITEM_QUANTITY5, 0)                                AS QUANTITY                         /* 수량 */
+             , B.ITEM_QUANTITY_UNIT                                     AS QUANTITY_UNIT_CODE               /* 수량단위 */
+             , (SELECT DECODE (COUNT(*), 1, 'N', 'Y')
+                  FROM XPR_RECEPT_REQ
+                 WHERE SN = B.SN
+                   AND REGINO = B.REGINO)                               AS SUM_PACKING                      /* 동시포장 여부 */
+             , (SELECT DECODE (COUNT(*), 1, 'N', 'Y')
+                  FROM XPR_RECEPT_REQ
+                 WHERE SN = B.SN
+                   AND RPT_NO = B.RPT_NO)                               AS DIVISION_PACKING                 /* 분할포장 여부 */
+             , DECODE (A.RECE, '신고지검사', 'Y', '적재지검사', 'Y', 'N')  AS INSPECTION_TARGET                /* 검사대상 여부 */
+          FROM EXP_CUSDEC830 A
+             , XPR_RECEPT_REQ B
+         WHERE A.RPT_NO         = B.RPT_NO
+           AND A.RPT_SEQ        = '00'
+           AND B.EXPRESS_BIZ_NO = #{USR_SESSION.bizNo}
+        <if test="REGNOS  != null">
+           AND B.REGNO IN
+            <foreach collection="REGNOS" item="item" index="index" open="(" separator=", " close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="F_REG_DTM != null and F_REG_DTM != ''">
+           AND TO_CHAR(B.REG_DTM, 'YYYYMMDD') <![CDATA[ >= ]]> #{F_REG_DTM}
+        </if>
+        <if test="T_REG_DTM != null and T_REG_DTM != ''">
+           AND TO_CHAR(B.REG_DTM, 'YYYYMMDD') <![CDATA[ <= ]]> #{T_REG_DTM}
+        </if>
+        <if test="XPR_SHIP_STATUS != null and XPR_SHIP_STATUS != ''">
+           AND B.STATUSCD = #{XPR_SHIP_STATUS}
+        </if>
+        <choose>
+            <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('regi_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND B.REGINO = UPPER (#{SEARCH_TXT})
+            </when>
+            <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('exprt_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND B.RPT_NO = UPPER (#{SEARCH_TXT})
+            </when>
+            <when test="SEARCH_COL != null and SEARCH_COL.equalsIgnoreCase('order_no') and SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND B.STORE_ORDER_NO = UPPER (#{SEARCH_TXT})
+            </when>
+        </choose>
+         ORDER BY B.SN, B.SEQ
+    </select>
+    
+    <!-- [특송] 이행신고용 정보요청 API -->
+    <select id="selectFullfillmentInfoAPI" parameterType="map" resultType="map">
+        SELECT A.ORDER_ID                                               AS ORDER_NO                         /* 주문번호 */
+             , B.REGINO                                                 AS REGINO                           /* 운송장번호 */ 
+             , A.RPT_NO                                                 AS EXP_DECL_NO                      /* 수출신고번호 */
+             , A.EXP_LIS_DAY                                            AS CONFIRM_DATE_TIME                /* 수리일자 */
+             , B.TOTAL_WEIGHT                                           AS TOTAL_PACKAGE_WEIGHT             /* 총중량 */
+             , B.WEIGHT_UNIT                                            AS TOTAL_PACKAGE_WEIGHT_UNIT_CODE   /* 총중량단위 */
+             , B.TOTAL_PACK_CNT                                         AS TOTAL_PACKAGE_QUANTITY           /* 총포장수 */
+             , B.TOTAL_PACK_UNIT                                        AS TOTAL_PACKAGE_UNIT_CODE          /* 총포장수단위 */
+             , NVL (B.ITEM_QUANTITY1, 0) +
+               NVL (B.ITEM_QUANTITY2, 0) +
+               NVL (B.ITEM_QUANTITY3, 0) +
+               NVL (B.ITEM_QUANTITY4, 0) +
+               NVL (B.ITEM_QUANTITY5, 0)                                AS QUANTITY                         /* 수량 */
+             , B.ITEM_QUANTITY_UNIT                                     AS QUANTITY_UNIT_CODE               /* 수량단위 */
+             , (SELECT DECODE (COUNT(*), 1, 'N', 'Y')
+                  FROM XPR_RECEPT_REQ
+                 WHERE SN = B.SN
+                   AND REGINO = B.REGINO)                               AS SUM_PACKING                      /* 동시포장 여부 */
+             , (SELECT DECODE (COUNT(*), 1, 'N', 'Y')
+                  FROM XPR_RECEPT_REQ
+                 WHERE SN = B.SN
+                   AND RPT_NO = B.RPT_NO)                               AS DIVISION_PACKING                 /* 분할포장 여부 */
+             , DECODE (A.RECE, '신고지검사', 'Y', '적재지검사', 'Y', 'N')  AS INSPECTION_TARGET                /* 검사대상 여부 */
+          FROM EXP_CUSDEC830 A
+             , XPR_RECEPT_REQ B
+         WHERE A.RPT_NO         = B.RPT_NO
+           AND A.RPT_SEQ        = '00'
+           AND B.EXPRESS_BIZ_NO = (SELECT BIZ_NO FROM CMM_USER WHERE USER_ID = #{EXPRESS_ID:VARCHAR})
+<!--            AND B.REG_ID         = #{SELLER_ID:VARCHAR} -->
+        <if test='ORDERNOTYPECODE == "A" '>
+           AND B.STORE_ORDER_NO = #{ORDERNO:VARCHAR}
+        </if>
+        <if test='ORDERNOTYPECODE == "B" '>
+           AND B.REGINO         = #{ORDERNO:VARCHAR}
+        </if>
+    </select>
+</mapper>

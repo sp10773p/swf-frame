@@ -1,0 +1,348 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="mod">
+
+    
+    <!-- 정정신고메인요청 정보조회 -->
+	  <select id="selectExpModInfo" parameterType="map" resultType="map" >
+	    <![CDATA[
+	      SELECT
+		         A.REQ_NO                     /* 요청관리번호 */
+		       , A.STATUS                     /* 상태 */
+		       , A.MALL_ID                    /* 몰ID */
+		       , A.SELLER_ID                  /* 판매자ID */
+		       , A.ORDER_ID                   /* 주문번호 */
+		       , A.REQUEST_DIV                /* 요청구분 */
+		       , A.MODI_CONTENTS              /* 정정요청내역 */
+		       , A.OFFICECODE                 /* 세관 */
+		       , A.DEPARTMENTCODE             /* 과 */
+		       , A.TYPECODE                   /* 송신구분 */
+		       , A.ISSUEDATE                  /* 정정일자 */
+		       , A.REFERENCEID                /* 수출신고번호 */
+		       , A.ISSUEDATETIME              /* 신고일자 */
+		       , A.AGENTREPNAME               /* 신고자대표자명 */
+		       , A.AGENTNAME                  /* 신고자상호 */
+		       , A.EXPORTERNAME               /* 수출자성명 */
+		       , A.EXPORTERTGNO               /* 수출자통관고유부호 */
+		       , A.AMENDTYPECD                /* 정정사유코드 */
+		       , A.AMENDREASON                /* 정정사유 */
+		       , A.OBLIGATIONREASONCD         /* 귀책사유 */
+		       , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS') AS REG_DTM                    /* 등록일시 */
+		       , A.MOD_ID                     /* 수정자ID */
+		       , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD HH24:MI:SS') AS MOD_DTM                    /* 수정일시 */
+		       , A.REG_ID                     /* 등록자ID */
+		       , A.APPLICANTPARTYORGID        /* 수출자신고인부호 */
+	           , A.BIZ_NO                     /* 사업자등록번호 */
+		    FROM EXP_EXPMOD_REQ A 
+		   WHERE 1 = 1
+		     AND A.REQ_NO = #{REQ_NO:VARCHAR}
+	    ]]>
+	  </select>
+	  
+	  <!-- 정정신고항목목록요청 정보조회 -->
+	  <select id="selectExpModItemInfo" parameterType="map" resultType="map">
+	    <![CDATA[
+	       SELECT REQ_NO
+				, SN
+				, LINENUMBERID
+				, GOODSIDENTIFICATIONID
+				, ITEMCODE
+				, TYPECODE
+				, BEFOREDESCRIPTION
+				, AFTERDESCRIPTION
+				, REG_ID
+				, REG_DTM
+				, MOD_ID
+				, MOD_DTM
+	         FROM EXP_EXPMOD_REQ_ITEM
+	        WHERE 1 = 1
+	          AND REQ_NO = #{REQ_NO}
+	        ORDER BY SN
+	    ]]>
+	  </select>
+	  
+	  <!-- 정정항목조회 -->
+	  <select id="selectModItemNm" parameterType="map" resultType="string">
+	    <![CDATA[
+	      SELECT MAX(MOD_ITEM_DESC) AS MOD_ITEM_DESC 
+	        FROM CMM_EXPMOD_ITEM
+	       WHERE MOD_ITEM_NO = #{MOD_ITEM_NO:VARCHAR}
+	    ]]>
+	  </select>
+	  
+	  <!-- 요청정보업데이트 -->
+	  <update id="updateExpModiReqStatus" parameterType="map">
+	    <![CDATA[
+	      UPDATE EXP_EXPMOD_REQ
+	         SET STATUS = #{STATUS}
+	           , ERROR_DESC = #{ERROR_DESC:VARCHAR}
+	           , ERROR_JSON = #{ERROR_JSON:VARCHAR}
+	       WHERE REQ_NO = #{REQ_NO:VARCHAR}
+	    ]]>
+	  </update>
+	  
+	  <!-- 관세사 메일주소 찾기 -->
+	  <select id="selectApplicantMail" parameterType="map" resultType="string">
+	    <![CDATA[
+	      SELECT max(EMAIL) as EMAIL
+	        FROM CMM_USER
+	       WHERE APPLICANT_ID = #{APPLICANT_ID}
+	    ]]>
+	  </select>
+	  
+	  <!-- 수출신고요청 결과 정보조회 -->
+	  <select id="selectExpReqResultInfo" parameterType="map" resultType="map">
+	    <![CDATA[
+	       SELECT A.STATUS
+	            , A.ERROR_DESC
+	            , A.ERROR_JSON
+	            , A.FULFILLMENT
+	            , B.RPT_NO
+	            , B.RPT_SEQ
+	            , B.RPT_DAY
+	            , (SELECT C.DPTDAY FROM CUSRES5AA C WHERE C.RPTNO = B.RPT_NO AND ROWNUM=1) AS EXP_LIS_DT
+	            , B.TOT_RPT_KRW
+	            , B.EXC_RATE_CUR
+	            , B.SEND
+	            , B.LEAVE_DAY
+	            , B.BLNO
+	            , DECODE(B.LEAVE_DAY, NULL, NVL(B.RECE, '00'), '14') AS RECE
+	            , CASE NVL(B.RECE,'') WHEN 'NULL' THEN A.STATUS ELSE B.RECE END AS RESULT
+	            , C.DPT_DTM
+	            , C.RESULT_CD
+	            , C.RESULT_TXT
+	         FROM EXP_EXPDEC_REQ A
+             LEFT OUTER JOIN EXP_CUSDEC830 B ON B.REQ_NO = A.REQ_NO
+             LEFT OUTER JOIN EXP_GOVCBRR73 C ON B.RPT_NO = C.RPT_NO
+	        WHERE 1=1
+	          AND A.MALL_ID  = #{MALL_ID}
+	          AND A.ORDER_ID = #{ORDER_ID}
+	    ]]>
+	  </select>
+  
+	  <!-- 수출신고요청 결과 정보조회 -->
+	  <select id="selectAmendResultInfo" parameterType="map" resultType="map">
+		<![CDATA[
+		  SELECT A.STATUS
+		       , A.ERROR_DESC
+		       , A.ERROR_JSON
+		       , B.RPT_NO
+		       , B.RPT_NO
+		       , B.RPT_DAY
+		       , B.DPT_DAY
+		       , B.DPT_NO
+		       , B.SEND
+		       , B.RECE
+		       , CASE NVL(B.RECE,'') WHEN 'NULL' THEN A.STATUS ELSE B.RECE END AS RESULT
+		    FROM EXP_EXPMOD_REQ A
+		       , EXP_CUSDMR5AS B
+		   WHERE A.REQ_NO = B.REQ_NO(+)
+		     AND A.MALL_ID  = #{MALL_ID}
+		     AND A.ORDER_ID = #{ORDER_ID}
+		]]>
+	  </select>
+    
+      <!-- 오류통보내역조회 -->
+      <select id="selectGovcbrr20" parameterType="map" resultType="map">
+        SELECT B.ERR_REASON
+          FROM EXP_GOVCBRR20 A
+             , EXP_GOVCBRR20_ITEM B
+         WHERE A.KEY_NO = B.KEY_NO
+           AND A.RPT_NO = #{RPT_NO}
+      </select>
+      
+      <select id="selectModList" parameterType="map" resultType="map">
+                      
+          SELECT  ROW_NUMBER() OVER (ORDER BY REG_DTM DESC , RPT_NO DESC, MODI_SEQ DESC) RNUM 
+                , RPT_NO								/*	신청번호	*/
+				, MODI_SEQ								/*	수출정정차수	*/
+				, RPT_SEQ								/*	수출신고제출차수	*/
+				, SEND									/*	전송결과	*/
+				, RECE									/*	수신결과	*/
+				, CUS									/*	신청세관	*/
+				, SEC									/*	신청과	*/
+				, SEND_DIVI								/*	송신구분	*/
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0030' AND CODE = SEND_DIVI) AS SEND_DIVI_NM
+				, TO_CHAR(TO_DATE(MODI_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') MODI_DAY	/*	정정신청일자	*/
+				, TO_CHAR(TO_DATE(RPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DAY		/*	수출신고일자	*/
+				, TO_CHAR(TO_DATE(LIS_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DAY		/*	수리일자	*/
+				, RPT_FIRM								/*	신고자상호	*/
+				, RPT_NAME								/*	신고자대표자명	*/
+				, EXP_CODE								/*	수출자코드	*/
+				, EXP_NAME								/*	수출화주 상호	*/
+				, EXP_TGNO								/*	수출화주 통관부호	*/
+				, EXP_ADDR1								/*	수출화주 기본주소	*/
+				, EXP_ADDR2								/*	수출화주 상세주소	*/
+				, MODI_DIVI								/*	정정사유코드	*/
+				, CASE 
+					WHEN SEND_DIVI = 'B' THEN (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0032' AND CODE = MODI_DIVI)
+				    ELSE (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0029' AND CODE = MODI_DIVI)
+				  END AS MODI_DIVI_NM
+				, MODI_DIVI_TXT							/*	정정사유코드설명	*/
+				, MODI_COT								/*	정정사유	*/
+				, DUTY_CODE								/*	귀책사유코드	*/
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0028' AND CODE = DUTY_CODE) AS DUTY_CODE_NM
+				, DUTY_CODE_TXT							/*	귀책사유코드명	*/
+				, RPT_MARK								/*	신고인부호	*/
+				, DPT_NO								/*	통지번호	*/
+				, TO_CHAR(TO_DATE(DPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') DPT_DAY		/*	통지일자	*/
+				, JU_MARK								/*	심사담당자 직원부호	*/
+				, JU_NAME								/*	심사담당자 성	*/
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1001' AND CODE = SEND) AS SEND_NM
+				, (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1003' AND CODE = RECE) AS RECE_NM
+				, AMT_FRONT								/*	정정전신고가격원화(출력용)	*/
+				, AMT_AFTER								/*	정정후신고가격원화(출력용)	*/
+				, AMTUSD_FRONT							/*	정정전신고가격미화(출력용)	*/
+				, AMTUSD_AFTER							/*	정정후신고가격미화(출력용)	*/
+				, SEND_CNT								/*	전송횟수	*/
+				, CUS_USER_ID							/*	관세사ID	*/
+				, REQ_NO								/*	요청관리번호	*/
+				, REG_ID								/*	등록자ID	*/
+				, REG_DTM								/*	등록일시	*/
+				, MOD_ID								/*	수정자ID	*/
+				, MOD_DTM								/*	수정일시	*/
+		   FROM EXP_CUSDMR5AS
+		  WHERE 1 = 1
+		    <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                <if test='SEARCH_DTM == "MODI"'>
+	                AND MODI_DAY BETWEEN #{F_REG_DTM} AND #{T_REG_DTM}
+                </if>
+                <if test='SEARCH_DTM == "RPT"'>
+                	AND RPT_DAY BETWEEN #{F_REG_DTM} AND #{T_REG_DTM}
+                </if>
+                <if test='SEARCH_DTM == "LIS"'>
+                	AND LIS_DAY BETWEEN #{F_REG_DTM} AND #{T_REG_DTM}
+                </if>
+            </if>
+            <if test="RPT_NO != null and RPT_NO != ''">
+                AND RPT_NO LIKE '%'||#{RPT_NO}||'%'
+            </if>
+            <if test="SEND != null and SEND != ''">
+                AND SEND = #{SEND}
+            </if>
+            <if test="RECE != null and RECE != ''">
+                AND RECE = #{RECE}
+            </if>
+	            AND (
+	                CASE 
+	                    WHEN #{USR_SESSION.userDiv} = 'S' THEN DECODE(EXP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'M' THEN DECODE(EXP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+	                    WHEN #{USR_SESSION.userDiv} = 'G' THEN DECODE(RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+	                    ELSE 0
+	                END) = 1
+		    
+		    ORDER BY REG_DTM DESC , RPT_NO DESC, MODI_SEQ DESC
+        
+    </select>
+    
+    <select	id="selectModDetail" parameterType="map" resultType="map">
+          
+          SELECT  RPT_NO								/*	신청번호	*/
+				, MODI_SEQ								/*	수출정정차수	*/
+				, RPT_SEQ								/*	수출신고제출차수	*/
+				, CUS									/*	신청세관	*/
+				, SEC									/*	신청과	*/
+				, SEND_DIVI								/*	송신구분	*/
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUS) AS CUS_NM
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = SEC) AS SEC_NM
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0030' AND CODE = SEND_DIVI) AS SEND_DIVI_NM
+				, TO_CHAR(TO_DATE(MODI_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') MODI_DAY	/*	정정신청일자	*/
+				, TO_CHAR(TO_DATE(RPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') RPT_DAY		/*	수출신고일자	*/
+				, TO_CHAR(TO_DATE(LIS_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') LIS_DAY		/*	수리일자	*/
+				, RPT_FIRM								/*	신고자상호	*/
+				, RPT_NAME								/*	신고자대표자명	*/
+				, EXP_CODE								/*	수출자코드	*/
+				, EXP_NAME								/*	수출화주 상호	*/
+				, EXP_TGNO								/*	수출화주 통관부호	*/
+				, EXP_ADDR1								/*	수출화주 기본주소	*/
+				, EXP_ADDR2								/*	수출화주 상세주소	*/
+				, MODI_DIVI								/*	정정사유코드	*/
+				, CASE 
+					WHEN SEND_DIVI = 'B' THEN (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0032' AND CODE = MODI_DIVI)
+				    ELSE (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0029' AND CODE = MODI_DIVI)
+				  END AS MODI_DIVI_NM
+				, MODI_DIVI_TXT							/*	정정사유코드설명	*/
+				, MODI_COT								/*	정정사유	*/
+				, DUTY_CODE								/*	귀책사유코드	*/
+				, (SELECT '['||CODE||']' || CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0028' AND CODE = DUTY_CODE) AS DUTY_CODE_NM
+				, DUTY_CODE_TXT							/*	귀책사유코드명	*/
+				, RPT_MARK								/*	신고인부호	*/
+				, DPT_NO								/*	통지번호	*/
+				, TO_CHAR(TO_DATE(DPT_DAY, 'YYYYMMDDHH24MISS'), 'YYYY-MM-DD') DPT_DAY		/*	통지일자	*/
+				, JU_MARK								/*	심사담당자 직원부호	*/
+				, JU_NAME								/*	심사담당자 성	*/
+				, SEND									/*	전송결과	*/
+				, RECE									/*	수신결과	*/
+				, AMT_FRONT								/*	정정전신고가격원화(출력용)	*/
+				, AMT_AFTER								/*	정정후신고가격원화(출력용)	*/
+				, AMTUSD_FRONT							/*	정정전신고가격미화(출력용)	*/
+				, AMTUSD_AFTER							/*	정정후신고가격미화(출력용)	*/
+				, SEND_CNT								/*	전송횟수	*/
+				, CUS_USER_ID							/*	관세사ID	*/
+				, REQ_NO								/*	요청관리번호	*/
+				, REG_ID								/*	등록자ID	*/
+				, REG_DTM								/*	등록일시	*/
+				, MOD_ID								/*	수정자ID	*/
+				, MOD_DTM								/*	수정일시	*/
+		   FROM EXP_CUSDMR5AS
+          WHERE RPT_NO = #{RPT_NO}
+            AND MODI_SEQ = #{MODI_SEQ}
+           
+    </select>
+    
+    <select	id="selectModSubList" parameterType="map" resultType="map">
+         
+          SELECT  ROW_NUMBER() OVER (ORDER BY RPT_NO, MODI_SEQ, RAN_NO, SIZE_NO, ITEM_NO) RNUM 
+                , RPT_NO					/*	신청번호	*/
+				, MODI_SEQ					/*	수출정정차수	*/
+				, SEQ_NO					/*	순번	*/
+				, RAN_NO					/*	란번호	*/
+				, SIZE_NO					/*	규격번호	*/
+				, CNTR_SEQNO				/*	컨테이너 일련번호	*/
+				, LAW_SEQNO					/*	요건 일련번호	*/
+				, CAR_SEQNO					/*	차대번호 일련번호	*/
+				, ITEM_NO					/*	정정항목코드	*/
+				, ITEM_NM					/*	정정항목명	*/
+				, RAN_DIVI					/*	정정구분	*/
+				, MODIFRONT					/*	정정전내역	*/
+				, MODIAFTER					/*	정정후내역	*/
+				, REG_ID					/*	등록자ID	*/
+				, REG_DTM					/*	등록일시	*/
+				, MOD_ID					/*	수정자ID	*/
+				, MOD_DTM					/*	수정일시	*/
+		   FROM EXP_CUSDMR5AS_ITEM
+          WHERE RPT_NO = #{RPT_NO}
+            AND MODI_SEQ = #{MODI_SEQ}
+	   ORDER BY RPT_NO, MODI_SEQ, RAN_NO, SIZE_NO, ITEM_NO
+		
+    </select>
+    
+    <update id="updateExpDmrSend" parameterType="map">
+        UPDATE EXP_CUSDMR5AS
+           SET SEND = #{SEND}
+             , MOD_ID  = #{USER_ID}
+             , MOD_DTM = SYSDATE
+        WHERE RPT_NO = #{RPT_NO}
+          AND MODI_SEQ = #{MODI_SEQ}
+    </update>
+    
+    <select id="selectExpCusDmrChkCnt" parameterType="map" resultType="map">
+		SELECT COUNT(*) AS CNT
+		  FROM EXP_CUSDMR5AS 
+		 WHERE 1=1
+		   AND RPT_NO = #{RPT_NO}
+		   AND MODI_SEQ = (SELECT MAX(MODI_SEQ) FROM EXP_CUSDMR5AS WHERE RPT_NO = #{RPT_NO})
+	</select>
+	
+	<select id="selectExpCusDmrChkRece" parameterType="map" resultType="map">
+		SELECT NVL(RECE, 'NULL') AS RECE
+		  FROM EXP_CUSDMR5AS 
+		 WHERE 1=1
+		   AND RPT_NO = #{RPT_NO}
+		   AND MODI_SEQ = (SELECT MAX(MODI_SEQ) FROM EXP_CUSDMR5AS WHERE RPT_NO = #{RPT_NO})
+	</select>
+
+</mapper>

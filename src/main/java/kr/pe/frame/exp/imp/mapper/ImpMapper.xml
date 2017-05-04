@@ -1,0 +1,733 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="imp">
+    <select id="selectImpReq" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY REQ.REQ_NO DESC) RNUM, 
+            REQ.REQ_NO, 
+            (SELECT CODE_NM FROM CMM_STD_CODE WHERE CLASS_ID = 'AAA1004' AND CODE = (CASE WHEN DEC.IMP_REQ_NO IS NOT NULL THEN '03' WHEN NVL(REQ.DOWN_YN, 'N') = 'Y' THEN '02' ELSE '01' END) AND ROWNUM = 1) STATUS, 
+            REQ.SELLER_ID, REQ.ORDER_ID, REQ.CUS, REQ.SEC, REQ.MAS_BLNO, REQ.BLNO, 
+            REQ.MRN_NO, SUBSTR(MRN_NO,1,11) MRN, SUBSTR(MRN_NO,12,4) MSN, SUBSTR(MRN_NO,16,4) HSN, REQ.IMP_CODE, TO_CHAR(SYSDATE, 'YYYYMMDD') RPT_DAY, 
+            REQ.IMP_FIRM, REQ.IMP_TGNO, REQ.IMP_DIVI, REQ.NAB_CODE, REQ.NAB_FIRM, REQ.NAB_NAME, REQ.NAB_PA_MARK, REQ.NAB_ADDR, 
+            REQ.NAB_TGNO, REQ.NAB_SDNO, REQ.NAB_TELNO, REQ.NAB_EMAIL, REQ.SUP_FIRM, REQ.SUP_ST, REQ.SUP_MARK, REQ.LEV_FORM, REQ.RPT_DIVI_MARK, REQ.EXC_DIVI_MARK, 
+            REQ.IMP_KI_MARK, REQ.ORI_ST_PRF_YN, REQ.AMT_RPT_YN, REQ.TOT_WT, REQ.TOT_PACK_CNT, REQ.TOT_PACK_UT, REQ.ARR_MARK, REQ.TRA_MET, REQ.TRA_CTA, REQ.FOD_ST_ISO, 
+            REQ.SHIP_NM, REQ.SHIP_ST_ISO, REQ.CON_COD, REQ.CON_CUR, REQ.CON_AMT, REQ.CON_KI, REQ.FRE_UT, REQ.FRE_AMT, REQ.INSU_UT, REQ.INSU_AMT, 
+            REQ.ADD_UT, REQ.ADD_AMT, REQ.SUB_UT, REQ.SUB_AMT, REQ.RPT_MARK, REQ.REQ_TXT, REQ.ATCH_FILE_ID, 
+            REQ.REG_ID, TO_CHAR(REQ.REG_DTM , 'YYYY-MM-DD') REG_DTM, REQ.MOD_ID, TO_CHAR(REQ.MOD_DTM , 'YYYY-MM-DD') MOD_DTM, 
+            
+            DEC.RPT_NO, TO_CHAR(TO_DATE(DEC.LIS_DAY, 'YYYYMMDD'), 'YYYY-MM-DD') LIS_DAY
+        FROM 
+            IMP_IMPREQ REQ 
+                LEFT OUTER JOIN IMP_CUSDEC929 DEC ON REQ.REQ_NO = DEC.IMP_REQ_NO
+        WHERE 
+            1 = 1 
+            AND (
+                CASE 
+                    WHEN #{USR_SESSION.authCd} = 'SELLER' THEN DECODE(REQ.SELLER_ID, #{USR_SESSION.userId}, 1, 0)
+                    WHEN #{USR_SESSION.authCd} = 'CUSTOMS' THEN DECODE(REQ.RPT_MARK, #{USR_SESSION.applicantId}, 1, 0)
+                    ELSE 0
+                END) = 1
+        <if test="F_DTM != null and F_DTM != ''">
+            AND 
+         	<if test='SEARCH_DTM == "REG_DTM"'>
+                REQ.REG_DTM &gt;= TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND REQ.REG_DTM &lt;= TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+         	</if>
+         	<if test='SEARCH_DTM == "MOD_DTM"'>
+                REQ.MOD_DTM &gt;= TO_DATE(#{F_DTM}||'000000', 'YYYYMMDDHH24MISS') AND REQ.MOD_DTM &lt;= TO_DATE(#{T_DTM}||'235959', 'YYYYMMDDHH24MISS')
+         	</if>                   
+        </if>
+        <if test="STATUS != null and STATUS != ''">
+            AND DEC.IMP_REQ_NO IS 
+            <if test='STATUS == "RG"'>
+                NULL
+            </if>  
+            <if test='STATUS == "RR"'>
+                NOT NULL 
+            </if>                  
+        </if>               
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            AND 
+            <if test='SEARCH_COL == "REQ_NO"'>
+                REQ_NO
+            </if>
+            <if test='SEARCH_COL == "ORDER_ID"'>
+                ORDER_ID
+            </if>      
+            <if test='SEARCH_COL == "IMP_FIRM"'>
+                IMP_FIRM
+            </if>        
+            <if test='SEARCH_COL == "IMP_TGNO"'>
+                IMP_TGNO
+            </if>
+            = #{SEARCH_TXT}                                                       
+        </if>
+        <if test="REQ_NO != null and REQ_NO != ''">
+            AND REQ_NO = #{REQ_NO}                                                       
+        </if>            
+        ORDER BY REQ_NO DESC
+    </select>
+    
+    <select id="selectImpReqDupChk" parameterType="map" resultType="map">
+        SELECT  
+            REQ_NO
+        FROM 
+            IMP_IMPREQ
+        WHERE 
+            ORDER_ID = #{ORDER_ID} 
+        <if test="REQ_NO != null and REQ_NO != ''">
+            AND REQ_NO != #{REQ_NO}                                                       
+        </if>      
+            AND SELLER_ID = NVL(#{USR_SESSION.userId}, #{SELLER_ID})
+    </select>     
+
+    <delete id="deleteImpReq" parameterType="map">
+        DELETE 
+            IMP_IMPREQ REQ 
+        WHERE 
+            NOT EXISTS(SELECT IMP_REQ_NO FROM IMP_CUSDEC929 DEC WHERE DEC.IMP_REQ_NO = REQ.REQ_NO) 
+            AND REQ_NO = #{REQ_NO}        
+    </delete>
+    
+    <select id="selectImpReqItem" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY SEQ_NO DESC) RNUM, 
+            REQ_NO, SEQ_NO, EXP_SIL, HS_NO, ORI_ST_MARK1, ITEM_DESC, SUN_WT, SUN_UT, MODEL_DESC, COMPOENT1, 
+            QTY, QTY_UT, USE_QTY, PRICE, AMT, GS_YN, VAT_YN, STATUS, EXP_RAN_NO, 
+            EXP_RPT_NO, COMPOENT2, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM 
+        FROM 
+            IMP_IMPREQ_ITEM
+        WHERE 
+            REQ_NO = #{REQ_NO}                
+        ORDER BY SEQ_NO DESC
+    </select>    
+    
+    <select id="selectImpReqRan" parameterType="map" resultType="map">
+		SELECT 
+			REQ_NO, LPAD(ROWNUM, 3, '0') RAN_NO, HS_NO, HS_NO HS, STD_GNAME, EXC_GNAME, TAX_USG_USD, QTY, ORI_ST_MARK1, 
+			GS_YN, CASE GS_YN WHEN 'Y' THEN 'A' ELSE '' END GS_RMV_DIVI, 
+			VAT_YN, CASE VAT_YN WHEN 'Y' THEN 'B' ELSE 'A' END VAT_DIVI 
+		FROM (
+			SELECT 
+				REQ_NO, HS_NO, MAX(ITEM_DESC) STD_GNAME, SUBSTR(MAX(MODEL_DESC),1,50) EXC_GNAME, SUM(PRICE * USE_QTY)  TAX_USG_USD, 
+				SUM(USE_QTY) QTY, MAX(ORI_ST_MARK1) ORI_ST_MARK1, GS_YN, VAT_YN 
+			FROM 
+				IMP_IMPREQ_ITEM
+			WHERE 
+				REQ_NO = #{REQ_NO} 
+  			GROUP BY REQ_NO, HS_NO, GS_YN, VAT_YN
+  		)
+    </select>     
+    
+    <select id="selectImpReqRanItem" parameterType="map" resultType="map">
+		SELECT 
+			ITEM.REQ_NO, RAN.RAN_NO, LPAD(ROWNUM, 2, '0') SIL, 
+			SUBSTR(ITEM.MODEL_DESC,1,30) IMP_GNAME1, SUBSTR(ITEM.MODEL_DESC,31,30) IMP_GNAME2, SUBSTR(ITEM.MODEL_DESC,61,30) IMP_GNAME3, 
+			ITEM.COMPOENT1, ITEM.COMPOENT2, 
+			ITEM.USE_QTY QTY, ITEM.QTY_UT  UT, ITEM.PRICE UPI, ITEM.AMT 
+		FROM 
+			IMP_IMPREQ_ITEM ITEM, 
+			(SELECT #{REQ_NO} REQ_NO, #{HS_NO} HS_NO, #{GS_YN} GS_YN, #{VAT_YN} VAT_YN, #{RAN_NO} RAN_NO FROM DUAL) RAN 
+		WHERE 
+			ITEM.REQ_NO = RAN.REQ_NO
+			AND ITEM.HS_NO  = RAN.HS_NO
+			AND ITEM.GS_YN  = RAN.GS_YN
+			AND ITEM.VAT_YN = RAN.VAT_YN
+    </select>     
+         
+    <select id="selectImpReqRanExp" parameterType="map" resultType="map">
+		SELECT 
+			ITEM.REQ_NO, RAN.RAN_NO, LPAD(ROWNUM, 2, '0') SIL, ITEM.EXP_RPT_NO EXPCD, ITEM.EXP_RAN_NO EXPRANNO, 
+			ITEM.EXP_SIL EXPSILNO, ITEM.USE_QTY QTY, ITEM.QTY_UT 
+		FROM 
+			IMP_IMPREQ_ITEM ITEM, 
+			(SELECT #{REQ_NO} REQ_NO, #{HS_NO} HS_NO, #{GS_YN} GS_YN, #{VAT_YN} VAT_YN, #{RAN_NO} RAN_NO FROM DUAL) RAN 
+		WHERE 
+			ITEM.REQ_NO = RAN.REQ_NO
+			AND ITEM.HS_NO  = RAN.HS_NO
+			AND ITEM.GS_YN  = RAN.GS_YN
+			AND ITEM.VAT_YN = RAN.VAT_YN 
+    </select>  
+    
+    <select id="selectCustoms" parameterType="string" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY AUTH_CD DESC) RNUM, 
+            APPLICANT_ID CODE, USER_NM CODE_NM, EMAIL
+        FROM 
+            CMM_USER
+        WHERE 
+            AUTH_CD = 'CUSTOMS'           
+		<if test="value != null and value != ''">
+			AND APPLICANT_ID = #{value}
+		</if>                 
+        ORDER BY AUTH_CD DESC
+    </select>   
+    
+    <insert id="insertImpReq" parameterType="map">
+        INSERT INTO IMP_IMPREQ (
+            REQ_NO, ORDER_ID, SELLER_ID, CUS, SEC, MAS_BLNO, BLNO, MRN_NO, IMP_FIRM, IMP_TGNO, IMP_DIVI, 
+            NAB_FIRM, NAB_NAME, NAB_PA_MARK, NAB_ADDR, NAB_TGNO, NAB_SDNO, NAB_TELNO, NAB_EMAIL, SUP_FIRM, SUP_ST, SUP_MARK, 
+            LEV_FORM, RPT_DIVI_MARK, EXC_DIVI_MARK, IMP_KI_MARK, ORI_ST_PRF_YN, AMT_RPT_YN, TOT_WT, TOT_PACK_CNT, TOT_PACK_UT, ARR_MARK, 
+            TRA_MET, TRA_CTA, FOD_ST_ISO, SHIP_NM, SHIP_ST_ISO, CON_COD, CON_CUR, CON_AMT, CON_KI, FRE_UT, 
+            FRE_AMT, INSU_UT, INSU_AMT, ADD_UT, ADD_AMT, SUB_UT, SUB_AMT, RPT_MARK, REQ_TXT, 
+			REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		)VALUES(
+			#{REQ_NO}, #{ORDER_ID}, #{SELLER_ID}, #{CUS}, #{SEC}, #{MAS_BLNO}, #{BLNO}, #{MRN_NO}, #{IMP_FIRM}, #{IMP_TGNO}, #{IMP_DIVI}, 
+			#{NAB_FIRM}, #{NAB_NAME}, #{NAB_PA_MARK}, #{NAB_ADDR}, #{NAB_TGNO}, #{NAB_SDNO}, #{NAB_TELNO}, #{NAB_EMAIL}, #{SUP_FIRM}, #{SUP_ST}, #{SUP_MARK}, 
+			#{LEV_FORM}, #{RPT_DIVI_MARK}, #{EXC_DIVI_MARK}, #{IMP_KI_MARK}, #{ORI_ST_PRF_YN}, #{AMT_RPT_YN}, #{TOT_WT}, #{TOT_PACK_CNT}, #{TOT_PACK_UT}, #{ARR_MARK}, 
+			#{TRA_MET}, #{TRA_CTA}, #{FOD_ST_ISO}, #{SHIP_NM}, #{SHIP_ST_ISO}, #{CON_COD}, #{CON_CUR}, #{CON_AMT}, #{CON_KI}, #{FRE_UT}, 
+			#{FRE_AMT}, #{INSU_UT}, #{INSU_AMT}, #{ADD_UT}, #{ADD_AMT}, #{SUB_UT}, #{SUB_AMT}, #{RPT_MARK}, #{REQ_TXT}, 
+			NVL(#{USR_SESSION.userId}, #{SELLER_ID}), SYSDATE, NVL(#{USR_SESSION.userId}, #{SELLER_ID}), SYSDATE
+		)
+    </insert>
+  
+    <update id="updateImpReq" parameterType="map">
+        UPDATE
+        	IMP_IMPREQ
+        SET
+			SELLER_ID = #{SELLER_ID},
+			ORDER_ID = #{ORDER_ID},
+			CUS = #{CUS},
+			SEC = #{SEC},
+			MAS_BLNO = #{MAS_BLNO},
+			BLNO = #{BLNO},
+			MRN_NO = #{MRN_NO},
+			IMP_CODE = #{IMP_CODE},
+			IMP_FIRM = #{IMP_FIRM},
+			IMP_TGNO = #{IMP_TGNO},
+			IMP_DIVI = #{IMP_DIVI},
+			NAB_CODE = #{NAB_CODE},
+			NAB_FIRM = #{NAB_FIRM},
+			NAB_NAME = #{NAB_NAME},
+			NAB_PA_MARK = #{NAB_PA_MARK},
+			NAB_ADDR = #{NAB_ADDR},
+			NAB_TGNO = #{NAB_TGNO},
+			NAB_SDNO = #{NAB_SDNO},
+			NAB_TELNO = #{NAB_TELNO},
+			NAB_EMAIL = #{NAB_EMAIL},
+			SUP_FIRM = #{SUP_FIRM},
+			SUP_ST = #{SUP_ST},
+			SUP_MARK = #{SUP_MARK},
+			LEV_FORM = #{LEV_FORM},
+			RPT_DIVI_MARK = #{RPT_DIVI_MARK},
+			EXC_DIVI_MARK = #{EXC_DIVI_MARK},
+			IMP_KI_MARK = #{IMP_KI_MARK},
+			ORI_ST_PRF_YN = #{ORI_ST_PRF_YN},
+			AMT_RPT_YN = #{AMT_RPT_YN},
+			TOT_WT = #{TOT_WT},
+			TOT_PACK_CNT = #{TOT_PACK_CNT},
+			TOT_PACK_UT = #{TOT_PACK_UT},
+			ARR_MARK = #{ARR_MARK},
+			TRA_MET = #{TRA_MET},
+			TRA_CTA = #{TRA_CTA},
+			FOD_ST_ISO = #{FOD_ST_ISO},
+			SHIP_NM = #{SHIP_NM},
+			SHIP_ST_ISO = #{SHIP_ST_ISO},
+			CON_COD = #{CON_COD},
+			CON_CUR = #{CON_CUR},
+			CON_AMT = #{CON_AMT},
+			CON_KI = #{CON_KI},
+			FRE_UT = #{FRE_UT},
+			FRE_AMT = #{FRE_AMT},
+			INSU_UT = #{INSU_UT},
+			INSU_AMT = #{INSU_AMT},
+			ADD_UT = #{ADD_UT},
+			ADD_AMT = #{ADD_AMT},
+			SUB_UT = #{SUB_UT},
+			SUB_AMT = #{SUB_AMT},
+			RPT_MARK = #{RPT_MARK},
+			REQ_TXT = #{REQ_TXT},
+			MOD_ID = #{USR_SESSION.userId},
+			MOD_DTM = SYSDATE         	
+        WHERE 
+            REQ_NO = #{REQ_NO}        
+    </update>
+      
+    <update id="updateImpReqDownload" parameterType="string">
+        UPDATE
+        	IMP_IMPREQ
+        SET
+			DOWN_YN = 'Y', 
+			MOD_ID = #{USR_SESSION.userId},
+			MOD_DTM = SYSDATE         	
+        WHERE 
+            REQ_NO = #{value}        
+    </update>
+
+    <delete id="deleteImpReqItem" parameterType="map">
+        DELETE 
+            IMP_IMPREQ_ITEM REQ_ITEM 
+        WHERE 
+            NOT EXISTS(SELECT IMP_REQ_NO FROM IMP_CUSDEC929 DEC WHERE DEC.IMP_REQ_NO = REQ_ITEM.REQ_NO) 
+            AND REQ_ITEM.REQ_NO = #{REQ_NO}
+		<if test="SEQ_NO != null and SEQ_NO != ''">
+			AND REQ_ITEM.SEQ_NO = #{SEQ_NO}
+		</if>                        
+    </delete>  
+          
+    <insert id="insertImpReqItem" parameterType="map">
+		INSERT INTO IMP_IMPREQ_ITEM (
+			REQ_NO, SEQ_NO, 
+			EXP_RPT_NO, EXP_RAN_NO, EXP_SIL, HS_NO, ORI_ST_MARK1, 
+			ITEM_DESC, SUN_WT, SUN_UT, MODEL_DESC, 
+			COMPOENT1, COMPOENT2, 
+			QTY, QTY_UT, USE_QTY, PRICE, AMT, 
+			GS_YN, VAT_YN, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) 
+		SELECT 
+  			#{REQ_NO} REQ_NO, (SELECT NVL(MAX(TO_NUMBER(SEQ_NO)), 0) + 1 FROM IMP_IMPREQ_ITEM WHERE REQ_NO = #{REQ_NO}) SEQ_NO, 
+  			RAN.RPT_NO EXP_RPT_NO, RAN.RAN_NO EXP_RAN_NO, ITEM.SIL EXP_SIL, RAN.HS HS_NO, RAN.ORI_ST_MARK1 ORI_ST_MARK1, 
+			RAN.STD_GNM ITEM_DESC, RAN.SUN_WT SUN_WT, 'KG' SUN_UT, ITEM.GNM MODEL_DESC, 
+			SUBSTR(ITEM.COMP, 1,35) COMPOENT1, SUBSTR(ITEM.COMP, 36, 35) COMPOENT2, 
+			ITEM.QTY QTY, ITEM.QTY_UT QTY_UT, ITEM.QTY USE_QTY, ITEM.PRICE PRICE, ITEM.AMT AMT, 
+			'N' GS_YN, 'N' VAT_YN,  #{USR_SESSION.userId} REG_ID, SYSDATE REG_DTM, #{USR_SESSION.userId} MOD_ID, SYSDATE MOD_DTM
+		FROM 
+			EXP_CUSDEC830 MST 
+				JOIN EXP_CUSDEC830_RAN RAN ON MST.RPT_NO = RAN.RPT_NO AND MST.RPT_SEQ = RAN.RPT_SEQ 
+				JOIN EXP_CUSDEC830_RAN_ITEM ITEM ON RAN.RPT_NO = ITEM.RPT_NO AND RAN.RPT_SEQ = ITEM.RPT_SEQ AND RAN.RAN_NO = ITEM.RAN_NO
+		WHERE 
+			MST.RPT_SEQ = '00' 
+			AND MST.EXP_LIS_DAY IS NOT NULL 
+			AND ITEM.RPT_NO = #{RPT_NO} AND ITEM.RAN_NO = #{RAN_NO} AND ITEM.SIL = #{SIL}
+    </insert>
+          
+    <insert id="insertImpReqItem_Api" parameterType="map">
+		INSERT INTO IMP_IMPREQ_ITEM (
+			REQ_NO, SEQ_NO, 
+			EXP_RPT_NO, EXP_RAN_NO, EXP_SIL, HS_NO, ORI_ST_MARK1, 
+			ITEM_DESC, SUN_WT, SUN_UT, MODEL_DESC, 
+			COMPOENT1, COMPOENT2, 
+			QTY, QTY_UT, USE_QTY, PRICE, AMT, 
+			GS_YN, VAT_YN, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) 
+		SELECT 
+  			#{REQ_NO} REQ_NO, (SELECT NVL(MAX(TO_NUMBER(SEQ_NO)), 0) + 1 FROM IMP_IMPREQ_ITEM WHERE REQ_NO = #{REQ_NO}) SEQ_NO, 
+  			RAN.RPT_NO EXP_RPT_NO, RAN.RAN_NO EXP_RAN_NO, ITEM.SIL EXP_SIL, RAN.HS HS_NO, RAN.ORI_ST_MARK1 ORI_ST_MARK1, 
+			RAN.STD_GNM ITEM_DESC, RAN.SUN_WT SUN_WT, 'KG' SUN_UT, ITEM.GNM MODEL_DESC, 
+			SUBSTR(ITEM.COMP, 1,35) COMPOENT1, SUBSTR(ITEM.COMP, 36, 35) COMPOENT2, 
+			ITEM.QTY QTY, ITEM.QTY_UT QTY_UT, #{USE_QTY}, ITEM.PRICE PRICE, ITEM.AMT AMT, 
+			#{GS_YN}, #{VAT_YN},  #{SELLER_ID} REG_ID, SYSDATE REG_DTM, #{SELLER_ID} MOD_ID, SYSDATE MOD_DTM
+		FROM 
+			EXP_CUSDEC830 MST 
+				JOIN EXP_CUSDEC830_RAN RAN ON MST.RPT_NO = RAN.RPT_NO AND MST.RPT_SEQ = RAN.RPT_SEQ 
+				JOIN EXP_CUSDEC830_RAN_ITEM ITEM ON RAN.RPT_NO = ITEM.RPT_NO AND RAN.RPT_SEQ = ITEM.RPT_SEQ AND RAN.RAN_NO = ITEM.RAN_NO
+		WHERE 
+			MST.RPT_SEQ = '00' 
+			AND MST.EXP_LIS_DAY IS NOT NULL 
+			AND MST.EXP_SDNO = (SELECT NAB_SDNO FROM IMP_IMPREQ WHERE REQ_NO = #{REQ_NO}) 
+			AND ITEM.RPT_NO = #{EXP_RPT_NO} AND ITEM.RAN_NO = #{EXP_RAN_NO} AND ITEM.SIL = #{EXP_SIL}
+			AND MST.TA_ST_ISO = (SELECT FOD_ST_ISO FROM IMP_IMPREQ WHERE REQ_NO = #{REQ_NO})
+			AND NOT EXISTS(SELECT 1 FROM IMP_IMPREQ_ITEM WHERE REQ_NO = #{REQ_NO} AND EXP_RPT_NO = RAN.RPT_NO AND EXP_RAN_NO = RAN.RAN_NO AND EXP_SIL = ITEM.SIL)
+    </insert>    
+    
+    <update id="updateImpReqItem" parameterType="map">
+        UPDATE 
+        	IMP_IMPREQ_ITEM
+		SET 
+			USE_QTY = #{USE_QTY},
+			GS_YN = #{GS_YN}, 
+			VAT_YN = #{VAT_YN}, 						 
+			MOD_ID = #{USR_SESSION.userId}, 
+			MOD_DTM = SYSDATE
+		WHERE 
+			REQ_NO = #{REQ_NO}
+			AND SEQ_NO = #{SEQ_NO}
+    </update> 
+
+    <update id="updateImpReqFileAttchId" parameterType="map">
+        UPDATE 
+        	IMP_IMPREQ
+		SET 
+			ATCH_FILE_ID = #{ATCH_FILE_ID}, 
+			MOD_ID = #{USR_SESSION.userId}, 
+			MOD_DTM = SYSDATE
+		WHERE 
+			REQ_NO = #{REQ_NO}
+    </update>   
+         
+    <select id="selectExpItem" parameterType="map" resultType="map">
+		SELECT 
+			ROW_NUMBER() OVER (ORDER BY MST.EXP_LIS_DAY DESC) RNUM, 
+			#{REQ_NO} REQ_NO, 
+			#{REGNO} REGNO, 
+  			RAN.RPT_NO, RAN.RAN_NO, ITEM.SIL, RAN.HS, MST.EXP_LIS_DAY, MST.TA_ST_ISO, 
+  			ITEM.GNM, ITEM.QTY, ITEM.QTY_UT, ITEM.QTY USE_QTY, ITEM.PRICE, ITEM.AMT
+		FROM 
+			EXP_CUSDEC830 MST 
+				JOIN EXP_CUSDEC830_RAN RAN ON MST.RPT_NO = RAN.RPT_NO AND MST.RPT_SEQ = RAN.RPT_SEQ 
+				JOIN EXP_CUSDEC830_RAN_ITEM ITEM ON RAN.RPT_NO = ITEM.RPT_NO AND RAN.RPT_SEQ = ITEM.RPT_SEQ AND RAN.RAN_NO = ITEM.RAN_NO
+		WHERE 
+			MST.RPT_SEQ = '00' 
+			AND MST.EXP_SDNO = #{USR_SESSION.bizNo} 	
+			AND MST.EXP_LIS_DAY IS NOT NULL 
+			AND MST.TA_ST_ISO = #{FOD_ST_ISO}
+        <if test="REQ_NO != null and REQ_NO != ''">
+			AND NOT EXISTS(SELECT 1 FROM IMP_IMPREQ_ITEM ITEM WHERE REQ_NO = #{REQ_NO} AND ITEM.EXP_RPT_NO = RAN.RPT_NO AND ITEM.EXP_RAN_NO = RAN.RAN_NO AND ITEM.EXP_SIL = ITEM.SIL)
+        </if>		
+        <if test="REGNO != null and REGNO != ''">
+			AND NOT EXISTS(SELECT 1 FROM IMP_KOTRA_RETURN_EXP ITEM WHERE REQ_NO = #{REQ_NO} AND ITEM.RPT_NO = RAN.RPT_NO AND ITEM.RAN_NO = RAN.RAN_NO AND ITEM.SIL = ITEM.SIL)
+        </if>	        		
+        <if test="F_EXP_LIS_DAY != null and F_EXP_LIS_DAY != ''">
+            AND MST.EXP_LIS_DAY &gt;= #{F_EXP_LIS_DAY} AND MST.EXP_LIS_DAY &lt;= #{T_EXP_LIS_DAY}
+        </if>		
+        <if test="RPT_NO != null and RPT_NO != ''">
+            AND MST.RPT_NO LIKE #{RPT_NO} || '%'
+        </if>	
+        ORDER BY MST.EXP_LIS_DAY DESC        	
+    </select> 
+    
+    <sql id="impRes">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY CUSDEC.RPT_DAY DESC) RNUM, 
+            CUSDEC.RPT_NO, CUSDEC.IMP_REQ_NO, CUSDEC.RPT_DAY, CUSDEC.LIS_DAY, CUSDEC.BLNO, CUSDEC.BL_YN, CUSDEC.MAS_BLNO, 
+            CUSDEC.MRN, CUSDEC.MSN, CUSDEC.HSN, CUSDEC.MRN || CUSDEC.MSN || CUSDEC.HSN MRN_MSN_HSN, CUSDEC.RPT_FIRM, CUSDEC.RPT_NAME, CUSDEC.RPT_TELNO, CUSDEC.RPT_EMAIL, CUSDEC.RPT_TELNO_EXTENSION, 
+            CUSDEC.IMP_FIRM, CUSDEC.IMP_TGNO, CUSDEC.IMP_DIVI, 
+            CUSDEC.NAB_FIRM, CUSDEC.NAB_NAME, CUSDEC.NAB_TGNO, CUSDEC.NAB_SDNO, CUSDEC.NAB_TELNO, CUSDEC.NAB_EMAIL, CUSDEC.NAB_PA_MARK, CUSDEC.NAB_ADDR1, CUSDEC.NAB_BLDG_NO, CUSDEC.NAB_ROAD_CD,
+            CUSDEC.SUP_FIRM, CUSDEC.SUP_MARK, CUSDEC.SUP_ST,  
+            CUSDEC.CUS, CUSDEC.SEC, CUSDEC.RPT_DIVI_MARK, CUSDEC.EXC_DIVI_MARK, CUSDEC.IMP_KI_MARK, CUSDEC.LEV_FORM, CUSDEC.ORI_ST_PRF_YN, CUSDEC.AMT_RPT_YN, 
+            CUSDEC.ARR_MARK, CUSDEC.TRA_MET, CUSDEC.TRA_CTA, CUSDEC.SHIP, CUSDEC.ST_CODE, CUSDEC.ARR_DAY, CUSDEC.INC_DAY, CUSDEC.TRA_CHF_MARK, 
+            CUSDEC.FOD_MARK, CUSDEC.CON_COD, CUSDEC.CON_CUR, CUSDEC.CON_AMT, CUSDEC.CHK_PA_MARK, CUSDEC.CHK_PA, CUSDEC.CHK_PA_NAME, CUSDEC.TOT_RAN_CNT, 
+            CUSDEC.TOT_TAX_KRW, CUSDEC.TOT_TAX_USD, CUSDEC.TOT_GS, CUSDEC.TOT_TS, CUSDEC.TOT_HOF, CUSDEC.TOT_GT, CUSDEC.TOT_KY, CUSDEC.TOT_NT, CUSDEC.TOT_VAT, CUSDEC.TOT_TAX_SUM,
+			CUSDEC.VAT_TAX_CT, CUSDEC.VAT_FREE_CT, CUSDEC.TOT_DLY_TAX, CUSDEC.TOT_ADD_TAX, CUSDEC.NAB_NO, CUSDEC.NAB_DELI_DAY, CUSDEC.SP_DELI, 
+            CUSDEC.TOT_WT, CUSDEC.TOT_PACK_CNT, CUSDEC.TOT_PACK_UT, CUSDEC.CON_KI, CUSDEC.CON_RATE, CUSDEC.CON_RATE_USD, 
+            CUSDEC.FRE_KRW, CUSDEC.INSU_KRW, CUSDEC.AD_CST_KRW, CUSDEC.SUB_CST_KRW, 
+            CUSDEC.REG_ID, TO_CHAR(CUSDEC.REG_DTM , 'YYYY-MM-DD') REG_DTM, CUSDEC.MOD_ID, TO_CHAR(CUSDEC.MOD_DTM , 'YYYY-MM-DD') MOD_DTM
+        FROM 
+            IMP_CUSDEC929 CUSDEC     
+    </sql>
+    
+    <select id="selectImpRes" parameterType="map" resultType="map">
+        <include refid="impRes" />
+        WHERE 
+            1 = 1 
+            AND (
+                CASE 
+                    WHEN #{USR_SESSION.authCd} = 'SELLER' THEN DECODE(CUSDEC.IMP_TGNO, #{USR_SESSION.tgNo}, 1, 0)
+                    WHEN #{USR_SESSION.authCd} = 'CUSTOMS' THEN INSTR(CUSDEC.RPT_NO, #{USR_SESSION.applicantId})
+                    ELSE 0
+                END) = 1
+        <if test="F_DTM != null and F_DTM != ''">
+            AND 
+         	<if test='SEARCH_DTM == "RPT_DAY"'>
+				CUSDEC.RPT_DAY &gt;= #{F_DTM} AND CUSDEC.RPT_DAY &lt;= #{T_DTM}         	
+         	</if>
+         	<if test='SEARCH_DTM == "LIS_DAY"'>
+                CUSDEC.LIS_DAY &gt;= #{F_DTM} AND CUSDEC.LIS_DAY &lt;= #{T_DTM}      
+         	</if>                   
+        </if>                
+        <if test="RPT_NO != null and RPT_NO != ''">
+            AND CUSDEC.RPT_NO LIKE #{RPT_NO} || '%'                                                       
+        </if>        
+        <if test="IMP_REQ_NO != null and IMP_REQ_NO != ''">
+            AND CUSDEC.IMP_REQ_NO LIKE #{IMP_REQ_NO} || '%'                                                    
+        </if>            
+        <if test="ORDER_ID != null and ORDER_ID != ''">
+            AND CUSDEC.IMP_REQ_NO LIKE #{IMP_REQ_NO} || '%'                                                    
+        </if>             
+        ORDER BY CUSDEC.RPT_DAY DESC
+    </select> 
+    
+	<select id="selectImpRes_Api" parameterType="map" resultType="map">
+        <include refid="impRes" />
+        WHERE 
+            IMP_REQ_NO = (SELECT REQ_NO FROM IMP_IMPREQ WHERE SELLER_ID = #{SELLER_ID} AND ORDER_ID = #{ORDER_ID})
+    </select> 
+    
+    <select id="selectImpResRan" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY RAN_NO ASC) RNUM, 
+            RPT_NO, RAN_NO, HS, STD_GNAME, EXC_GNAME, STD_CODE, MODEL_GNAME, ATT_YN, FRE_RMV_DIVI, FRE_CUR, FRE_AMT, 
+            FRE_KRW, INSU_CUR, INSU_AMT, INSU_KRW, AD_CUR, AD_AMT, AD_CST, SUB_CUR, SUB_AMT, SUB_CST, 
+            TAX_KRW, TAX_USD, TAX_USG_KRW, TAX_USG_USD, SUN_WT, SUN_UT, QTY, QTY_UT, REF_WT, REF_UT, 
+            CS_CHK_MARK, CS_CHK_COT, CHK_MET_MARK, CHK_MET_COT, AFT_CHK_CHF1, AFT_CHK_CHF2, AFT_CHK_CHF3, ORI_ST_MARK1, ORI_ST_SHT, ORI_ST_MARK2, 
+            ORI_ST_MARK3, ORI_ST_MARK4, ORI_ST_DAY, ORI_ST_NO, ORI_ST_CHF, SP_TAX_BASIS, TAX_KI_DIVI, GS_DIVI, GS_RATE, UPI_TAX, 
+            GS_RMV_RATE, GS, GS_RMV, GS_RMV_MARK, GS_RMV_DIVI, SEND_RATE, NG_DIVI, NG_KI_DIVI, NG_MARK, NG_RATE, 
+            NG_RMV_AMT, NG, TS_FREE_MARK, TS_CET_SUB, TS, GT, HOF, KY_DIVI, KY_KI_DIVI, KY_RMV_AMT, 
+            KY_RATE, KY, NT_DIVI, NT_KI_DIVI, NT, NT_RATE, VAT_RATE, VAT_DIVI, VAT_KI_DIVI, VAT, 
+            VAT_RMV_MARK, VAT_RMV, VAT_RMV_RATE, GS_CET, VAT_TAX_CT RAN_VAT_TAX_CT, VAT_FREE_CT RAN_VAT_FREE_CT, SP_DELI, ROY_RATE, ROY_DIVI, 
+            ROY_AMT, CHK_MET_CH, DAM_AMT, TOT_SIZE_CNT, TOT_EXP_CNT, TOT_C4_CNT, YONGDO_NO, ORI_ST_STNCD, ORI_ST_STN, ORI_ST_NAME, 
+            ORI_ST_MARK5, ORI_ST_MARK6, ORI_ST_TOTQTY, ORI_ST_QTY, ORI_ST_TOTWT, ORI_ST_WT, ORI_ST_PARTYN, ITEMCD, ITEMCDSEND, ORI_ST_EXEMPT_CD, 
+            ORI_ST_EXEMPT_NM, ORI_ST_ISO, MG_DIVI, MG_RANNO, HOF_FREE_MARK, CS_REQ_MARK, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM
+        FROM 
+            IMP_CUSDEC929_RAN 
+        WHERE 
+            RPT_NO = #{RPT_NO}
+        ORDER BY RAN_NO ASC
+    </select> 
+    
+    <select id="selectImpResRanItem" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY SIL ASC) RNUM, 
+            RPT_NO, RAN_NO, SIL, RG_CODE, IMP_GNAME1, IMP_GNAME2, IMP_GNAME3, COMPOENT1, COMPOENT2, QTY, UT, UPI, AMT, REF_NO, D26_RPT_NO, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM
+        FROM 
+            IMP_CUSDEC929_RAN_ITEM 
+        WHERE 
+            RPT_NO = #{RPT_NO}
+            AND RAN_NO = #{RAN_NO} 
+        ORDER BY SIL ASC
+    </select>    
+             
+    <delete id="deleteImpRes" parameterType="map">
+        DELETE 
+            IMP_CUSDEC929  
+        WHERE 
+            RPT_NO = #{RPT_NO}
+    </delete> 
+         
+    <delete id="deleteImpResRan" parameterType="map">
+        DELETE 
+            IMP_CUSDEC929_RAN  
+        WHERE 
+            RPT_NO = #{RPT_NO}
+    </delete> 
+         
+    <delete id="deleteImpResRanItem" parameterType="map">
+        DELETE 
+            IMP_CUSDEC929_RAN_ITEM  
+        WHERE 
+            RPT_NO = #{RPT_NO}
+    </delete>   
+    
+    <insert id="insertImpRes" parameterType="map">
+        INSERT INTO IMP_CUSDEC929 (
+            IMP_REQ_NO, RPT_NO, RPT_DAY, CUS, SEC, BLNO, BL_YN, MRN, MSN, HSN, 
+            ARR_DAY, INC_DAY, LEV_FORM, RPT_FIRM, RPT_NAME, RPT_TELNO, RPT_EMAIL, IMP_CODE, IMP_FIRM, IMP_TGNO, 
+            IMP_DIVI, NAB_CODE, NAB_FIRM, NAB_NAME, NAB_PA_MARK, NAB_ADDR1, NAB_ADDR2, NAB_TGNO, NAB_SDNO, NAB_SDNO_DIVI, 
+            NAB_TELNO, NAB_EMAIL, OFF_FIRM, OFF_MARK, SUP_FIRM, SUP_ST, SUP_ST_SHT, SUP_MARK, TG_PLN_MARK, TG_PLN_COT, 
+            RPT_DIVI_MARK, RPT_DIVI_COT, EXC_DIVI_MARK, EXC_DIVI_COT, IMP_KI_MARK, IMP_KI_COT, ORI_ST_PRF_YN, AMT_RPT_YN, TOT_WT, TOT_UT, 
+            TOT_PACK_CNT, TOT_PACK_UT, ARR_MARK, ARR_NAME, TRA_MET, TRA_CTA, FOD_MARK, FOD_SHT, SHIP, ST_SHT, 
+            ST_CODE, MAS_BLNO, TRA_CHF_MARK, CHK_PA_MARK, CHK_PA, CHK_PA_NAME, TOT_RAN_CNT, CON_COD, CON_CUR, CON_RATE, 
+            CON_RATE_USD, CON_TOT_AMT, CON_KI, CON_KI_COT, CON_AMT, CON_GITA_AMT, TOT_TAX_USD, TOT_TAX_KRW, FRE_KRW, FRE1_KI, 
+            FRE1_AMT, INSU_KRW, INSU1_KI, INSU1_AMT, AD_DIVI, AD_CUR_KI, AD_CST_RATE, AD_CST_KRW, SUB_DIVI, SUB_CUR_KI, 
+            SUB_CST_RATE, SUB_CST_KRW, TOT_GS, TOT_TS, TOT_HOF, TOT_GT, TOT_KY, TOT_NT, TOT_VAT, 
+            TOT_DLY_TAX, TOT_ADD_TAX, TOT_TAX_SUM, ADD_TAX_GBN, NAB_NO, NAB_DELI_DAY, VAT_TAX_CT, VAT_FREE_CT, SP_DELI, SEND_DIVI, 
+            RES_FORM, CB_DIVI1, CB_DIVI2, CB_DIVI3, CB1, CB2, CB3, CB4, CB5, CB6, 
+            CB7, CB8, CB9, CUS_NOTICE, JU_NAME, JU_MARK, RC_DAY, LIS_DAY, FILE_NO, SEND, 
+            RECE, MD_REFE_NO, SN_DIVI, BLYNCD, BLYNTXT, AMTFIXDAY, AMTNO_5SM, FWDMARK, FWDNAME, MODI_RPT, 
+			REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) VALUES(
+			#{IMP_REQ_NO}, #{RPT_NO}, #{RPT_DAY}, #{CUS}, #{SEC}, #{BLNO}, #{BL_YN}, #{MRN}, #{MSN}, #{HSN}, 
+			#{ARR_DAY}, #{INC_DAY}, #{LEV_FORM}, #{RPT_FIRM}, #{RPT_NAME}, #{RPT_TELNO}, #{RPT_EMAIL}, #{IMP_CODE}, #{IMP_FIRM}, #{IMP_TGNO}, 
+			#{IMP_DIVI}, #{NAB_CODE}, #{NAB_FIRM}, #{NAB_NAME}, #{NAB_PA_MARK}, #{NAB_ADDR1}, #{NAB_ADDR2}, #{NAB_TGNO}, #{NAB_SDNO}, #{NAB_SDNO_DIVI}, 
+			#{NAB_TELNO}, #{NAB_EMAIL}, #{OFF_FIRM}, #{OFF_MARK}, #{SUP_FIRM}, #{SUP_ST}, #{SUP_ST_SHT}, #{SUP_MARK}, #{TG_PLN_MARK}, #{TG_PLN_COT}, 
+			#{RPT_DIVI_MARK}, #{RPT_DIVI_COT}, #{EXC_DIVI_MARK}, #{EXC_DIVI_COT}, #{IMP_KI_MARK}, #{IMP_KI_COT}, #{ORI_ST_PRF_YN}, #{AMT_RPT_YN}, #{TOT_WT}, #{TOT_UT}, 
+			#{TOT_PACK_CNT}, #{TOT_PACK_UT}, #{ARR_MARK}, #{ARR_NAME}, #{TRA_MET}, #{TRA_CTA}, #{FOD_MARK}, #{FOD_SHT}, #{SHIP}, #{ST_SHT}, 
+			#{ST_CODE}, #{MAS_BLNO}, #{TRA_CHF_MARK}, #{CHK_PA_MARK}, #{CHK_PA}, #{CHK_PA_NAME}, #{TOT_RAN_CNT}, #{CON_COD}, #{CON_CUR}, #{CON_RATE}, 
+			#{CON_RATE_USD}, #{CON_TOT_AMT}, #{CON_KI}, #{CON_KI_COT}, #{CON_AMT}, #{CON_GITA_AMT}, #{TOT_TAX_USD}, #{TOT_TAX_KRW}, #{FRE_KRW}, #{FRE1_KI}, 
+			#{FRE1_AMT}, #{INSU_KRW}, #{INSU1_KI}, #{INSU1_AMT}, #{AD_DIVI}, #{AD_CUR_KI}, #{AD_CST_RATE}, #{AD_CST_KRW}, #{SUB_DIVI}, #{SUB_CUR_KI}, 
+			#{SUB_CST_RATE}, #{SUB_CST_KRW}, #{TOT_GS}, #{TOT_TS}, #{TOT_HOF}, #{TOT_GT}, #{TOT_KY}, #{TOT_NT}, #{TOT_VAT}, 
+			#{TOT_DLY_TAX}, #{TOT_ADD_TAX}, #{TOT_TAX_SUM}, #{ADD_TAX_GBN}, #{NAB_NO}, #{NAB_DELI_DAY}, #{VAT_TAX_CT}, #{VAT_FREE_CT}, #{SP_DELI}, #{SEND_DIVI}, 
+			#{RES_FORM}, #{CB_DIVI1}, #{CB_DIVI2}, #{CB_DIVI3}, #{CB1}, #{CB2}, #{CB3}, #{CB4}, #{CB5}, #{CB6}, 
+			#{CB7}, #{CB8}, #{CB9}, #{CUS_NOTICE}, #{JU_NAME}, #{JU_MARK}, #{RC_DAY}, #{LIS_DAY}, #{FILE_NO}, #{SEND}, 
+			#{RECE}, #{MD_REFE_NO}, #{SN_DIVI}, #{BLYNCD}, #{BLYNTXT}, #{AMTFIXDAY}, #{AMTNO_5SM}, #{FWDMARK}, #{FWDNAME}, #{MODI_RPT}, 
+			#{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE
+		)
+    </insert>
+    
+    <insert id="insertImpResRan" parameterType="map">
+        INSERT INTO IMP_CUSDEC929_RAN (
+            RPT_NO, RAN_NO, HS, STD_GNAME, EXC_GNAME, STD_CODE, MODEL_GNAME, ATT_YN, FRE_CUR, FRE_AMT, 
+            FRE_KRW, INSU_CUR, INSU_AMT, INSU_KRW, AD_CUR, AD_AMT, AD_CST, SUB_CUR, SUB_AMT, SUB_CST, 
+            TAX_KRW, TAX_USD, TAX_USG_KRW, TAX_USG_USD, SUN_WT, SUN_UT, QTY, QTY_UT, REF_WT, REF_UT, 
+            CS_CHK_MARK, CS_CHK_COT, CHK_MET_MARK, CHK_MET_COT, AFT_CHK_CHF1, AFT_CHK_CHF2, AFT_CHK_CHF3, ORI_ST_MARK1, ORI_ST_SHT, ORI_ST_MARK2, 
+            ORI_ST_MARK3, ORI_ST_MARK4, ORI_ST_DAY, ORI_ST_NO, ORI_ST_CHF, ORI_ST_STNCD, SP_TAX_BASIS, TAX_KI_DIVI, GS_DIVI, GS_RATE, 
+            UPI_TAX, GS_RMV_RATE, GS, GS_RMV, GS_RMV_MARK, GS_RMV_DIVI, SEND_RATE, NG_DIVI, NG_KI_DIVI, NG_MARK, 
+            NG_RATE, NG_RMV_AMT, NG, TS_FREE_MARK, TS_CET_SUB, TS, GT, HOF, KY_DIVI, KY_KI_DIVI, 
+            KY_RMV_AMT, KY_RATE, KY, NT_DIVI, NT_KI_DIVI, NT, NT_RATE, VAT_RATE, VAT_DIVI, VAT_KI_DIVI, 
+            VAT, VAT_RMV_MARK, VAT_RMV, VAT_RMV_RATE, GS_CET, VAT_TAX_CT, VAT_FREE_CT, SP_DELI, ROY_RATE, ROY_DIVI, 
+            ROY_AMT, CHK_MET_CH, DAM_AMT, TOT_SIZE_CNT, TOT_EXP_CNT, TOT_C4_CNT, YONGDO_NO, ORI_ST_STN, ORI_ST_NAME, 
+            ORI_ST_MARK5, ORI_ST_MARK6, ORI_ST_TOTQTY, ORI_ST_QTY, ORI_ST_TOTWT, ORI_ST_WT, ORI_ST_PARTYN, ITEMCD, ITEMCDSEND,  
+			REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) VALUES(
+			#{RPT_NO}, #{RAN_NO}, #{HS}, #{STD_GNAME}, #{EXC_GNAME}, #{STD_CODE}, #{MODEL_GNAME}, #{ATT_YN}, #{FRE_CUR}, #{FRE_AMT}, 
+			#{FRE_KRW}, #{INSU_CUR}, #{INSU_AMT}, #{INSU_KRW}, #{AD_CUR}, #{AD_AMT}, #{AD_CST}, #{SUB_CUR}, #{SUB_AMT}, #{SUB_CST}, 
+			#{TAX_KRW}, #{TAX_USD}, #{TAX_USG_KRW}, #{TAX_USG_USD}, #{SUN_WT}, #{SUN_UT}, #{QTY}, #{QTY_UT}, #{REF_WT}, #{REF_UT},  
+			#{CS_CHK_MARK}, #{CS_CHK_COT}, #{CHK_MET_MARK}, #{CHK_MET_COT}, #{AFT_CHK_CHF1}, #{AFT_CHK_CHF2}, #{AFT_CHK_CHF3}, #{ORI_ST_MARK1}, #{ORI_ST_SHT}, #{ORI_ST_MARK2}, 
+			#{ORI_ST_MARK3}, #{ORI_ST_MARK4}, #{ORI_ST_DAY}, #{ORI_ST_NO}, #{ORI_ST_CHF}, #{ORI_ST_STNCD}, #{SP_TAX_BASIS}, #{TAX_KI_DIVI}, #{GS_DIVI}, #{GS_RATE}, 
+			#{UPI_TAX}, #{GS_RMV_RATE}, #{GS}, #{GS_RMV}, #{GS_RMV_MARK}, #{GS_RMV_DIVI}, #{SEND_RATE}, #{NG_DIVI}, #{NG_KI_DIVI}, #{NG_MARK},  
+			#{NG_RATE}, #{NG_RMV_AMT}, #{NG}, #{TS_FREE_MARK}, #{TS_CET_SUB}, #{TS}, #{GT}, #{HOF}, #{KY_DIVI}, #{KY_KI_DIVI},  
+			#{KY_RMV_AMT}, #{KY_RATE}, #{KY}, #{NT_DIVI}, #{NT_KI_DIVI}, #{NT}, #{NT_RATE}, #{VAT_RATE}, #{VAT_DIVI}, #{VAT_KI_DIVI}, 
+			#{VAT}, #{VAT_RMV_MARK}, #{VAT_RMV}, #{VAT_RMV_RATE}, #{GS_CET}, #{VAT_TAX_CT}, #{VAT_FREE_CT}, #{SP_DELI}, #{ROY_RATE}, #{ROY_DIVI},  
+			#{ROY_AMT}, #{CHK_MET_CH}, #{DAM_AMT}, #{TOT_SIZE_CNT}, #{TOT_EXP_CNT}, #{TOT_C4_CNT}, #{YONGDO_NO}, #{ORI_ST_STN}, #{ORI_ST_NAME}, 
+			#{ORI_ST_MARK5}, #{ORI_ST_MARK6}, #{ORI_ST_TOTQTY}, #{ORI_ST_QTY}, #{ORI_ST_TOTWT}, #{ORI_ST_WT}, #{ORI_ST_PARTYN}, #{ITEMCD}, #{ITEMCDSEND},  
+			#{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE
+		)
+    </insert>    
+    
+    <insert id="insertImpResRanItem" parameterType="map">
+        INSERT INTO IMP_CUSDEC929_RAN_ITEM (
+            RPT_NO, RAN_NO, SIL, RG_CODE, IMP_GNAME1, IMP_GNAME2, IMP_GNAME3, COMPOENT1, COMPOENT2, QTY, UT, UPI, AMT, D26_RPT_NO,  
+			REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) VALUES(
+			#{RPT_NO}, #{RAN_NO}, #{SIL}, #{RG_CODE}, #{IMP_GNAME1}, #{IMP_GNAME2}, #{IMP_GNAME3}, #{COMPOENT1}, #{COMPOENT2}, #{QTY}, #{UT}, #{UPI}, #{AMT}, #{D26_RPT_NO},   
+			#{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE
+		)
+    </insert>     
+    
+    <select id="selectImpKotra" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY KOTRA.REGNO DESC) RNUM, 
+            KOTRA.REGNO, KOTRA.SELLER_ID, KOTRA.ORDER_ID, KOTRA.SERVICE_DIVI, KOTRA.RETERN_NM, 
+            KOTRA.EXP_RPT_NM, KOTRA.EXP_WAYBILL_NO, KOTRA.CONSIGNOR_NM, KOTRA.CONSIGNOR_ADDR, KOTRA.CONSIGNOR_TELNO, 
+            KOTRA.MD_NM, KOTRA.GOODS_NM, KOTRA.DELIVERY_FIRM, KOTRA.WAYBILL_NO, KOTRA.EXP_TYPE, 
+            KOTRA.REG_ID, TO_CHAR(KOTRA.REG_DTM , 'YYYY-MM-DD') REG_DTM, KOTRA.MOD_ID, TO_CHAR(KOTRA.MOD_DTM , 'YYYY-MM-DD') MOD_DTM
+        FROM 
+            IMP_KOTRA_RETURN KOTRA 
+        WHERE 
+            1 = 1 
+            AND KOTRA.SELLER_ID = #{USR_SESSION.userId} 
+        <if test="F_REG_DTM != null and F_REG_DTM != ''">
+            AND KOTRA.REG_DTM &gt;= TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND KOTRA.REG_DTM &lt;= TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            AND 
+            <if test='SEARCH_COL == "ORDER_ID"'>
+                ORDER_ID
+            </if>
+            <if test='SEARCH_COL == "EXP_WAYBILL_NO"'>
+                EXP_WAYBILL_NO
+            </if>      
+            <if test='SEARCH_COL == "WAYBILL_NO"'>
+                WAYBILL_NO
+            </if>        
+            <if test='SEARCH_COL == "GOODS_NM"'>
+                GOODS_NM
+            </if>
+            LIKE #{SEARCH_TXT} || '%'                                                       
+        </if> 
+        <if test="REGNO != null and REGNO != ''">
+        	AND KOTRA.REGNO = #{REGNO}
+        </if>               
+        ORDER BY KOTRA.REGNO DESC
+    </select>   
+               
+    <delete id="deleteImpKotra" parameterType="map">
+        DELETE 
+            IMP_KOTRA_RETURN  
+        WHERE 
+            REGNO = #{REGNO}
+    </delete>  
+    
+    <insert id="insertImpKotra" parameterType="map">
+    	<selectKey resultType="string" keyProperty="REGNO" order="BEFORE">
+    		SELECT 
+    			TO_CHAR(SYSDATE, 'YYYYMMDD') || LPAD(NVL(MAX(TO_NUMBER(SUBSTR(REGNO, 9))), 0) + 1, 4, '0') 
+    		FROM 
+    			IMP_KOTRA_RETURN 
+    		WHERE 
+    			REGNO LIKE TO_CHAR(SYSDATE, 'YYYYMMDD') || '%'
+    	</selectKey>
+        INSERT INTO IMP_KOTRA_RETURN (
+            REGNO, SELLER_ID, ORDER_ID, SERVICE_DIVI, RETERN_NM, EXP_RPT_NM, EXP_WAYBILL_NO, CONSIGNOR_NM, CONSIGNOR_ADDR, CONSIGNOR_TELNO, 
+            MD_NM, GOODS_NM, DELIVERY_FIRM, WAYBILL_NO, EXP_TYPE, 
+			REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		)VALUES(
+			#{REGNO}, #{USR_SESSION.userId}, #{ORDER_ID}, #{SERVICE_DIVI}, #{RETERN_NM}, #{EXP_RPT_NM:NVARCHAR}, #{EXP_WAYBILL_NO}, #{CONSIGNOR_NM:NVARCHAR}, #{CONSIGNOR_ADDR:NVARCHAR}, #{CONSIGNOR_TELNO}, 
+			#{MD_NM}, #{GOODS_NM:NVARCHAR}, #{DELIVERY_FIRM:NVARCHAR}, #{WAYBILL_NO}, #{EXP_TYPE}, 
+			#{USR_SESSION.userId}, SYSDATE, #{USR_SESSION.userId}, SYSDATE
+		)
+    </insert>    
+  
+    <update id="updateImpKotra" parameterType="map">
+        UPDATE
+        	IMP_KOTRA_RETURN
+        SET
+			SELLER_ID = #{USR_SESSION.userId}, 
+			ORDER_ID = #{ORDER_ID}, 
+			SERVICE_DIVI = #{SERVICE_DIVI}, 
+			RETERN_NM = #{RETERN_NM}, 
+			EXP_RPT_NM = #{EXP_RPT_NM:NVARCHAR}, 
+			EXP_WAYBILL_NO = #{EXP_WAYBILL_NO}, 
+			CONSIGNOR_NM = #{CONSIGNOR_NM:NVARCHAR}, 
+			CONSIGNOR_ADDR = #{CONSIGNOR_ADDR:NVARCHAR}, 
+			CONSIGNOR_TELNO = #{CONSIGNOR_TELNO}, 
+			MD_NM = #{MD_NM}, 
+			GOODS_NM = #{GOODS_NM:NVARCHAR}, 
+			DELIVERY_FIRM = #{DELIVERY_FIRM:NVARCHAR}, 
+			WAYBILL_NO = #{WAYBILL_NO}, 
+			EXP_TYPE = #{EXP_TYPE}, 
+			MOD_ID = #{USR_SESSION.userId},
+			MOD_DTM = SYSDATE         	
+        WHERE 
+            REGNO = #{REGNO} 
+    </update>
+    
+    <select id="selectImpKotraItem" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY SEQ_NO DESC) RNUM, 
+            REGNO, SEQ_NO, EXP_NM, RPT_NO, TOT_WT, TOT_PACK_CNT, TOT_PACK_UT, TOT_AMT, TOT_RAN, RAN_NO, 
+            SIL, HS, STD_GNM, EXC_GNM, MODEL_GNM, QTY, AMT_UT, PRICE, AMT, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM 
+        FROM 
+            IMP_KOTRA_RETURN_EXP
+        WHERE 
+            REGNO = #{REGNO}                
+        ORDER BY SEQ_NO DESC
+    </select>
+    
+    <delete id="deleteImpKotraItem" parameterType="map">
+        DELETE 
+            IMP_KOTRA_RETURN_EXP EXP  
+        WHERE 
+            EXP.REGNO = #{REGNO}
+		<if test="SEQ_NO != null and SEQ_NO != ''">
+			AND EXP.SEQ_NO = #{SEQ_NO}
+		</if>                        
+    </delete>  
+          
+    <insert id="insertImpKotraItem" parameterType="map">
+		INSERT INTO IMP_KOTRA_RETURN_EXP (
+			REGNO, SEQ_NO, 
+			EXP_NM, RPT_NO, TOT_WT, TOT_PACK_CNT, TOT_PACK_UT, 
+			TOT_AMT, TOT_RAN, RAN_NO, SIL, HS, 
+			STD_GNM, EXC_GNM, MODEL_GNM, QTY, AMT_UT, 
+			PRICE, AMT, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		) 
+		SELECT 
+  			#{REGNO} REGNO, (SELECT NVL(MAX(TO_NUMBER(SEQ_NO)), 0) + 1 FROM IMP_KOTRA_RETURN_EXP WHERE REGNO = #{REGNO}) SEQ_NO, 
+  			MST.EXP_BOSS_NAME, MST.RPT_NO, MST.TOT_WT, MST.TOT_PACK_CNT, MST.TOT_PACK_UT, 
+  			MST.TOT_RPT_KRW, MST.TOT_RAN, RAN.RAN_NO, ITEM.SIL, RAN.HS, 
+  			RAN.STD_GNM, RAN.EXC_GNM, RAN.MODEL_GNM, ITEM.QTY, MST.CUR, 
+  			ITEM.PRICE, ITEM.AMT, #{USR_SESSION.userId} REG_ID, SYSDATE REG_DTM, #{USR_SESSION.userId} MOD_ID, SYSDATE MOD_DTM
+		FROM 
+			EXP_CUSDEC830 MST 
+				JOIN EXP_CUSDEC830_RAN RAN ON MST.RPT_NO = RAN.RPT_NO AND MST.RPT_SEQ = RAN.RPT_SEQ 
+				JOIN EXP_CUSDEC830_RAN_ITEM ITEM ON RAN.RPT_NO = ITEM.RPT_NO AND RAN.RPT_SEQ = ITEM.RPT_SEQ AND RAN.RAN_NO = ITEM.RAN_NO
+		WHERE 
+			MST.RPT_SEQ = '00' 
+			AND MST.EXP_LIS_DAY IS NOT NULL 
+			AND ITEM.RPT_NO = #{RPT_NO} AND ITEM.RAN_NO = #{RAN_NO}
+    </insert>    
+    
+    <select id="selectImpKotraWms" parameterType="list" resultType="map">
+        SELECT
+            ROW_NUMBER() OVER (ORDER BY RTN.REGNO DESC, EXP.SEQ_NO DESC) RNUM,       
+            RTN.ORDER_ID, RTN.SERVICE_DIVI, RTN.RETERN_NM, RTN.EXP_RPT_NM, RTN.EXP_WAYBILL_NO, RTN.CONSIGNOR_NM, 
+            RTN.CONSIGNOR_ADDR, RTN.CONSIGNOR_TELNO, RTN.MD_NM, RTN.GOODS_NM, RTN.DELIVERY_FIRM, RTN.WAYBILL_NO, 
+            EXP.EXP_NM, EXP.RPT_NO, EXP.TOT_AMT, EXP.TOT_WT, EXP.TOT_PACK_CNT, EXP.TOT_RAN, EXP.RAN_NO, EXP.SIL, EXP.STD_GNM, EXP.EXC_GNM, EXP.MODEL_GNM, 
+            EXP.QTY, EXP.AMT_UT, EXP.PRICE, EXP.AMT, EXP.HS
+        FROM 
+            IMP_KOTRA_RETURN RTN 
+            	JOIN IMP_KOTRA_RETURN_EXP EXP ON RTN.REGNO = EXP.REGNO
+		WHERE
+			RTN.REGNO IN 
+        <foreach item="item" index="index" collection="list" open="(" separator=", " close=")">
+            #{item} 
+        </foreach>
+        ORDER BY RTN.REGNO DESC, EXP.SEQ_NO DESC
+    </select>    
+    
+    <select id="selectImpResult_Api" parameterType="map" resultType="map">
+        SELECT  
+        	DEC.RPT_NO, (CASE WHEN DEC.IMP_REQ_NO IS NOT NULL THEN '03' WHEN NVL(REQ.DOWN_YN, 'N') = 'Y' THEN '02' ELSE '01' END) STATUS, 
+        	DEC.LIS_DAY, DEC.TOT_TAX_KRW, DEC.TOT_GS, DEC.TOT_VAT, DEC.TOT_TAX_SUM
+        FROM 
+            IMP_IMPREQ REQ 
+                LEFT OUTER JOIN IMP_CUSDEC929 DEC ON REQ.REQ_NO = DEC.IMP_REQ_NO
+        WHERE 
+			REQ.SELLER_ID = #{SELLER_ID} AND REQ.ORDER_ID = #{ORDER_ID}
+    </select>    
+</mapper>

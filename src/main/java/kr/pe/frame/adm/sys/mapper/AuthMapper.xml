@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="auth">
+    <select	id="selectCmmAuth" parameterType="map" resultType="map">
+        SELECT   AUTH_CD
+                , AUTH_NM
+                , AUTH_EXPLAIN
+                , USE_YN
+         FROM CMM_AUTH
+        WHERE 1=1
+         <if test="AUTH_CD != NULL and AUTH_CD != ''">
+             AND AUTH_CD = #{AUTH_CD}
+         </if>
+    </select>
+
+    <select	id="selectCmmAuthMenu" parameterType="map" resultType="map">
+        SELECT   A.MENU_NM
+                , A.MENU_NM||'['||A.MENU_DIV||']' AS TREE_NM
+                , A.MENU_ID
+                , A.PMENU_ID
+                , A.MENU_LEVEL
+                , DECODE(A.AUTH_CD, NULL, '0', '1') AS CHK
+        FROM (
+                SELECT  MA.MENU_ID
+                        , MA.PMENU_ID
+                        , MA.MENU_NM
+                        , AU.AUTH_CD
+                        , MA.MENU_ORDR
+                        , MA.MENU_LEVEL
+                        , MA.MENU_DIV
+                 FROM   CMM_MENU_MAS MA, CMM_MENU_AUTH AU
+                WHERE  MA.MENU_ID    =  AU.MENU_ID(+)
+                  AND  AU.AUTH_CD(+) =  #{AUTH_CD}
+                  AND  (MA.MENU_LEVEL = 0  OR MA.MENU_DIV = #{MENU_DIV})
+              ) A
+        WHERE  	1 = 1
+        START  	WITH A.MENU_LEVEL = 0
+        CONNECT BY PRIOR A.MENU_ID = A.PMENU_ID
+        ORDER 	SIBLINGS BY A.MENU_ORDR
+    </select>
+
+    <select id="selectCmmMenuBtnAuth" parameterType="map" resultType="map">
+        SELECT  B.MENU_ID,
+                 B.BTN_ID,
+                 B.BTN_NM,
+                 DECODE(C.BTN_ID, NULL, '0', '1') AS CHK
+          FROM CMM_MENU_BTN B, CMM_MENU_BTN_AUTH C
+         WHERE B.MENU_ID = C.MENU_ID(+)
+           AND B.BTN_ID = C.BTN_ID(+)
+           AND B.MENU_ID = #{MENU_ID}
+           AND C.AUTH_CD(+) = #{AUTH_CD}
+    </select>
+
+    <select id="selectCmmAuthCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM CMM_AUTH
+         WHERE AUTH_CD = #{AUTH_CD}
+    </select>
+
+    <insert id="insertCmmAuth" parameterType="map">
+        INSERT INTO CMM_AUTH(
+            AUTH_CD
+            , AUTH_EXPLAIN
+            , AUTH_NM
+            , MOD_DTM
+            , MOD_ID
+            , REG_DTM
+            , REG_ID
+            , USE_YN
+        )VALUES(
+            #{AUTH_CD:VARCHAR }
+            , #{AUTH_EXPLAIN:VARCHAR }
+            , #{AUTH_NM:VARCHAR }
+            , SYSDATE
+            , #{MOD_ID:VARCHAR }
+            , SYSDATE
+            , #{REG_ID:VARCHAR }
+            , #{USE_YN:VARCHAR }
+        )
+    </insert>
+
+    <delete id="deleteCmmAuth" parameterType="map">
+        DELETE FROM CMM_AUTH
+        WHERE AUTH_CD = #{AUTH_CD}
+    </delete>
+
+    <update id="updateCmmAuth" parameterType="map">
+        UPDATE CMM_AUTH
+            SET AUTH_EXPLAIN  = #{AUTH_EXPLAIN}
+                , AUTH_NM     = #{AUTH_NM}
+                , MOD_DTM     = SYSDATE
+                , MOD_ID     = #{MOD_ID}
+                , USE_YN     = #{USE_YN}
+         WHERE AUTH_CD = #{AUTH_CD}
+    </update>
+
+    <delete id="deleteCmmMenuAuth" parameterType="map">
+        DELETE FROM CMM_MENU_AUTH
+        WHERE AUTH_CD = #{AUTH_CD}
+        <if test="MENU_ID != NULL and MENU_ID != ''">
+            AND MENU_ID = #{MENU_ID}
+        </if>
+    </delete>
+
+    <delete id="deleteCmmMenuAuthForMenuDiv" parameterType="map">
+        DELETE FROM CMM_MENU_AUTH
+         WHERE AUTH_CD = #{AUTH_CD}
+           AND MENU_ID IN (
+                           SELECT A.MENU_ID
+                              FROM CMM_MENU_AUTH A, CMM_MENU_MAS B
+                             WHERE A.MENU_ID = B.MENU_ID
+                               AND A.AUTH_CD = #{AUTH_CD}
+                               AND B.MENU_DIV = #{MENU_DIV}
+                            )
+    </delete>
+
+    <insert id="insertCmmMenuAuth" parameterType="map">
+        INSERT INTO CMM_MENU_AUTH(
+            AUTH_CD
+            , MENU_ID
+            , MOD_DTM
+            , MOD_ID
+            , REG_DTM
+            , REG_ID
+        )VALUES(
+            #{AUTH_CD:VARCHAR}
+            , #{MENU_ID:VARCHAR}
+            , SYSDATE
+            , #{MOD_ID:VARCHAR}
+            , SYSDATE
+            , #{REG_ID:VARCHAR}
+        )
+    </insert>
+
+    <delete id="deleteCmmMenuBtnAuth" parameterType="map">
+        DELETE FROM CMM_MENU_BTN_AUTH
+        WHERE AUTH_CD = #{AUTH_CD}
+            <if test="MENU_ID != null and MENU_ID != ''">
+              AND MENU_ID = #{MENU_ID}
+            </if>
+    </delete>
+
+    <insert id="insertCmmMenuBtnAuth" parameterType="map">
+        INSERT INTO CMM_MENU_BTN_AUTH(
+            AUTH_CD
+            , MENU_ID
+            , BTN_ID
+            , MOD_DTM
+            , MOD_ID
+            , REG_DTM
+            , REG_ID
+        )VALUES(
+            #{AUTH_CD:VARCHAR}
+            , #{MENU_ID:VARCHAR}
+            , #{BTN_ID:VARCHAR}
+            , SYSDATE
+            , #{MOD_ID:VARCHAR}
+            , SYSDATE
+            , #{REG_ID:VARCHAR}
+        )
+    </insert>
+</mapper>

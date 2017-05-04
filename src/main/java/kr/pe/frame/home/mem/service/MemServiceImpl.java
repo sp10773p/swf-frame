@@ -7,7 +7,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
+import kr.pe.frame.cmm.core.base.Sha256;
 import kr.pe.frame.cmm.core.base.AbstractDAO;
 import kr.pe.frame.cmm.core.base.CommonDAO;
 import kr.pe.frame.cmm.core.base.CommonDAOFactory;
@@ -92,7 +92,7 @@ public class MemServiceImpl implements MemService {
 			param.put("HP_NO", DocUtil.encrypt(hpNo));
 		}
 		param.put("EMAIL", DocUtil.encrypt(email));
-		param.put("USER_PW", OneWayCipherM.encryptText(userPw));
+		param.put("USER_PW", Sha256.encrypt(userPw));
 		commonDAO.insert("mem.insertMember", param);
 		Map<String, Object> result = (Map<String, Object>)commonDAO.select("mem.selectUser", param);
 		AjaxModel model = new AjaxModel();

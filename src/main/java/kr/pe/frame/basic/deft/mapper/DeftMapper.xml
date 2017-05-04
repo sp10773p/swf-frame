@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="deft">
+    <select	id="selectUser" parameterType="map" resultType="map">
+        SELECT A.USER_ID                       /* 사용자ID */
+                , A.USER_NM                    /* 사용자명 */
+                , A.AUTO_SEND_YN               /* 자동신고여부 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , A.USER_DIV                   /* 사용자구분 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'USER_DIV' AND CODE = A.USER_DIV) AS USER_DIV_NM
+                , A.BIZ_NO                     /* 사업자등록번호 */
+                , A.BIZ_DIV                    /* 사업자구분 */
+                , A.CHARGE_NM                  /* 담당자명 */
+                , A.BIZ_CONDITION              /* 업태 */
+                , A.BIZ_LINE                   /* 종목 */
+                , A.USER_STATUS                /* 가입상태 */
+                , A.APPLICANT_ID               /* 관세사신고인부호 */
+                , A.CO_NM_ENG					/* 업체영문명 */
+                , A.REP_NM						/* 대표자명 */
+                , A.ZIP_CD						/* 우편번호 */
+                , A.ADDRESS					    /* 주소 */
+                , A.ADDRESS2					/* 상세주소 */
+                , A.TG_NO						/* 통관고유부호 */
+                , (SELECT C.IDENTIFY_ID FROM  CMM_IDENTIFIER C WHERE C.USER_ID = A.USER_ID AND C.TYPE = 'ECC') AS CUS_IDENTIFY_ID /* 판매자 관세사식별자ID */
+	            , (SELECT C.IDENTIFY_ID FROM  CMM_IDENTIFIER C WHERE C.USER_ID = A.USER_ID AND C.TYPE = 'ECP') AS PUR_IDENTIFY_ID /* 판매자 구매확인서식별자ID */
+                , A.REG_MALL_ID                 /* 등록몰ID */
+        FROM CMM_USER A, CMM_API_KEY_MNG B
+          WHERE A.USER_ID = B.USER_ID(+)
+            AND A.USER_ID = #{USER_ID}
+        ORDER 	BY A.USER_ID DESC
+    </select>
+    
+    <select id="selectBaseSeller" parameterType="map" resultType="map">
+		SELECT '0' AS CHK
+				, A.BIZ_NO                     				/* 사업자등록번호 */
+				, A.DOC_ID                     				/* 문서코드 */
+				, A.DOC_ITEM                   				/* 수출신고항목 */
+				, A.BASE_VAL                   				/* 기본값 */
+				, TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS' ) AS REG_DTM      /* 등록일시 */
+				, A.MOD_ID                    				/* 수정자ID */
+				, TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD HH24:MI:SS' ) AS MOD_DTM      /* 수정일시 */
+				, A.REG_ID                     				/* 등록자ID */
+				, B.ITEM_DESC                  				/* 항목명 */
+				, B.API_ITEM_NM                  			/* API항목코드 */
+				, B.BASE_VAL AS GLOBAL_BASE_VAL      		/* 전체설정 공통값 */
+				, (SELECT  MAX(CODE_NM) AS CODE_NM FROM BT_STD_CODE WHERE CLASS_ID = 'BASE_VAL_DIV' AND CODE = B.BASE_VAL_DIV) AS BASE_VAL_DIV_NM  /* 기본값구분명 */
+				, C.USER_ID       /* 사용자ID */
+				, C.USER_NM       /* 사용자명 */
+	       FROM CMM_BASEVAL_SELLER A
+                INNER JOIN CMM_BASEVAL B
+                ON B.DOC_ID = A.DOC_ID AND B.DOC_ITEM = A.DOC_ITEM
+					INNER JOIN (SELECT BIZ_NO, USER_ID, USER_NM
+						FROM  CMM_USER
+						WHERE 1=1
+						AND   USER_ID IN (SELECT MAX(USER_ID) AS USER_ID FROM CMM_USER WHERE USER_DIV IN ('S', 'M') GROUP BY BIZ_NO )
+                    ) C
+             ON C.BIZ_NO = A.BIZ_NO
+		 WHERE A.BIZ_NO = #{BIZ_NO}
+		 ORDER BY A.BIZ_NO, A.DOC_ID, B.ORDR ASC
+	</select>
+	
+	<update id="updateUser" parameterType="map">
+        UPDATE CMM_USER
+           SET   AUTO_SEND_YN      = #{AUTO_SEND_YN}
+                ,USER_NM           = #{USER_NM}
+                ,REP_NM            = #{REP_NM}
+                ,TG_NO      	   = #{TG_NO}
+                ,APPLICANT_ID      = #{APPLICANT_ID}
+                ,ZIP_CD            = #{ZIP_CD}
+                ,ADDRESS           = #{ADDRESS}
+                ,ADDRESS2          = #{ADDRESS2}
+                ,REG_MALL_ID       = #{REG_MALL_ID}
+                ,MOD_ID            = #{MOD_ID}
+                ,MOD_DTM           = SYSDATE
+         WHERE USER_ID = #{USER_ID}
+    </update>
+    
+    <delete id="deleteCmmbasevalSeller">
+        DELETE FROM CMM_BASEVAL_SELLER
+         WHERE BIZ_NO = #{BIZ_NO}
+           AND DOC_ID IN ('수출신고', 'EMS', '특송', '관세사')
+           AND DOC_ITEM IN ('CustomOrganizationID', 'CustomDepartmentID', 'LodingLocationID', 'GoodsLocationID1', 'GoodsLocationName', 'PaymentTermsTypeCode'
+	 	   		, 'ExporterClassCode', 'SimpleDrawAppIndicator', 'InspectionCode', 'TransportMeansCode', 'DeliveryTermsCode','DrawBackRole'
+	 	   		, 'CustNo', 'ApprNo1', 'ApprNo2', 'ApprNo3', 'MainExpressCode', 'MainExpressName', 'MainCusUserCode', 'MainCusUserName')
+    </delete>
+    
+	<insert id="insertCmmbasevalSeller" parameterType="map">
+	 	INSERT INTO CMM_BASEVAL_SELLER(BIZ_NO, DOC_ID, DOC_ITEM, BASE_VAL, REG_ID, REG_DTM, MOD_ID, MOD_DTM)
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'CustomOrganizationID' AS DOC_ITEM, #{CUSTOMORGANIZATIONID} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*세관코드*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'CustomDepartmentID' AS DOC_ITEM, #{CUSTOMDEPARTMENTID} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*과코드*/
+		 UNION 
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'LodingLocationID' AS DOC_ITEM, #{LODINGLOCATIONID} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*적재항*/
+		 UNION 
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'GoodsLocationID1' AS DOC_ITEM, #{GOODSLOCATIONID1} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*물품소재지우편번호*/
+		 UNION 
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'GoodsLocationName' AS DOC_ITEM, #{GOODSLOCATIONNAME} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*물품소재지*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'PaymentTermsTypeCode' AS DOC_ITEM, #{PAYMENTTERMSTYPECODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*결제방법코드*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'ExporterClassCode' AS DOC_ITEM, #{EXPORTERCLASSCODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*수출자구분*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'SimpleDrawAppIndicator' AS DOC_ITEM, #{SIMPLEDRAWAPPINDICATOR} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*간이환급신청여부*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'InspectionCode' AS DOC_ITEM, #{INSPECTIONCODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*검사방법선택*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'TransportMeansCode' AS DOC_ITEM, #{TRANSPORTMEANSCODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*주운송수단*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '수출신고' AS DOC_ID, 'DeliveryTermsCode' AS DOC_ITEM, #{DELIVERYTERMSCODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*인도조건*/
+		 UNION
+		SELECT #{BIZ_NO} AS MALL_ID, '수출신고' AS DOC_ID, 'DrawBackRole' AS DOC_ITEM, #{DRAWBACKROLE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*환급신청인*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, 'EMS' AS DOC_ID, 'CustNo' AS DOC_ITEM, #{CUSTNO} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*고객번호*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, 'EMS' AS DOC_ID, 'ApprNo1' AS DOC_ITEM, #{APPRNO1} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*계약승인번호1*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, 'EMS' AS DOC_ID, 'ApprNo2' AS DOC_ITEM, #{APPRNO2} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*계약승인번호2*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, 'EMS' AS DOC_ID, 'ApprNo3' AS DOC_ITEM, #{APPRNO3} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*계약승인번호3*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '특송' AS DOC_ID, 'MainExpressCode' AS DOC_ITEM, #{MAINEXPRESSCODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*주거래특송사코드*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '특송' AS DOC_ID, 'MainExpressName' AS DOC_ITEM, #{MAINEXPRESSNAME} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*주거래특송사명*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '관세사' AS DOC_ID, 'MainCusUserCode' AS DOC_ITEM, #{MAINCUSUSERCODE} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*주거래관세사코드*/
+		 UNION
+		SELECT #{BIZ_NO} AS BIZ_NO, '관세사' AS DOC_ID, 'MainCusUserName' AS DOC_ITEM, #{MAINCUSUSERNAME} AS BASE_VAL, #{REG_ID}, SYSDATE, #{MOD_ID}, SYSDATE FROM DUAL /*주거래관세사명*/
+	</insert>
+ 	
+ 	<select	id="selectUsrList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY USER_ID DESC) RNUM
+                , USER_NM                     /* 사용자명 */
+                , USER_DIV                    /* 사용자구분 */
+                , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'USER_DIV' AND CODE = CMM_USER.USER_DIV) AS USER_DIV_NM
+                , BIZ_NO                      /* 사업자등록번호 */
+                , BIZ_CONDITION               /* 업태 */
+                , BIZ_LINE                    /* 종목 */
+                , ADDRESS || ADDRESS2 AS ADDR /* 주소 */
+                , TO_CHAR(REG_DTM, 'YYYY-MM-DD') AS REG_DTM    /* 등록일시 */
+           FROM CMM_USER
+          WHERE 1 = 1
+            AND USER_DIV = #{USER_DIV}
+            <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+                AND REG_DTM BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+            </if>
+            <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+                <if test="SEARCH_COL == 'BIZ_NO'">
+                    AND BIZ_NO LIKE '%'||#{SEARCH_TXT}||'%'
+                </if>
+                <if test="SEARCH_COL == 'USER_NM'">
+                    AND USER_NM LIKE '%'||#{SEARCH_TXT}||'%'
+                </if>
+                <if test="SEARCH_COL == 'ADDR'">
+                    AND ADDRESS || ADDRESS2 LIKE '%'||#{SEARCH_TXT}||'%'
+                </if>
+            </if>
+            ORDER 	BY USER_ID DESC
+    </select>
+    
+    <select id="selectPostCusInfo" parameterType="map" resultType="map">
+		SELECT    A.CUS           /* 세관코드 */
+				, A.SEC           /* 과부호코드 */
+	      FROM CMM_POST_CUS A
+		 WHERE A.POST_NO = #{POST_NO}
+	</select>
+ 	
+</mapper>

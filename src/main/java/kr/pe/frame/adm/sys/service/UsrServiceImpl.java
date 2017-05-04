@@ -3,7 +3,7 @@ package kr.pe.frame.adm.sys.service;
 import kr.pe.frame.adm.sys.model.UsrSessionModel;
 import kr.pe.frame.cmm.core.base.CommonDAO;
 import kr.pe.frame.cmm.core.base.Constant;
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
+import kr.pe.frame.cmm.core.base.Sha256;
 import kr.pe.frame.cmm.core.model.AjaxModel;
 import kr.pe.frame.cmm.core.service.CommonService;
 import kr.pe.frame.cmm.core.service.FileCommonService;
@@ -213,7 +213,7 @@ public class UsrServiceImpl implements UsrService {
 
         Map<String, Object> mailMap = model.getData();
 
-        String passwd = OneWayCipherM.encryptText(randomPassword);
+        String passwd = Sha256.encrypt(randomPassword);
         mailMap.put("USER_PW", passwd);
         mailMap.put("RANDOM_PASSWORD", randomPassword);
 

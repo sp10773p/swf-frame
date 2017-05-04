@@ -2,7 +2,7 @@ package kr.pe.frame.basic.my.service;
 
 import kr.pe.frame.adm.sys.model.UsrSessionModel;
 import kr.pe.frame.cmm.core.base.CommonDAO;
-import kr.pe.frame.cmm.core.base.OneWayCipherM;
+import kr.pe.frame.cmm.core.base.Sha256;
 import kr.pe.frame.cmm.core.model.AjaxModel;
 import kr.pe.frame.cmm.util.DocUtil;
 import kr.pe.frame.cmm.util.StringUtil;
@@ -109,7 +109,7 @@ public class InfoServiceImpl implements InfoService {
         UsrSessionModel usrSessionModel = model.getUsrSessionModel();
         // 현재 비밀번호 확인
         String passWd = (String)params.get("USER_PW");
-        passWd = OneWayCipherM.encryptText(passWd);
+        passWd = Sha256.encrypt(passWd);
 
         if(!passWd.equals(model.getUsrSessionModel().getUserPw())){
             model.setCode("W00000028"); // 현재 패스워드 정보와 일치하지 않습니다.
@@ -146,7 +146,7 @@ public class InfoServiceImpl implements InfoService {
             params.put("PW_PRIOR", passWd);
         }
 
-        params.put("USER_PW"    , OneWayCipherM.encryptText(toPw));
+        params.put("USER_PW"    , Sha256.encrypt(toPw));
         params.put("LOGIN_ERROR", 0);
         params.put("USE_CHK"    , "Y");
         params.put("PW_UPDATE"  , PASSWORD_CHANGE_PERIOD);

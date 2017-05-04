@@ -1,0 +1,521 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="sel">
+    <select	id="selectSellerList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.BIZ_NO DESC) RNUM
+                , A.BIZ_NO                     /* 사업자등록번호 */
+                , A.SELLER_NM                  /* 판매자명 */
+                , A.TG_NO                      /* 통관부호 */
+                , A.APPLICANT_ID               /* 신고인부호 */
+                , A.IDENTIFY_ID                /* 식별자 */
+                , A.ADDRESS                    /* 주소 */
+                , A.POST_NO                    /* 우편번호 */
+                , A.TEL_NO                     /* 전화번호 */
+                , A.EMAIL_ADDRESS              /* 이메일 */
+                , A.AUTO_SEND_YN               /* 자동신고여부 */
+                , A.ITEM_SEND_YN               /* 품목별신고여부 */
+                , A.REG_MALL_ID                /* 등록몰ID */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM , 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+                , B.USER_ID                    /* 셀러ID */
+          FROM CMM_SELLER A INNER JOIN CMM_USER B
+            ON A.BIZ_NO = B.BIZ_NO
+           AND B.USER_DIV = 'S'
+         WHERE 1 = 1
+        <if test="F_REG_DTM != null and F_REG_DTM != '' and T_REG_DTM != null and T_REG_DTM != ''">
+            AND A.REG_DTM BETWEEN TO_DATE(#{F_REG_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_REG_DTM}||'235959', 'YYYYMMDDHH24MISS')
+        </if>
+        <if test="SELLER_NM != null and SELLER_NM != ''">
+            AND A.SELLER_NM LIKE '%'||#{SELLER_NM}||'%'
+        </if>
+        <if test="BIZ_NO != null and BIZ_NO != ''">
+            AND A.BIZ_NO LIKE #{BIZ_NO}||'%'
+        </if>
+        <if test="TG_NO != null and TG_NO != ''">
+            AND A.TG_NO LIKE '%'||#{TG_NO}||'%'
+        </if>
+        <if test="APPLICANT_ID != null and APPLICANT_ID != ''">
+            AND A.APPLICANT_ID LIKE '%'||#{APPLICANT_ID}||'%'
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            <if test="SEARCH_COL == 'IDENTIFY_ID'">
+                AND IDENTIFY_ID LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+            <if test="SEARCH_COL == 'REG_MALL_ID'">
+                AND REG_MALL_ID LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+        </if>
+        ORDER 	BY A.BIZ_NO DESC
+    </select>
+
+    <select	id="selectSellerItemList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.USER_ID DESC, B.HS) RNUM,
+                A.USER_ID AS MALL_ID,
+                A.REG_MALL_ID AS MALL_SELLER_ID,
+                A.BIZ_NO,
+                B.HS AS HS_CD,                            /* HS 부호 */
+                NVL(B.STD_GNM, B.STD_NM_EN) AS ITEM_NM,   /* 품명    */
+                B.STD_NM_HN,                              /* 품명(한글)   */
+                B.STD_NM_EN,                              /* 품명(영문)   */
+                B.MODEL_GNM AS BRAND_NM,                  /* 상표명       */
+                B.ORI_ST_MARK1 AS ORG_NAT_CD,             /* 원산지       */
+                NVL(B.SUN_UT, B.WT_UNIT) AS WEIGHT_UT,    /* 순중량단위    */
+                B.SUN_WT AS WEIGHT,                       /* 순중량        */
+                NVL(B.UT, B.PKG_UNIT) AS QUANTY_UT,       /* 수량단위   */
+                B.WT_UNIT,                                /* 중량단위      */
+                B.PKG_UNIT                                /* 수량단위   */
+          FROM CMM_USER A,
+               (
+                SELECT A.RPT_MARK,
+                       B.HS,                                /* HS 부호 */
+                       MAX(B.STD_GNM) AS STD_GNM,           /* 품명    */
+                       MAX(H.STD_NM_HN) AS STD_NM_HN,       /* 품명(한글)   */
+                       MAX(H.STD_NM_EN) AS STD_NM_EN,       /* 품명(영문)   */
+                       MAX(B.MODEL_GNM) AS MODEL_GNM,       /* 상표명       */
+                       MAX(B.ORI_ST_MARK1) AS ORI_ST_MARK1, /* 원산지       */
+                       MAX(B.SUN_UT) AS SUN_UT,             /* 순중량단위    */
+                       MAX(B.SUN_WT) AS SUN_WT,             /* 순중량        */
+                       MAX(H.WT_UNIT) AS WT_UNIT,           /* 중량단위      */
+                       MAX(B.UT) AS UT,                     /* 수량단위   */
+                       MAX(H.PKG_UNIT) AS PKG_UNIT          /* 수량단위   */
+                  FROM EXP_CUSDEC830 A, EXP_CUSDEC830_RAN B, CMM_HS_CD H
+                 WHERE A.RPT_NO = B.RPT_NO
+                   AND B.HS = H.HS_CD(+)
+                GROUP BY A.RPT_MARK, B.HS
+                ) B
+         WHERE A.APPLICANT_ID = B.RPT_MARK
+        <if test="MALL_ID != null and MALL_ID != ''">
+            AND A.USER_ID LIKE '%'||#{MALL_ID}||'%'
+        </if>
+        <if test="MALL_SELLER_ID != null and MALL_SELLER_ID != ''">
+            AND A.REG_MALL_ID LIKE '%'||#{MALL_SELLER_ID}||'%'
+        </if>
+        <if test="BIZ_NO != null and BIZ_NO != ''">
+            AND A.BIZ_NO LIKE #{BIZ_NO}||'%'
+        </if>
+        <if test="ITEM_NM != null and ITEM_NM != ''">
+            AND NVL(B.STD_GNM, B.STD_NM_EN) LIKE '%'||#{ITEM_NM}||'%'
+        </if>
+        <if test="BRAND_NM != null and BRAND_NM != ''">
+            AND B.MODEL_GNM LIKE '%'||#{BRAND_NM}||'%'
+        </if>
+        ORDER BY A.USER_ID DESC, B.HS
+    </select>
+
+    <select	id="selectSellerItemList_BAK" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.MALL_ID DESC, A.MALL_SELLER_ID DESC, A.MALL_ITEM_NO DESC) RNUM
+                , A.MALL_ID                    /* 몰ID */
+                , A.BIZ_NO                     /* 사업자등록번호 */
+                , A.MALL_SELLER_ID             /* 판매자몰ID */
+                , A.MALL_ITEM_NO               /* 몰상품번호 */
+                , A.ITEM_NM                    /* 품명 */
+                , A.HS_CD                      /* 세번부호 */
+                , A.BRAND_NM                   /* 상표명 */
+                , A.ORG_NAT_CD                 /* 원산지국가코드 */
+                , A.WEIGHT                     /* 중량 */
+                , A.WEIGHT_UT                  /* 중량단위 */
+                , A.QUANTY_UT                  /* 수량단위 */
+                , A.MAKER_NM                   /* 제조자 */
+                , A.EXPORT_DEC                 /* 수출신고여부 */
+                , A.CATEGORY1                  /* 카테고리1 */
+                , A.CATEGORY2                  /* 카테고리2 */
+                , A.CATEGORY3                  /* 카테고리3 */
+                , A.SPEC_DETAIL                /* 상세스펙 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM , 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+                , ITEM_VIEW_URL /* 상품정보 URL*/
+          FROM CMM_ITEM_INFO A
+        WHERE 1 = 1
+        <if test="MALL_ID != null and MALL_ID != ''">
+            AND A.MALL_ID LIKE '%'||#{MALL_ID}||'%'
+        </if>
+        <if test="MALL_SELLER_ID != null and MALL_SELLER_ID != ''">
+            AND A.MALL_SELLER_ID LIKE '%'||#{MALL_SELLER_ID}||'%'
+        </if>
+        <if test="BIZ_NO != null and BIZ_NO != ''">
+            AND A.BIZ_NO LIKE #{BIZ_NO}||'%'
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            AND
+            <if test="SEARCH_COL == 'MALL_ITEM_NO'">
+                MALL_ITEM_NO
+            </if>
+            <if test="SEARCH_COL == 'ITEM_NM'">
+                ITEM_NM
+            </if>
+            LIKE '%'||#{SEARCH_TXT}||'%'
+        </if>
+        <if test="BRAND_NM != null and BRAND_NM != ''">
+            AND A.BRAND_NM LIKE '%'||#{BRAND_NM}||'%'
+        </if>
+        <if test="MAKER_NM != null and MAKER_NM != ''">
+            AND A.MAKER_NM LIKE '%'||#{MAKER_NM}||'%'
+        </if>
+        ORDER 	BY A.MALL_ID DESC, A.MALL_SELLER_ID DESC, A.MALL_ITEM_NO DESC
+    </select>
+
+    <update id="updateSellItem" parameterType="map">
+        UPDATE CMM_ITEM_INFO
+           SET HS_CD   = #{HS_CD:VARCHAR},
+                MOD_ID  = #{USER_ID:VARCHAR},
+                MOD_DTM = SYSDATE
+         WHERE MALL_ID        = #{MALL_ID}
+           AND MALL_SELLER_ID = #{MALL_SELLER_ID}
+           AND MALL_ITEM_NO   = #{MALL_ITEM_NO}
+    </update>
+
+    <select id="selectBasevalList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.DOC_ID, A.TABLE_NM, ORDR ASC) RNUM
+			     , A.DOC_ID                     /* 문서코드 */
+			     , A.DOC_ITEM                   /* 수출신고항목 */
+			     , A.ITEM_DESC                  /* 항목설명 */
+			     , A.API_ITEM_NM                /* API항목명 */
+			     , A.BASE_VAL                   /* 기본값 */
+			     , A.BASE_VAL_DIV               /* 기본값구분 */
+                 , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'BASE_VAL_DIV' AND CODE = A.BASE_VAL_DIV) AS BASE_VAL_DIV_NM  /* 기본값구분명 */
+			     , A.NODE_NM                    /* 노드명 */
+			     , A.TABLE_NM                   /* 테이블명 */
+			     , A.COLUMN_NM                  /* 칼럼명 */
+			     , A.ORDR                       /* 순서 */
+			     , TO_CHAR(A.REG_DTM , 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+			     , A.MOD_ID                     /* 수정자ID */
+			     , TO_CHAR(A.MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+			     , A.REG_ID                     /* 등록자ID */
+			     , A.CHECK_SIZE                 /* 사이즈체크 */
+			     , A.CHECK_CODE                 /* 공통코드체크 */
+			FROM CMM_BASEVAL A
+			WHERE 1=1
+            <if test="BASEVAL_DOC_ID != null and BASEVAL_DOC_ID != ''">
+                AND DOC_ID = #{BASEVAL_DOC_ID}
+            </if>
+            <if test="BASE_VAL_DIV != null and BASE_VAL_DIV != ''">
+                AND BASE_VAL_DIV = #{BASE_VAL_DIV}
+            </if>
+            <if test="DOC_ITEM != null and DOC_ITEM != ''">
+                AND DOC_ITEM LIKE '%'||#{DOC_ITEM}||'%'
+            </if>
+            <if test="API_ITEM_NM != null and API_ITEM_NM != ''">
+                AND API_ITEM_NM LIKE '%'||UPPER(#{API_ITEM_NM})||'%'
+            </if>
+            <if test="BASE_VAL != null and BASE_VAL != ''">
+                AND BASE_VAL LIKE '%'||#{BASE_VAL}||'%'
+            </if>
+            <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+                AND
+                <if test="SEARCH_COL == 'NODE_NM'">
+                    NODE_NM
+                </if>
+                <if test="SEARCH_COL == 'TABLE_NM'">
+                    TABLE_NM
+                </if>
+                <if test="SEARCH_COL == 'COLUMN_NM'">
+                    COLUMN_NM
+                </if>
+                <if test="SEARCH_COL == 'ORDR'">
+                    ORDR
+                </if>
+                LIKE '%'||#{SEARCH_TXT}||'%'
+            </if>
+			ORDER BY A.DOC_ID, A.TABLE_NM, ORDR ASC
+    </select>
+
+    <update id="updateBaseval" parameterType="map">
+        UPDATE CMM_BASEVAL
+           SET ITEM_DESC      = #{ITEM_DESC:VARCHAR},
+                API_ITEM_NM   = #{API_ITEM_NM:VARCHAR},
+                BASE_VAL      = #{BASE_VAL:VARCHAR},
+                BASE_VAL_DIV  = #{BASE_VAL_DIV:VARCHAR},
+                TABLE_NM      = #{TABLE_NM:VARCHAR},
+                ORDR          = #{ORDR:VARCHAR},
+                CHECK_SIZE    = #{CHECK_SIZE:VARCHAR},
+                CHECK_CODE    = #{CHECK_CODE:VARCHAR},
+                COLUMN_NM     = #{COLUMN_NM:VARCHAR},
+                NODE_NM       = #{NODE_NM:VARCHAR},
+                MOD_ID        = #{USER_ID:VARCHAR},
+                MOD_DTM       = SYSDATE
+        WHERE DOC_ID = #{DOC_ID}
+          AND DOC_ITEM = #{DOC_ITEM}
+    </update>
+
+    <select id="selectSellerBasevalList" parameterType="map" resultType="map">
+        SELECT  ROW_NUMBER() OVER (ORDER BY A.BIZ_NO, A.DOC_ID, B.ORDR ASC) RNUM
+                 , A.BIZ_NO                     /* 사업자등록번호 */
+			     , A.DOC_ID                     /* 문서코드 */
+			     , A.DOC_ITEM                   /* 수출신고항목 */
+			     , A.BASE_VAL                   /* 기본값 */
+			     , TO_CHAR(A.REG_DTM , 'YYYY-MM-DD') AS REG_DTM                    /* 등록일시 */
+			     , A.MOD_ID                     /* 수정자ID */
+			     , TO_CHAR(A.MOD_DTM , 'YYYY-MM-DD') AS MOD_DTM                    /* 수정일시 */
+			     , A.REG_ID                     /* 등록자ID */
+                 , B.ITEM_DESC                  /* 항목명 */
+                 , B.API_ITEM_NM                  /* API항목코드 */
+                 , B.BASE_VAL AS GLOBAL_BASE_VAL      /* 전체설정 공통값 */
+                 , (<include refid="common.commonCodeName"/> AND CLASS_ID = 'BASE_VAL_DIV' AND CODE = B.BASE_VAL_DIV) AS BASE_VAL_DIV_NM  /* 기본값구분명 */
+                 , C.USER_ID       /* 사용자ID */
+                 , C.USER_NM       /* 사용자명 */
+		   FROM CMM_BASEVAL_SELLER A INNER JOIN CMM_BASEVAL B
+             ON B.DOC_ID=A.DOC_ID AND B.DOC_ITEM=A.DOC_ITEM
+        INNER JOIN ( SELECT BIZ_NO, USER_ID, USER_NM
+                        FROM  CMM_USER
+                       WHERE USER_ID IN ( SELECT  MAX(USER_ID) AS USER_ID
+                                             FROM CMM_USER
+                                            WHERE USER_DIV='S'
+                                            GROUP BY BIZ_NO )
+                   ) C
+           ON C.BIZ_NO=A.BIZ_NO
+		  WHERE 1 = 1
+        <if test="F_SEARCH_DTM != null and F_SEARCH_DTM != '' and T_SEARCH_DTM != null and T_SEARCH_DTM != ''">
+            AND
+            <if test="SEARCH_DATE == 'A.MOD_DTM'">
+                 A.MOD_DTM
+            </if>
+            <if test="SEARCH_DATE == 'A.REG_DTM'">
+                 A.REG_DTM
+            </if>
+            BETWEEN TO_DATE(#{F_SEARCH_DTM}||'000000', 'YYYYMMDDHH24MISS') AND TO_DATE(#{T_SEARCH_DTM}||'235959', 'YYYYMMDDHH24MISS')
+        </if>
+        <if test="SEARCH_TXT != null and SEARCH_TXT != ''">
+            AND
+            <if test="SEARCH_COL == 'C.USER_ID'">
+                 C.USER_ID
+            </if>
+            <if test="SEARCH_COL == 'C.USER_NM'">
+                 C.USER_NM
+            </if>
+            <if test="SEARCH_COL == 'A.BIZ_NO'">
+                 A.BIZ_NO
+            </if>
+            LIKE '%'||#{SEARCH_TXT}||'%'
+        </if>
+		ORDER BY A.BIZ_NO, A.DOC_ID, B.ORDR ASC
+    </select>
+
+    <update id="updateSellerBaseval" parameterType="map">
+        UPDATE CMM_BASEVAL_SELLER
+           SET BASE_VAL = #{BASE_VAL:VARCHAR},
+               MOD_ID    = #{USER_ID:VARCHAR},
+               MOD_DTM   = SYSDATE
+         WHERE BIZ_NO   = #{BIZ_NO}
+           AND DOC_ID   = #{DOC_ID}
+           AND DOC_ITEM = #{DOC_ITEM}
+    </update>
+
+    <select id="selectExchangeRateList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY APPLY_DATE DESC, NATION DESC) RNUM,
+                TO_CHAR(TO_DATE(APPLY_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS APPLY_DATE, /* 기준일자 */
+                NATION,
+                MAX(IMP_CURR_VAL) AS IMP_CURR_VAL,
+                MAX(EXP_CURR_VAL) AS EXP_CURR_VAL
+          FROM (
+                SELECT A.APPLY_DATE
+                        , A.NATION
+                        , A.IMPORT_EXPORT
+                        , DECODE(A.IMPORT_EXPORT, 'I', CURR_VAL, 0) AS IMP_CURR_VAL
+                        , DECODE(A.IMPORT_EXPORT, 'E', CURR_VAL, 0) AS EXP_CURR_VAL
+                  FROM CMM_EXCHANGE_RATE A
+                 WHERE 1=1
+                <if test="F_APPLY_DATE != null and F_APPLY_DATE != '' and T_APPLY_DATE != null and T_APPLY_DATE != ''">
+                    AND APPLY_DATE BETWEEN #{F_APPLY_DATE} AND #{T_APPLY_DATE}
+                </if>
+                <if test="NATION != null and NATION != ''">
+                    AND NATION LIKE '%'||#{NATION}||'%'
+                </if>
+                )
+        GROUP BY APPLY_DATE, NATION
+        ORDER BY APPLY_DATE DESC, NATION DESC
+    </select>
+
+    <select id="selectMajExchangeRateList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY APPLY_DATE DESC, NATION DESC) RNUM,
+                TO_CHAR(TO_DATE(APPLY_DATE, 'YYYY-MM-DD'), 'YYYY-MM-DD') AS APPLY_DATE, /* 기준일자 */
+                NATION,
+                MAX(IMP_CURR_VAL) AS IMP_CURR_VAL,
+                MAX(EXP_CURR_VAL) AS EXP_CURR_VAL
+          FROM (
+                SELECT A.APPLY_DATE
+                        , A.NATION
+                        , A.IMPORT_EXPORT
+                        , DECODE(A.IMPORT_EXPORT, 'I', CURR_VAL, 0) AS IMP_CURR_VAL
+                        , DECODE(A.IMPORT_EXPORT, 'E', CURR_VAL, 0) AS EXP_CURR_VAL
+                FROM CMM_EXCHANGE_RATE A
+                WHERE NATION IN ('USD', 'CNY', 'JPY', 'EUR')
+                <if test="F_APPLY_DATE != null and F_APPLY_DATE != '' and T_APPLY_DATE != null and T_APPLY_DATE != ''">
+                    AND APPLY_DATE BETWEEN #{F_APPLY_DATE} AND #{T_APPLY_DATE}
+                </if>
+                <if test="NATION != null and NATION != ''">
+                    AND NATION LIKE '%'||#{NATION}||'%'
+                </if>
+                )
+        GROUP BY APPLY_DATE, NATION
+        ORDER BY APPLY_DATE DESC, NATION DESC
+    </select>
+
+    <select id="selectHsList" parameterType="map" resultType="map">
+        SELECT ROW_NUMBER() OVER (ORDER BY A.SN DESC, A.HS_CD DESC) RNUM
+                , A.SN                         /* 일련번호 */
+                , A.HS_CD                      /* HS부호 */
+                , A.STD_NM_HN                  /* 품명(한글) */
+                , A.STD_NM_EN                  /* 품명(영문) */
+                , A.PKG_UNIT                   /* 수량단위 */
+                , A.WT_UNIT                    /* 중량단위 */
+                , A.APPLY_START_DT             /* 적용개시일 */
+                , A.APPLY_END_DT               /* 적용만료일 */
+                , A.REG_ID                     /* 등록자ID */
+                , TO_CHAR(A.REG_DTM, 'YYYY-MM-DD HH24:MI:SS' ) AS REG_DTM                    /* 등록일시 */
+                , A.MOD_ID                     /* 수정자ID */
+                , TO_CHAR(A.MOD_DTM, 'YYYY-MM-DD HH24:MI:SS' ) AS MOD_DTM                    /* 수정일시 */
+        FROM CMM_HS_CD A
+        WHERE 1 = 1
+        <if test="P_HS_CD != null and P_HS_CD != ''">
+            AND HS_CD LIKE #{P_HS_CD}||'%'
+        </if>
+        <if test="P_STD_NM_HN != null and P_STD_NM_HN != ''">
+            AND STD_NM_HN LIKE '%'||#{P_STD_NM_HN}||'%'
+        </if>
+        <if test="P_STD_NM_EN != null and P_STD_NM_EN != ''">
+            AND STD_NM_EN LIKE '%'||#{P_STD_NM_EN}||'%'
+        </if>
+        ORDER 	BY A.SN DESC, A.HS_CD DESC
+    </select>
+
+    <select id="selectHsCount" parameterType="map" resultType="int">
+        SELECT COUNT(*)
+          FROM CMM_HS_CD
+         WHERE HS_CD = #{HS_CD}
+    </select>
+
+    <insert id="insertHsCode" parameterType="map">
+        <selectKey resultType="int" keyProperty="NEW_SN" order="BEFORE">
+            SELECT NVL(MAX(SN), 0) + 1 AS SN FROM CMM_HS_CD
+        </selectKey>
+        INSERT INTO CMM_HS_CD (
+            SN
+            , HS_CD
+            , STD_NM_HN
+            , STD_NM_EN
+            , PKG_UNIT
+            , WT_UNIT
+            , APPLY_START_DT
+            , APPLY_END_DT
+            , REG_ID
+            , REG_DTM
+            , MOD_ID
+            , MOD_DTM
+        )VALUES(
+            #{NEW_SN}
+            , #{HS_CD}
+            , #{STD_NM_HN}
+            , #{STD_NM_EN}
+            , #{PKG_UNIT}
+            , #{WT_UNIT}
+            , #{APPLY_START_DT}
+            , #{APPLY_END_DT}
+            , #{SSuserId}
+            , SYSDATE
+            , #{SSuserId}
+            , SYSDATE
+        )
+    </insert>
+
+    <update id="updateHsCode" parameterType="map">
+        UPDATE CMM_HS_CD
+           SET HS_CD          = #{HS_CD},
+                STD_NM_HN      = #{STD_NM_HN},
+                STD_NM_EN      = #{STD_NM_EN},
+                PKG_UNIT       = #{PKG_UNIT},
+                WT_UNIT        = #{WT_UNIT},
+                MOD_ID         = #{SSuserId},
+                MOD_DTM        = SYSDATE
+         WHERE SN = #{SN}
+    </update>
+
+    <delete id="deleteHsCode" parameterType="map">
+        DELETE FROM CMM_HS_CD
+         WHERE SN = #{SN}
+    </delete>
+
+    <select id="selectUserInfo" parameterType="map" resultType="map">
+        SELECT BIZ_NO
+                , NVL(AUTO_SEND_YN, 'N') AS AUTO_SEND_YN
+                , USER_NM, REP_NM, TG_NO, APPLICANT_ID, ZIP_CD, REG_MALL_ID, ADDRESS
+                , (SELECT CODE_NM||' ('||CODE||')' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0015' AND CODE = CUSTOMORGANIZATIONID) AS CUSTOMORGANIZATIONID
+                , (SELECT CODE_NM||' ('||CODE||')' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0004' AND CODE = CUSTOMDEPARTMENTID) AS CUSTOMDEPARTMENTID
+                , (SELECT CODE_NM||' ('||CODE||')' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0046' AND CODE = LODINGLOCATIONID) AS LODINGLOCATIONID
+                , GOODSLOCATIONID1
+                , (SELECT CODE_NM||' ('||CODE||')' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0038' AND CODE = DELIVERYTERMSCODE) AS DELIVERYTERMSCODE
+                , (SELECT CODE_NM||' ('||CODE||')' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0003' AND CODE = PAYMENTTERMSTYPECODE) AS PAYMENTTERMSTYPECODE
+                , DECODE(EXPORTERCLASSCODE, 'C', 'C (완제품판매자)', EXPORTERCLASSCODE) AS EXPORTERCLASSCODE
+                , (SELECT CODE_NM||' ('||CODE||')' FROM CMM_STD_CODE WHERE CLASS_ID = 'CUS0048' AND CODE = DRAWBACKROLE) AS DRAWBACKROLE
+                , DECODE(INSPECTIONCODE, 'A', 'A (신고지)', 'B', 'B (적재지)') AS INSPECTIONCODE
+                , DECODE(TRANSPORTMEANSCODE, '40', '40 (항공기)', '10', '10 (선박)') AS TRANSPORTMEANSCODE
+                , GOODSLOCATIONNAME
+                , CUSTNO
+                , APPRNO1
+                , APPRNO2
+                , APPRNO3
+                , MAINCUSUSERNAME||'('||MAINCUSUSERCODE||')' AS MAINCUSUSERNAME
+                , MAINEXPRESSNAME||'('||MAINEXPRESSCODE||')' AS MAINEXPRESSNAME
+           FROM (
+                 SELECT BIZ_NO
+                        , AUTO_SEND_YN, USER_NM, REP_NM, TG_NO, APPLICANT_ID, ZIP_CD, REG_MALL_ID, ADDRESS
+                        , MAX(CUSTOMORGANIZATIONID) AS CUSTOMORGANIZATIONID
+                        , MAX(CUSTOMDEPARTMENTID) AS CUSTOMDEPARTMENTID
+                        , MAX(LODINGLOCATIONID) AS LODINGLOCATIONID
+                        , MAX(GOODSLOCATIONID1) AS GOODSLOCATIONID1
+                        , NVL(MAX(DELIVERYTERMSCODE), 'FOB') AS DELIVERYTERMSCODE
+                        , NVL(MAX(PAYMENTTERMSTYPECODE), 'CD') AS PAYMENTTERMSTYPECODE
+                        , NVL(MAX(EXPORTERCLASSCODE), 'C') AS EXPORTERCLASSCODE
+                        , NVL(MAX(DRAWBACKROLE), '0') AS DRAWBACKROLE
+                        , NVL(MAX(INSPECTIONCODE), 'A') AS INSPECTIONCODE
+                        , NVL(MAX(TRANSPORTMEANSCODE), '40') AS TRANSPORTMEANSCODE
+                        , MAX(GOODSLOCATIONNAME) AS GOODSLOCATIONNAME
+                        , MAX(CUSTNO) AS CUSTNO
+                        , MAX(APPRNO1) AS APPRNO1
+                        , MAX(APPRNO2) AS APPRNO2
+                        , MAX(APPRNO3) AS APPRNO3
+                        , MAX(MAINCUSUSERCODE) AS MAINCUSUSERCODE
+                        , MAX(MAINCUSUSERNAME) AS MAINCUSUSERNAME
+                        , MAX(MAINEXPRESSCODE) AS MAINEXPRESSCODE
+                        , MAX(MAINEXPRESSNAME) AS MAINEXPRESSNAME
+                   FROM (
+                         SELECT DECODE(UPPER(A.DOC_ITEM), 'CUSTOMORGANIZATIONID', BASE_VAL, NULL) AS CUSTOMORGANIZATIONID
+                                , DECODE(UPPER(A.DOC_ITEM), 'CUSTOMDEPARTMENTID', BASE_VAL, NULL) AS CUSTOMDEPARTMENTID
+                                , DECODE(UPPER(A.DOC_ITEM), 'LODINGLOCATIONID', BASE_VAL, NULL) AS LODINGLOCATIONID
+                                , DECODE(UPPER(A.DOC_ITEM), 'GOODSLOCATIONID1', BASE_VAL, NULL) AS GOODSLOCATIONID1
+                                , DECODE(UPPER(A.DOC_ITEM), 'DELIVERYTERMSCODE', BASE_VAL, NULL) AS DELIVERYTERMSCODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'PAYMENTTERMSTYPECODE', BASE_VAL, NULL) AS PAYMENTTERMSTYPECODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'EXPORTERCLASSCODE', BASE_VAL, NULL) AS EXPORTERCLASSCODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'DRAWBACKROLE', BASE_VAL, NULL) AS DRAWBACKROLE
+                                , DECODE(UPPER(A.DOC_ITEM), 'INSPECTIONCODE', BASE_VAL, NULL) AS INSPECTIONCODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'TRANSPORTMEANSCODE', BASE_VAL, NULL) AS TRANSPORTMEANSCODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'GOODSLOCATIONNAME', BASE_VAL, NULL) AS GOODSLOCATIONNAME
+                                , DECODE(UPPER(A.DOC_ITEM), 'CUSTNO', BASE_VAL, NULL) AS CUSTNO
+                                , DECODE(UPPER(A.DOC_ITEM), 'APPRNO1', BASE_VAL, NULL) AS APPRNO1
+                                , DECODE(UPPER(A.DOC_ITEM), 'APPRNO2', BASE_VAL, NULL) AS APPRNO2
+                                , DECODE(UPPER(A.DOC_ITEM), 'APPRNO3', BASE_VAL, NULL) AS APPRNO3
+                                , DECODE(UPPER(A.DOC_ITEM), 'MAINCUSUSERCODE', BASE_VAL, NULL) AS MAINCUSUSERCODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'MAINCUSUSERNAME', BASE_VAL, NULL) AS MAINCUSUSERNAME
+                                , DECODE(UPPER(A.DOC_ITEM), 'MAINEXPRESSCODE', BASE_VAL, NULL) AS MAINEXPRESSCODE
+                                , DECODE(UPPER(A.DOC_ITEM), 'MAINEXPRESSNAME', BASE_VAL, NULL) AS MAINEXPRESSNAME
+                                , A.BIZ_NO
+                                , B.AUTO_SEND_YN
+                                , B.USER_NM
+                                , B.REP_NM
+                                , B.TG_NO
+                                , B.APPLICANT_ID
+                                , B.ZIP_CD
+                                , B.REG_MALL_ID
+                                , B.ADDRESS||' '||B.ADDRESS2 AS ADDRESS
+                           FROM CMM_BASEVAL_SELLER A, CMM_USER B
+                          WHERE A.BIZ_NO = B.BIZ_NO
+                            AND B.USER_ID = #{USER_ID}
+                        )
+                GROUP BY BIZ_NO, AUTO_SEND_YN, USER_NM, REP_NM, TG_NO, APPLICANT_ID, ZIP_CD, REG_MALL_ID, ADDRESS
+                )
+    </select>
+</mapper>

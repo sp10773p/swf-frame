@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="edi">
+    <select id="selectSendRecv" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY SND_RCV_DTM DESC) RNUM, 
+            DOC_ID, REQ_KEY, REG_TYPE, DOC_TYPE, SNDR_ID, SNDR_QUAL, RECP_ID, RECP_QUAL, DOC_STATUS, 
+            TO_CHAR(SND_RCV_DTM, 'YYYY-MM-DD HH24:MI:SS') SND_RCV_DTM, 
+            SND_RCV_DIV, ORG_NM, FILE_PATH, FILE_NM, ERR_MSG, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM            
+        FROM 
+            CMM_EDI_HIS
+        WHERE 
+            1 = 1 
+            <if test="F_SND_RCV_DTM != null and F_SND_RCV_DTM != ''">
+                AND SND_RCV_DTM &gt;= TO_DATE(#{F_SND_RCV_DTM}||'000000', 'YYYYMMDDHH24MISS')
+            </if>
+            <if test="T_SND_RCV_DTM != null and T_SND_RCV_DTM != ''">
+                AND SND_RCV_DTM &lt;= TO_DATE(#{T_SND_RCV_DTM}||'235959', 'YYYYMMDDHH24MISS')
+            </if>     
+            <if test="SND_RCV_DIV != null">
+                AND SND_RCV_DIV IN 
+                <foreach collection="SND_RCV_DIV"  item="item" index="index" open="(" separator=", " close=")">
+                    #{item} 
+                </foreach>
+            </if>
+            <if test="SND_RCV_DIV != null and SNDR_RECP_ID != null and SNDR_RECP_ID != ''">
+                <foreach collection="SND_RCV_DIV"  item="item" index="index" open="AND (" separator=" OR " close=")">
+	                <if test='item == "S"'>
+	                     SNDR_ID = #{SNDR_RECP_ID} 
+	                </if>
+	                <if test='item == "R"'>
+	                    RECP_ID = #{SNDR_RECP_ID} 
+	                </if>                    
+                </foreach>
+            </if>            
+            <if test="SND_RCV_DIV == null">
+                AND SND_RCV_DIV IS NULL 
+            </if>
+            <if test="ORG_NM != null and ORG_NM != ''">
+                AND ORG_NM LIKE '%'||#{ORG_NM}||'%'
+            </if>               
+            <if test="REG_ID != null and REG_ID != ''">
+                AND REG_ID = #{REG_ID}
+            </if>         
+            <if test="DOC_TYPE != null and DOC_TYPE != ''">
+                AND DOC_TYPE = #{DOC_TYPE}
+            </if>       
+            <if test="DOC_STATUS != null and DOC_STATUS != ''">
+                AND DOC_STATUS = #{DOC_STATUS}
+            </if>       
+            <if test="DOC_ID != null and DOC_ID != ''">
+                AND DOC_ID = #{DOC_ID}
+            </if>  
+            <if test="REQ_KEY != null and REQ_KEY != ''">
+                AND REQ_KEY = #{REQ_KEY}
+            </if>              
+        ORDER BY SND_RCV_DTM DESC
+    </select>
+    
+    <select id="selectSendRecvEvt" parameterType="map" resultType="map">
+        SELECT  
+            ROW_NUMBER() OVER (ORDER BY DOC_ID, RE_CNT ASC, SEQ ASC) RNUM, 
+            DOC_ID, RE_CNT, SEQ, EVT_TYPE, (<include refid="common.commonCodeName"/> AND CLASS_ID = 'EDI_EVT_TYPE' AND CODE = CMM_EDI_HIS_EVT.EVT_TYPE) EVT_TYPE_NM, 
+            REG_ID, TO_CHAR(REG_DTM , 'YYYY-MM-DD HH24:MI:SS') REG_DTM, MOD_ID, TO_CHAR(MOD_DTM , 'YYYY-MM-DD') MOD_DTM            
+        FROM 
+            CMM_EDI_HIS_EVT
+        WHERE 
+            DOC_ID = #{DOC_ID} 
+        ORDER BY DOC_ID DESC, RE_CNT DESC, SEQ DESC
+    </select>    
+    
+    <insert id="docReRecv">
+        INSERT INTO CMM_EDI_RE_RECV_REQ (
+            REQ_ID, DOC_ID, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		)VALUES(
+            SYS_GUID(), #{DOC_ID}, NVL(#{ADM_SESSION.userId}, #{REG_ID}), SYSDATE, NVL(#{ADM_SESSION.userId}, #{MOD_ID}), SYSDATE
+		)
+    </insert>
+        
+    <update id="updateEdiHis" parameterType="map">
+        UPDATE
+        	CMM_EDI_HIS
+       	SET
+       		DOC_STATUS = 'RI', 
+       		MOD_ID = NVL(#{ADM_SESSION.userId}, #{MOD_ID}), 
+       		MOD_DTM = SYSDATE
+       	WHERE
+       		DOC_ID = #{DOC_ID}
+    </update>
+        
+    <insert id="docSend">
+        INSERT INTO CMM_EDI_SEND_REQ (
+            REQ_ID, REQ_KEY, DOC_TYPE, SNDR_ID, SNDR_QUAL, RECP_ID, RECP_QUAL, REG_ID, REG_DTM, MOD_ID, MOD_DTM
+		)VALUES(
+            SYS_GUID(), #{REQ_KEY}, #{DOC_TYPE}, #{SNDR_ID}, NVL(#{SNDR_QUAL}, '57'), #{RECP_ID}, NVL(#{RECP_QUAL}, '57'), NVL(#{ADM_SESSION.userId}, #{REG_ID}), SYSDATE, NVL(#{ADM_SESSION.userId}, #{MOD_ID}), SYSDATE
+		)
+    </insert>
+</mapper>

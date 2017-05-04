@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="zip">
+
+  	<!-- 주소테이블은 도로명주소관리를 하는 KTNET 타 디비에서 관리 -->
+  	
+	<select id="selectZipCode"  parameterType="map" resultType="map">
+		 SELECT ROW_NUMBER() OVER (ORDER BY ZIP_CD, ADDR_DIV, ADDR_DET DESC) RNUM
+		      , ZIP_CD
+   			  , ADDR_DIV || ADDR_DET AS NAME_KR
+   			  , ADDR_DIV || ADDR_DET AS ADDRESS
+   			  , ADDR_DIV
+   			  , ADDR_DET
+   			  , RMGMTNO
+   			  , ZIPCODE
+   			  , ZIPCODE1
+   			  , ZIPCODE2
+   			  , ROADCD
+   			  , BLDGNO
+		 FROM (
+				SELECT DECODE(LENGTH(B.ZIPCODE), 6, SUBSTR (B.ZIPCODE, 0, 3) || '-' || SUBSTR (B.ZIPCODE, 4), B.ZIPCODE) AS ZIP_CD 
+	  				 , A.PROVINCE || DECODE(A.CITY, NULL, '', ' ' || A.CITY) AS ADDR_DIV
+	  				 , CASE WHEN SUBSTR(A.DONGNM, LENGTH(A.DONGNM), 1) IN ('읍', '면') THEN ' ' || A.DONGNM || ' ' ELSE ' ' END ||
+           				 A.ROADNM || DECODE(A.UNDERYN, '1', ' 지하 ', ' ') || A.BLDGMNO || DECODE(A.BLDGSNO, 0, '', '-' || A.BLDGSNO) ||
+           				 CASE WHEN SUBSTR(A.DONGNM, LENGTH(A.DONGNM), 1) IN ('읍', '면') THEN ' (' || A.DONGNM || ')' ELSE '' END ||
+           				 DECODE(A.BLDGNM, '', '', ', ' || A.BLDGNM) AS ADDR_DET
+	  				 , A.RMGMTNO
+	  				 , SUBSTR(A.RMGMTNO,1,10) AS LEDONGCD1
+	  				 , SUBSTR(B.ZIPCODE, 0, 3) AS ZIPCODE1
+	  				 , SUBSTR(B.ZIPCODE, 4) AS ZIPCODE2
+	  				 , B.ZIPCODE
+	  				 , A.ROADCD
+	  				 , A.BLDGMNO || DECODE(A.BLDGSNO, 0, '', '-' || A.BLDGSNO) AS BLDGNO
+			      FROM STZE30 A
+	  			     , STZE31 B
+			     WHERE A.RMGMTNO = B.RMGMTNO
+				   AND A.PROVINCE = #{SEARCH_COL:VARCHAR}
+				   AND A.ROADNM LIKE #{SEARCH_TXT:VARCHAR}
+	        <if test="SRCH_BLDGMNO == null or SRCH_BLDGMNO == ''">
+	            || '%'
+	        </if>
+	        <if test="SRCH_BLDGMNO != null and SRCH_BLDGMNO != ''">
+	            AND A.BLDGMNO = TRANSLATE(#{SRCH_BLDGMNO:VARCHAR}, '0123456789' || #{SRCH_BLDGMNO:VARCHAR}, '0123456789')
+	        </if>
+	        <if test="SRCH_BLDGSNO != null and SRCH_BLDGSNO != ''">
+	            AND A.BLDGSNO = TRANSLATE(#{SRCH_BLDGSNO:VARCHAR}, '0123456789' || #{SRCH_BLDGSNO:VARCHAR}, '0123456789')
+	        </if>
+    						)
+			 WHERE 1=1
+			 ORDER BY ZIP_CD, ADDR_DIV, ADDR_DET DESC
+		 
+	</select>
+    
+</mapper>
