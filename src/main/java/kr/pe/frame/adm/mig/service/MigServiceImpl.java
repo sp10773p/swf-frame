@@ -5,7 +5,6 @@ import kr.pe.frame.cmm.core.base.CommonDAO;
 import kr.pe.frame.cmm.core.base.CommonUcpappDAO;
 import kr.pe.frame.cmm.core.base.Constant;
 import kr.pe.frame.cmm.core.model.AjaxModel;
-import com.ktnet.goglobal.cmm.excel.*;
 import kr.pe.frame.cmm.excel.*;
 import kr.pe.frame.cmm.util.StringUtil;
 import kr.pe.frame.cmm.util.WebUtil;

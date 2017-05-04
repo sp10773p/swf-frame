@@ -12,7 +12,7 @@
                            http://www.springframework.org/schema/context/spring-context-3.2.xsd">
 
 
-    <context:component-scan base-package="com.ktnet.goglobal" use-default-filters="false">
+    <context:component-scan base-package="kr.pe.frame" use-default-filters="false">
         <context:include-filter expression="org.springframework.stereotype.Controller" type="annotation" />
         <context:include-filter expression="org.springframework.web.bind.annotation.ControllerAdvice" type="annotation" />
         <context:exclude-filter expression="org.springframework.stereotype.Service" type="annotation" />

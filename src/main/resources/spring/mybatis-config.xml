@@ -26,7 +26,7 @@
 	</settings>
 	
 	<typeAliases>
-		<package name="com.ktnet.goglobal"/>
+		<package name="kr.pe.frame"/>
 	</typeAliases>
 
 	<typeHandlers>
