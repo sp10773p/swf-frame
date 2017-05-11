@@ -1004,7 +1004,7 @@ GridWrapper.prototype = {
                 if(obj.tagName == "INPUT" && obj.type == "text"){
                     obj.onkeydown = $.comm.bindAsListener(this.onKeydown, this);
 
-                }else if(obj.tagName == "SELECT" || (obj.tagName == "INPUT" && obj.type == "radio")){
+                }else if(obj.tagName == "SELECT" || (obj.tagName == "INPUT" && (obj.type == "radio" || obj.type == "checkbox"))){
                     obj.onchange = $.comm.bindAsListener(this.onChange, this);
 
                 }

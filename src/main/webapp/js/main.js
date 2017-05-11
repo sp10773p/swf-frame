@@ -69,7 +69,7 @@ $(document).ready(function(){
 //visual 텍스트 롤링
 $(function() {
 	window.currentIdx = null;
-	var topPos = 120;
+    var topPos = 86;  //20170420 높이값 변경
 	var topUpPos = 50;
 	var topDownPos = 200;
 

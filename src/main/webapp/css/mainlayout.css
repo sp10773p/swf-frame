@@ -11,13 +11,6 @@ header {
 	background-color:#fff;
 }
 header h1.logo {position:absolute;left:20px;top:21px;}
-header div.util {position:absolute;right:0;top:0;}
-header div.util p.greeting {display:inline-block;margin-right:15px;vertical-align:middle; text-align:right;color:#67747d; line-height:14px; font-size:12px;}
-header div.util p.greeting strong {color:#008ee1;}
-header div.util p.greeting span {color:#b1becd;}
-header div.util > button {width:60px;height:60px;}
-header div.util > button.setting {background-image:url(/images/btn_setting.gif);}
-header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 
 /* gnb메뉴 start */
 .gnb{
@@ -28,7 +21,7 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 .gnb li{
 	display:block;
 	float:left;
-	margin-right: 35px;
+	margin-right:45px;
 }
 .gnb li:last-child{margin-right:0;}
 .gnb li a{
@@ -60,7 +53,11 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 	top:20px;
 	z-index:10;
 }
-.nav,
+.nav{
+	height:calc(100% - 146px);
+	height:-moz-calc(100% - 146px);
+	height:-webkit-calc(100% - 146px);
+}
 .chart {
 	height:calc(100% - 40px);
 	height:-moz-calc(100% - 40px);
@@ -99,39 +96,44 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 .nav .dash-toggle p a{margin-left:30px;}
 /* 대쉬보드 토글 endt*/
 
-/*.nav .lnb{width:100%; height:calc(100% - 271px); overflow:auto;}*/
-.nav .lnb{width:100%; height:calc(100% - 321px); overflow:auto;}
+.nav .lnb {
+	width: 100%;
+	/*height: calc(100% - 271px);*/
+	height: calc(100% - 311px);
+	overflow: auto;
+}
 
 /* nav footer 부분 start */
 .nav .footer{width:100%; height:229px; background:#2a394f;}
 .nav .footer .foot-content{
 	width:100%;
-	/*height:127px;*/
-	height:177px;
-	padding-top:5px;
-    background:#364760;
+	/*height:127px;
+	padding-top:23px;*/
+	height:167px;
+	padding-top:3px;
+	background:#364760;
 }
 .nav .footer .foot-content ul li{
-    margin-bottom:5px;
+	margin-bottom:5px;
 }
 .nav .footer .foot-content ul li a{
-    display:block;
-    text-align:center;
+	display:block;
+	text-align:center;
 	font-family:Dotum;
 	font-size:12px;
-    line-height:36px;
+	line-height:36px;
 	font-weight:600;
-    color:#fff;
-    width:170px;
-    height:35px;
-    background:#546278;
-    border-radius:3px;
+	color:#fff;
+	width:170px;
+	height:35px;
+	background:#546278;
+	border-radius:3px;
 }
 .nav .footer .copy{
 	width:100%;
 	height:102px;
 	padding-top:65px;
-    background:#2a394f url(/images/logo_foot.png) no-repeat 43px 17px;
+	background:#2a394f url(/images/logo_foot.png) no-repeat 43px 17px;
 	text-align:center;
 	font-family:dotum;
 	font-size:12px;
@@ -150,7 +152,7 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 .chart_title{
 	width:100%;
 	height:55px;
-    padding:25px 20px 0 20px ;
+	padding:25px 20px 0 20px ;
 	box-sizing:border-box;
 	font-family:nanumgothic;
 	font-size:16px;
@@ -216,7 +218,7 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 
 .horizental_bar_graph{
 	width:100%; height:245px;
-	background:url(/images/bg/bg_circle_graph.png) no-repeat center bottom;
+	/*background:url(/images/bg/bg_circle_graph.png) no-repeat center bottom;*/
 }
 
 .chart iframe{
@@ -259,13 +261,13 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 /* 스크롤 영역 설정 */
 .inner-box {
 	position:relative;
-	height:calc(100% - 54px);
-	height:-moz-calc(100% - 54px);
-	height:-webkit-calc(100% - 54px);
+	height:calc(100% - 20px);
+	height:-moz-calc(100% - 20px);
+	height:-webkit-calc(100% - 20px);
 	border-radius:0 0 5px 5px;
 }
 .lnb.inner-box{
-    border-radius:0;
+	border-radius:0;
 }
 .dashboard.inner-box {
 	position:relative;
@@ -277,7 +279,7 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 }
 
 /* 타이틀 */
-.title {position:relative;height:52px;padding:17px 20px 0 20px;border-radius:5px 5px 0 0;box-sizing:border-box;}
+.title {position:relative;height:52px;padding:16px 20px 0 20px; border-radius:5px 5px 0 0; box-sizing:border-box;}
 .title > strong {display:block;font-family:'Nanum Gothic', nanumgothic,dotum,gulim;font-size:16px;color:#fff;}
 .title.blue-type > strong{padding-left:22px;}
 .title.green-type > strong{padding-left:30px;}
@@ -292,7 +294,7 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 	background:url('/images/btn/btn_close.png') no-repeat left top;
 }
 
-.title.blue-type {background:#15a4fa url(/images/bg/bg_blue_type.png) no-repeat 17px 13px;}
+.title.blue-type {background:#15a4fa url(/images/bg/bg_blue_type.png) no-repeat 18px 11px; height:46px; margin-bottom:-1px;}
 .title.green-type {border:1px solid #51a7aa;border-bottom-width:0;background:#00c1c7 url(/images/bg/bg_green_type.png) no-repeat 17px 13px;}
 .title.gray-type {border:1px solid #5d6570;border-bottom-width:0;background:#6a7380 url(/images/bg/bg_gray_type.png) no-repeat 17px 13px;}
 
@@ -303,13 +305,16 @@ header div.util > button.logout {background-image:url(/images/btn_out.gif);}
 
 #win_dim{ display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);box-sizing:border-box;z-index:1000; }
 
-#main_win_dim{ display:none;position:fixed;left:0;top:0;width:100%;height:100%;background:rgba(0,0,0,0.5);box-sizing:border-box;z-index:1000; }
-
-/*20170329 gnb 로그인전 스타일 추가*/
-header div.util > button.gnb_login {background-image:url(/images/btn_login.gif);}
-header div.util > button.gnb_join {background-image:url(/images/btn_join.gif);}
-
 
 /*대쉬보드 추가작성*/
 .export dl{width:25%;}
 .export dl dt{font-size:25px; letter-spacing:-0.05em;}
+
+/*로그인정보 영역 변경 추가작성*/
+.login_info{background:#6a7380; border-radius:5px; text-align:center; padding-top:5px; font-size:12px; margin-bottom:5px; overflow:hidden;}
+.login_info .greeting{color:#ddd; line-height:18px;}
+.login_info .greeting span{color:#b6b6b6; font-size:11px;}
+.login_info .info_txt{color:#ddd; line-height:18px;}
+.login_info .info_txt strong{color:#fff;}
+.login_info button{font-size:12px; color:#d6d8dc; background:#546278; width:99px; height:30px; margin-top:5px; float:left;}
+.login_info .logout,.login_info .gnb_join{float:right; width:100px;}

@@ -221,6 +221,11 @@
             $.comm.logout('<c:out value="${logoutUrl}" />');
         }
 
+        // 개인정보수정
+        function fn_profWrite() {
+            fn_menuClick("200055", "basic/prof/profWrite", "회원정보", "W");
+        }
+
         // 회원가입
         function fn_join(){
             location.href = "<c:url value="/jspView.do?jsp="/>home/mem/join01";
@@ -232,7 +237,7 @@
                 $('#noneLogin').show();
                 $('#loginFooter').hide();
 
-                $('.foot-content').attr("style", "padding-top: 130px");
+                $('.foot-content').attr("style", "padding-top: 120px");
                 $('#noneLoginFooter').show();
             }
 
@@ -246,12 +251,17 @@
                 fn_logout();
             })
 
+            // 개인정보수정
+            $('#btnProfWrite').on('click', function () {
+                fn_profWrite();
+            })
+
             // 로그인
             $('.gnb_login').on('click', function () {
                 location.href = "<c:out value="/"/>";
             })
 
-            // 회원관리
+            // 회원가입
             $('.gnb_join').on('click', function () {
                 fn_join();
             })
@@ -286,13 +296,13 @@
 				</c:if>
 			</c:forEach>
 		</ul>
-		<div class="util" id="noneLogin" style="display: none">
+		<%--<div class="util" id="noneLogin" style="display: none">
 			<button class="image-type gnb_join" title="회원가입">회원가입</button><button class="image-type gnb_login" title="로그인">로그인</button>
 		</div>
 		<div class="util" id="loginInfo">
 			<p class="greeting"><strong>${userId}</strong>님 반갑습니다.<br /><span>[최근접속일 : ${loginLastTime}]</span></p>
-			<%--<button class="image-type setting">환경설정</button>--%><button class="image-type logout" id="btnLogout" title="로그아웃">로그아웃</button>
-		</div>
+			&lt;%&ndash;<button class="image-type setting">환경설정</button>&ndash;%&gt;<button class="image-type logout" id="btnLogout" title="로그아웃">로그아웃</button>
+		</div>--%>
 	</header>
 	<!-- Header Area End// -->
 
@@ -301,6 +311,26 @@
 
 		<!-- Navi Ar ea End// -->
 		<div class="nav">
+			<div class="login_info">
+				<!--로그인 전-->
+				<div id="noneLogin" style="display: none">
+					<p class="info_txt">서비스 이용을 위해서는 <strong>로그인</strong> <br />또는 <strong>회원가입</strong>이 필요합니다.</p>
+					<div class="clearfix">
+						<button class="gnb_login" title="로그인">로그인</button>
+						<button class="gnb_join" title="회원가입">회원가입</button>
+					</div>
+				</div>
+				<!--//로그인 전-->
+				<!--로그인 후-->
+				<div id="loginInfo">
+					<p class="greeting"><strong>${userId}</strong><%--님 반갑습니다.--%><br/><span>[최근접속일 : ${loginLastTime}]</span></p>
+					<div class="clearfix">
+						<button class="setting" id="btnProfWrite">개인정보수정</button>
+						<button class="logout" id="btnLogout" title="로그아웃">로그아웃</button>
+					</div>
+				</div>
+				<!--//로그인 후-->
+			</div>
 			<div class="title blue-type"><strong id="topMenuNm"></strong></div>
 			<div class="inner-box">
 				<div class="dash-toggle">

@@ -667,7 +667,13 @@
             if(inputData != null){
                 $.each(inputData, function () {
                     if(!$.comm.isNull(this.id)){
-                        inputParam[this.id] = this.value;
+                        if(this.type == "checkbox"){
+                            if($(this).is(":checked")){
+                                inputParam[this.id] = this.value;
+                            }
+                        }else{
+                            inputParam[this.id] = this.value;
+                        }
                     }
                 })
             }
