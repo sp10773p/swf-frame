@@ -394,12 +394,15 @@ GridWrapper.prototype = {
 
         if($('#' + this.bodyId).length > 0){
             // 세로 스크롤이 있을때 헤더의 넓이를 조정하여 세로 스크롤이 가리지 않게 처리
-            var scrollHeight = $('#' + this.bodyId).get(0).scrollHeight;
-            var bodyHeight   = $('#' + this.bodyId).height();
+            (function($) {
+                $.fn.hasVerticalScrollBar = function() {
+                    return (this.prop("scrollHeight") == 0 && this.prop("clientHeight") == 0)
+                        || (this.prop("scrollHeight") > this.prop("clientHeight"));
 
-            var scrollWidth = $('#' + this.bodyId).get(0).scrollWidth;
-            var bodyWidth   = $('#' + this.bodyId).width();
-            if(scrollHeight > bodyHeight || (scrollWidth > bodyWidth && (scrollHeight + 13)> bodyHeight)){
+                }
+            })(jQuery);
+
+            if($('#' + this.bodyId).hasVerticalScrollBar()){
                 $('#' + this.headerId).width((parseInt(currLayerWidth)-17)+"px");
             }else{
                 $('#' + this.headerId).width("99.99%");
@@ -493,30 +496,30 @@ GridWrapper.prototype = {
             var a = $('#' + this.paramsFormId).serializeArray();
             $.each(a, function () {
                 //if(this.value != null && this.value != ''){
-                    // 날짜필드이면 '-' 삭제
-                    if($('#'+this.name).is('[datefield]')){
-                        this.value = this.value.trim().replace(/\/|-/g, '');
-                    }
+                // 날짜필드이면 '-' 삭제
+                if($('#'+this.name).is('[datefield]')){
+                    this.value = this.value.trim().replace(/\/|-/g, '');
+                }
 
-                    var tagName = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].tagName : "");
-                    var tagType = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].type : "");
-                    if(tagName.toUpperCase() == "INPUT" && tagType.toUpperCase() == "CHECKBOX"){
-                        var arr = $('input[name="' + this.name + '"]').serializeArray();
-                        var valueArray = [];
-                        $.each(arr, function () {
-                            valueArray.push(this.value);
-                        })
+                var tagName = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].tagName : "");
+                var tagType = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].type : "");
+                if(tagName.toUpperCase() == "INPUT" && tagType.toUpperCase() == "CHECKBOX"){
+                    var arr = $('input[name="' + this.name + '"]').serializeArray();
+                    var valueArray = [];
+                    $.each(arr, function () {
+                        valueArray.push(this.value);
+                    })
 
-                        requestParam[this.name] = valueArray;
-                    }else{
-                        requestParam[this.name] = this.value;
-                    }
+                    requestParam[this.name] = valueArray;
+                }else{
+                    requestParam[this.name] = this.value;
+                }
 
-                    if(titleParam == null) titleParam = {};
+                if(titleParam == null) titleParam = {};
 
-                    if($("label[for='"+this.name+"']")){
-                        titleParam[this.name] = $("label[for='"+this.name+"']").html();
-                    }
+                if($("label[for='"+this.name+"']")){
+                    titleParam[this.name] = $("label[for='"+this.name+"']").html();
+                }
                 //}
             })
         }
@@ -750,11 +753,11 @@ GridWrapper.prototype = {
         }
 
         var dataTypeAlign = function (type) {
-                if (type == "NUM") {
-                    return rightAlignClass;
-                }else if (type == "DAT"){
-                    return centerAlignClass;
-                }
+            if (type == "NUM") {
+                return rightAlignClass;
+            }else if (type == "DAT"){
+                return centerAlignClass;
+            }
 
         }
 
