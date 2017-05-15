@@ -137,7 +137,7 @@ GridWrapper.prototype = {
         this.paramsAddOnclickEvent();
 
         if(this.SCROLL_PAGING){
-            $("#" + this.id).scroll($.comm.bindAsListener(this.scrollPaging, this));
+            $("#" + this.bodyId).scroll($.comm.bindAsListener(this.scrollPaging, this));
         }
     },
     drawGrid : function () {
@@ -430,7 +430,7 @@ GridWrapper.prototype = {
     scrollPaging : function(){
         if(this.totalCount == this.getSize()) return;
 
-        var obj = $('#' + this.id);
+        var obj = $('#' + this.bodyId);
 
         if(obj.get(0) && obj.get(0).scrollHeight > obj.innerHeight()){ // 세로 스크롤바가 있을때만
             if (obj[0].scrollHeight - obj.scrollTop() <= obj.outerHeight()){
