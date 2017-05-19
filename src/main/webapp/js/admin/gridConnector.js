@@ -384,7 +384,12 @@ GridWrapper.prototype = {
             })(jQuery);
 
             if($('#' + this.bodyId).hasVerticalScrollBar()){
-                $('#' + this.headerId).width((parseInt(currLayerWidth)-17)+"px");
+                var orgHeaderIdHeight = Math.ceil(Number($('#' + this.headerId).width()));
+                $('#' + this.headerId).css("width", "calc(100% - 17px)");
+                if($('#' + this.headerId).width() > (orgHeaderIdHeight - 17)){
+                    $('#' + this.headerId).css("width", "100%");
+                    $('#' + this.headerId).width(Number($('#' + this.headerId).width()) - 17);
+                }
             }else{
                 $('#' + this.headerId).width("99.99%");
             }
@@ -472,30 +477,30 @@ GridWrapper.prototype = {
             var a = $('#' + this.paramsFormId).serializeArray();
             $.each(a, function () {
                 //if(this.value != null && this.value != ''){
-                    // 날짜필드이면 '-' 삭제
-                    if($('#'+this.name).is('[datefield]')){
-                        this.value = this.value.trim().replace(/\/|-/g, '');
-                    }
+                // 날짜필드이면 '-' 삭제
+                if($('#'+this.name).is('[datefield]')){
+                    this.value = this.value.trim().replace(/\/|-/g, '');
+                }
 
-                    var tagName = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].tagName : "");
-                    var tagType = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].type : "");
-                    if(tagName.toUpperCase() == "INPUT" && tagType.toUpperCase() == "CHECKBOX"){
-                        var arr = $('input[name="' + this.name + '"]').serializeArray();
-                        var valueArray = [];
-                        $.each(arr, function () {
-                            valueArray.push(this.value);
-                        })
+                var tagName = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].tagName : "");
+                var tagType = ($('input[name="' + this.name + '"]').length > 0 ? $('input[name="' + this.name + '"]')[0].type : "");
+                if(tagName.toUpperCase() == "INPUT" && tagType.toUpperCase() == "CHECKBOX"){
+                    var arr = $('input[name="' + this.name + '"]').serializeArray();
+                    var valueArray = [];
+                    $.each(arr, function () {
+                        valueArray.push(this.value);
+                    })
 
-                        requestParam[this.name] = valueArray;
-                    }else{
-                        requestParam[this.name] = this.value;
-                    }
+                    requestParam[this.name] = valueArray;
+                }else{
+                    requestParam[this.name] = this.value;
+                }
 
-                    if(titleParam == null) titleParam = {};
+                if(titleParam == null) titleParam = {};
 
-                    if($("label[for='"+this.name+"']")){
-                        titleParam[this.name] = $("label[for='"+this.name+"']").html();
-                    }
+                if($("label[for='"+this.name+"']")){
+                    titleParam[this.name] = $("label[for='"+this.name+"']").html();
+                }
                 //}
             })
         }
