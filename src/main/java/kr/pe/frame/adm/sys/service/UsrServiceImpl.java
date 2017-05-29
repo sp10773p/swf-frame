@@ -22,11 +22,11 @@ import java.util.Map;
 
 /**
  * 시스템관리 > 사용자관리 구현 클래스
+ *
  * @author 성동훈
- * @since 2017-01-05
  * @version 1.0
  * @see UsrService
- *
+ * <p>
  * <pre>
  * == 개정이력(Modification Information) ==
  *
@@ -35,6 +35,7 @@ import java.util.Map;
  * 2017.01.05  성동훈  최초 생성
  *
  * </pre>
+ * @since 2017-01-05
  */
 @Service(value = "usrService")
 public class UsrServiceImpl implements UsrService {
@@ -54,13 +55,14 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
-     * @param usrId									사용자 ID
+     *
+     * @param usrId 사용자 ID
      * @return UsrSessionModel
      * @throws Exception
      */
     @Override
     public UsrSessionModel selectUsrSessionInfo(String usrId, String sessionDiv) throws Exception {
-        UsrSessionModel model = (UsrSessionModel)commonDAO.select("usr.selectUsrSessionInfo", usrId);
+        UsrSessionModel model = (UsrSessionModel) commonDAO.select("usr.selectUsrSessionInfo", usrId);
 
         if (model != null) {
 
@@ -72,15 +74,15 @@ public class UsrServiceImpl implements UsrService {
 
             Map<String, List<String>> menuAuthRet = new HashMap<>();
             List<Map<String, String>> menuAuth = commonDAO.list("menu.selectCmmBtnAuth", usrId);
-            for(Map<String, String> data : menuAuth){
+            for (Map<String, String> data : menuAuth) {
                 String menuId = data.get("MENU_ID");
-                String btnId  = data.get("BTN_ID");
+                String btnId = data.get("BTN_ID");
 
                 List<String> btnList;
-                if(menuAuthRet.containsKey(menuId)){
+                if (menuAuthRet.containsKey(menuId)) {
                     btnList = menuAuthRet.get(menuId);
 
-                }else{
+                } else {
                     btnList = new ArrayList<>();
                 }
 
@@ -96,6 +98,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -105,9 +108,9 @@ public class UsrServiceImpl implements UsrService {
         model = commonService.selectGridPagingList(model);
         List<Map<String, Object>> list = model.getDataList();
 
-        for(Map<String, Object> map : list){
-            map.put("EMAIL" , DocUtil.decrypt((String) map.get("EMAIL")));
-            map.put("HP_NO" , DocUtil.decrypt((String) map.get("HP_NO")));
+        for (Map<String, Object> map : list) {
+            map.put("EMAIL", DocUtil.decrypt((String) map.get("EMAIL")));
+            map.put("HP_NO", DocUtil.decrypt((String) map.get("HP_NO")));
             map.put("TEL_NO", DocUtil.decrypt((String) map.get("TEL_NO")));
         }
 
@@ -116,6 +119,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -125,7 +129,7 @@ public class UsrServiceImpl implements UsrService {
         Map param = model.getData();
 
         // 필수 쿼리 아이디 체크
-        if(StringUtil.isEmpty((String)param.get(Constant.QUERY_KEY.getCode()))){
+        if (StringUtil.isEmpty((String) param.get(Constant.QUERY_KEY.getCode()))) {
             model.setStatus(-1);
             model.setMsg(commonService.getMessage("E00000001")); // 조회 쿼리 ID가 존재하지 않습니다.
 
@@ -133,14 +137,14 @@ public class UsrServiceImpl implements UsrService {
         }
 
         // 조회쿼리
-        String qKey = (String)param.get(Constant.QUERY_KEY.getCode());
-        if(!param.containsKey("USER_ID")){
+        String qKey = (String) param.get(Constant.QUERY_KEY.getCode());
+        if (!param.containsKey("USER_ID")) {
             param.put("USER_ID", model.getUsrSessionModel().getUserId());
         }
-        Map<String, Object> map = (Map<String, Object>)commonDAO.select(qKey, param);
+        Map<String, Object> map = (Map<String, Object>) commonDAO.select(qKey, param);
 
-        map.put("EMAIL" , DocUtil.decrypt((String) map.get("EMAIL")));
-        map.put("HP_NO" , DocUtil.decrypt((String) map.get("HP_NO")));
+        map.put("EMAIL", DocUtil.decrypt((String) map.get("EMAIL")));
+        map.put("HP_NO", DocUtil.decrypt((String) map.get("HP_NO")));
         map.put("TEL_NO", DocUtil.decrypt((String) map.get("TEL_NO")));
 
         model.setData(map);
@@ -150,6 +154,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -160,16 +165,16 @@ public class UsrServiceImpl implements UsrService {
         logger.debug("param {}", param);
 
         // 필드 암호화 처리
-        if(StringUtil.isNotEmpty((String)param.get("EMAIL"))){
-            param.put("EMAIL", DocUtil.encrypt((String)param.get("EMAIL")));
+        if (StringUtil.isNotEmpty((String) param.get("EMAIL"))) {
+            param.put("EMAIL", DocUtil.encrypt((String) param.get("EMAIL")));
         }
 
-        if(StringUtil.isNotEmpty((String)param.get("TEL_NO"))){
-            param.put("TEL_NO", DocUtil.encrypt((String)param.get("TEL_NO")));
+        if (StringUtil.isNotEmpty((String) param.get("TEL_NO"))) {
+            param.put("TEL_NO", DocUtil.encrypt((String) param.get("TEL_NO")));
         }
 
-        if(StringUtil.isNotEmpty((String)param.get("HP_NO"))){
-            param.put("HP_NO", DocUtil.encrypt((String)param.get("HP_NO")));
+        if (StringUtil.isNotEmpty((String) param.get("HP_NO"))) {
+            param.put("HP_NO", DocUtil.encrypt((String) param.get("HP_NO")));
         }
 
         param.put("MOD_ID", model.getUsrSessionModel().getUserId());
@@ -177,20 +182,20 @@ public class UsrServiceImpl implements UsrService {
         commonDAO.update("usr.updateUser", param);
 
         // 가입상태 변경에 따른 처리
-        String userStatus    = (String)param.get("USER_STATUS");
-        String orgUserStatus = (String)param.get("ORG_USER_STATUS");
-        if(!orgUserStatus.equals(userStatus)){
-            model.getData().put("EMAIL", DocUtil.decrypt((String)param.get("EMAIL")));
+        String userStatus = (String) param.get("USER_STATUS");
+        String orgUserStatus = (String) param.get("ORG_USER_STATUS");
+        if (!orgUserStatus.equals(userStatus)) {
+            model.getData().put("EMAIL", DocUtil.decrypt((String) param.get("EMAIL")));
 
             // 가입승인
-            if("1".equals(userStatus)){
+            if ("1".equals(userStatus)) {
                 saveUserApprove(model);
 
-            // 탈퇴승인
-            }else if("9".equals(userStatus)){
+                // 탈퇴승인
+            } else if ("9".equals(userStatus)) {
                 saveUserDrop(model);
 
-            }else{
+            } else {
                 commonDAO.insert("usr.insertCmmStatusHis", param);
 
             }
@@ -203,6 +208,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -220,9 +226,9 @@ public class UsrServiceImpl implements UsrService {
         // 암호 초기화
         commonDAO.update("usr.updateUserPassword", mailMap);
 
-        String receiver = (String)mailMap.get("EMAIL");
-        String title    = "GoGlobal 서비스 사용자 임시 비밀번호 발송";
-        String vmName   = "init_password_mail.html";
+        String receiver = (String) mailMap.get("EMAIL");
+        String title = "GoGlobal 서비스 사용자 임시 비밀번호 발송";
+        String vmName = "init_password_mail.html";
         commonService.sendSimpleEMail(receiver, title, vmName, mailMap);
 
         model.setCode("I00000007"); //비밀번호가 초기화 되었습니다.
@@ -232,6 +238,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -242,13 +249,13 @@ public class UsrServiceImpl implements UsrService {
 
         Map<String, Object> userData = (Map<String, Object>) commonDAO.select("usr.selectUser", param);
 
-        String userDiv = (String)userData.get("USER_DIV");
-        String authCd  = (String)userData.get("AUTH_CD");
+        String userDiv = (String) userData.get("USER_DIV");
+        String authCd = (String) userData.get("AUTH_CD");
 
         // 관세사이고 권한코드가 없을때 권한코드 update+0.
-        if("G".equals(userDiv) && StringUtil.isEmpty(authCd)){
+        if ("G".equals(userDiv) && StringUtil.isEmpty(authCd)) {
             userData.put("AUTH_CD", "CUSTOMS");
-            userData.put("REG_ID" , model.getUsrSessionModel().getUserId());
+            userData.put("REG_ID", model.getUsrSessionModel().getUserId());
             commonDAO.update("usr.updateUserAuthcd", userData);
         }
 
@@ -261,17 +268,17 @@ public class UsrServiceImpl implements UsrService {
         commonDAO.insert("usr.insertCmbasevalSeller", userData);
 
         // 상태변경 내역 저장
-        param.put("USER_STATUS"       , "1");
+        param.put("USER_STATUS", "1");
         param.put("USER_STATUS_REASON", "가입승인");
         commonDAO.insert("usr.insertCmmStatusHis", param);
 
         param.put("USER_DIV", userDiv);
 
-        param.putAll((Map)commonDAO.select("usr.selectUserBaseVal", param));
+        param.putAll((Map) commonDAO.select("usr.selectUserBaseVal", param));
 
-        String receiver = (String)param.get("EMAIL");
-        String title    = "GoGlobal 서비스 사용자 가입승인";
-        String vmName   = "user_approve_mail.html";
+        String receiver = (String) param.get("EMAIL");
+        String title = "GoGlobal 서비스 사용자 가입승인";
+        String vmName = "user_approve_mail.html";
 
         commonService.sendSimpleEMail(receiver, title, vmName, param);
 
@@ -282,6 +289,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      */
@@ -293,14 +301,14 @@ public class UsrServiceImpl implements UsrService {
         Map<String, Object> apiMap = new HashMap<>();
         apiMap.put("USER_ID", param.get("USER_ID"));
         apiMap.put("API_KEY", DocUtil.getApiKey());
-        apiMap.put("MOD_ID" , model.getUsrSessionModel().getUserId());
+        apiMap.put("MOD_ID", model.getUsrSessionModel().getUserId());
 
         commonDAO.update("usr.updateAPIKeyMng", apiMap);
 
         // API키관리상세 등록
         List<Map<String, Object>> list = commonDAO.list("usr.selectApiDtl", apiMap); //CMM_API_KEY_DTL 조회
 
-        if(list.size() <= 0){ //기존 ApiKeyDtl 데이터가 없을 경우
+        if (list.size() <= 0) { //기존 ApiKeyDtl 데이터가 없을 경우
             commonDAO.insert("usr.insertApiDtl", apiMap);
         }
 
@@ -311,6 +319,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -327,13 +336,13 @@ public class UsrServiceImpl implements UsrService {
         commonDAO.update("usr.updateApiReqStatus", param);
 
         // 상태변경 내역 저장
-        param.put("USER_STATUS"       , "9");
+        param.put("USER_STATUS", "9");
         param.put("USER_STATUS_REASON", "탈퇴승인");
         commonDAO.insert("usr.insertCmmStatusHis", param);
 
-        String receiver = (String)param.get("EMAIL");
-        String title    = "GoGlobal 서비스 탈퇴가 완료되었습니다.";
-        String vmName   = "user_drop_mail.html";
+        String receiver = (String) param.get("EMAIL");
+        String title = "GoGlobal 서비스 탈퇴가 완료되었습니다.";
+        String vmName = "user_drop_mail.html";
 
         commonService.sendSimpleEMail(receiver, title, vmName, param);
 
@@ -344,6 +353,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      * @throws Exception
@@ -358,6 +368,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param usrSessionModel
      */
     @Override
@@ -367,6 +378,7 @@ public class UsrServiceImpl implements UsrService {
 
     /**
      * {@inheritDoc}
+     *
      * @param model
      * @return
      */
@@ -376,7 +388,7 @@ public class UsrServiceImpl implements UsrService {
         Map<String, Object> userData = (Map<String, Object>) commonDAO.select("usr.selectUser", param);
 
         // 1. 첨부파일 삭제
-        if(StringUtil.isNotEmpty((String)userData.get("ATCH_FILE_ID"))){
+        if (StringUtil.isNotEmpty((String) userData.get("ATCH_FILE_ID"))) {
             AjaxModel fileAjaxModel = new AjaxModel();
             fileAjaxModel.setData(userData);
             fileCommonService.deleteFiles(fileAjaxModel);
