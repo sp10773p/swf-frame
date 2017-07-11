@@ -246,7 +246,15 @@
                         this.value = $.comm.numberWithoutCommas(this.value.trim());
                     }
 
-                    paramObj[this.name] = this.value;
+                    if(paramObj[this.name]) {
+						if(typeof paramObj[this.name] == 'string'){
+							paramObj[this.name] = [paramObj[this.name], this.value];
+						}else{
+							paramObj[this.name].push(this.value);
+						}
+		    		}else{
+						paramObj[this.name] = this.value;	
+		    		}
                 }
             })
 
